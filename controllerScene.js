@@ -3,6 +3,49 @@ class ControllerScene extends Phaser.Scene {
         super({
             key: "ControllerScene"
         });
+
+        this.LIST_ITEM = {
+            wheat: {
+                texture: 'crops',
+                frame: 70
+            },
+            avocado: {
+                texture: 'crops',
+                frame: 101
+            },
+            melon: {
+                texture: 'crops',
+                frame: 29
+            },
+            lemon: {
+                texture: 'crops',
+                frame: 41
+            },
+            tomato: {
+                texture: 'crops',
+                frame: 35
+            },
+            potato: {
+                texture: 'crops',
+                frame: 95
+            },
+            grapes: {
+                texture: 'crops',
+                frame: 65
+            },
+            rose: {
+                texture: 'crops',
+                frame: 5
+            },
+            strawberry: {
+                texture: 'crops',
+                frame: 83
+            },
+            orange: {
+                texture: 'crops',
+                frame: 107
+            },
+        };
     }
 
     preload() {
@@ -16,6 +59,7 @@ class ControllerScene extends Phaser.Scene {
             { frameWidth: 32, frameHeight: 32 }
         );
         this.load.image('ui_button', 'assets/ui_button.png');
+        this.load.image('inventory_button', 'assets/bag.png');
     }
 
     create() {
@@ -25,6 +69,14 @@ class ControllerScene extends Phaser.Scene {
         this.data.set('selectedItem', null);
         this.events.on('changedata-selectedItem', function (gameObject, value) {
             console.log('Item selected : ' + value);
+        });
+
+        let listItemsName = Object.keys(this.LIST_ITEM);
+        this.data.set('inventory', new Array(70).fill({}).map(() => ({
+            name: listItemsName[Math.floor(Math.random() * listItemsName.length)]
+        })));
+        this.events.on('changedata-inventory', function (gameObject, value) {
+            this.game.scene.getScene('UiScene').buildInventory();
         });
     }
 
