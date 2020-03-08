@@ -59,6 +59,7 @@ class ControllerScene extends Phaser.Scene {
             { frameWidth: 32, frameHeight: 32 }
         );
         this.load.image('ui_button', 'assets/ui_button.png');
+        this.load.image('inventory_button', 'assets/bag.png');
     }
 
     create() {

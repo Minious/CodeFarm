@@ -36,7 +36,7 @@ class UiScene extends Phaser.Scene {
             nbColumns,
             nbRows,
             (this.cameras.main.displayWidth - widthGrid) / 2,
-            (this.cameras.main.displayHeight - sizeButtonInventoryBar - marginButtonsInventoryBar - heightGrid) / 2,
+            this.cameras.main.displayHeight - sizeButtonInventoryBar - marginButtonsInventoryBar * 2 - heightGrid,
             sizeButton,
             marginButtons,
             10
@@ -76,12 +76,18 @@ class UiScene extends Phaser.Scene {
     }
 
     create() {
-        this.inventoryOpen = true;
+        this.inventoryOpen = false;
 
         this.inventoryBarButtons = this.add.group();
         this.inventoryGridButtons = this.add.group();
 
         this.buildInventory();
+
+        let inventoryOpenButton = this.add.image(60, 45, 'inventory_button').setScale(2).setInteractive();
+        inventoryOpenButton.on('pointerdown', () => {
+            this.inventoryOpen = !this.inventoryOpen;
+            this.buildInventory();
+        });
     }
 
     update(time, delta) {
