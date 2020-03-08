@@ -1,12 +1,14 @@
 class Crop extends Phaser.GameObjects.GameObject {
-    constructor (scene, x, y, layerCrops, growthRate, baseTileIdx) {
+    constructor (scene, x, y, layerCrops, growthDuration, baseTileIdx) {
         super(scene, null);
 
         this.mapPosition = new Phaser.Math.Vector2(x, y);
         this.layerCrops = layerCrops;
         this.state = 0;
         this.growth = 0;
-        this.growthRate = growthRate;
+        this.growthDuration = growthDuration;
+        this.nbSteps = 5;
+        this.growthRate = (this.nbSteps - 1) / growthDuration;
         this.baseTileIdx = baseTileIdx;
 
         this.updateTile();
