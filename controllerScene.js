@@ -69,6 +69,14 @@ class ControllerScene extends Phaser.Scene {
         this.events.on('changedata-selectedItem', function (gameObject, value) {
             console.log('Item selected : ' + value);
         });
+
+        let listItemsName = Object.keys(this.LIST_ITEM);
+        this.data.set('inventory', new Array(70).fill({}).map(() => ({
+            name: listItemsName[Math.floor(Math.random() * listItemsName.length)]
+        })));
+        this.events.on('changedata-inventory', function (gameObject, value) {
+            this.game.scene.getScene('UiScene').buildInventory();
+        });
     }
 
     update(time, delta) {}

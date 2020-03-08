@@ -38,51 +38,50 @@ class UiScene extends Phaser.Scene {
             (this.cameras.main.displayWidth - widthGrid) / 2,
             (this.cameras.main.displayHeight - sizeButtonInventoryBar - marginButtonsInventoryBar - heightGrid) / 2,
             sizeButton,
-            marginButtons
+            marginButtons,
+            10
         );
         inventoryGridButtons.forEach(inventoryButton => this.inventoryBarButtons.add(inventoryButton));
     }
 
-    makeInventoryButtonsGrid(nbColumns, nbRows, x, y, sizeButton, marginButtons) {
-        let cropsNames = [
-            'wheat',
-            'avocado',
-            'melon',
-            'lemon',
-            'tomato',
-            'potato',
-            'grapes',
-            'rose',
-            'strawberry',
-            'orange',
-        ];
+    buildInventory(){
+        this.inventoryBarButtons.clear(true, true);
+        this.buildInventoryBar();
+        if(this.inventoryOpen){
+            this.inventoryGridButtons.clear(true, true);
+            this.buildInventoryGrid();
+        }
+    }
+
+    makeInventoryButtonsGrid(nbColumns, nbRows, x, y, sizeButton, marginButtons, inventoryOffset = 0) {
         let inventoryGridButtons = [];
         for(let j=0;j<nbRows;j+=1) {
             for(let i=0;i<nbColumns;i+=1) {
-                // let cropName = cropsNames[(i + j * nbColumns) % cropsNames.length];
-                let cropName = cropsNames[Math.floor(Math.random() * cropsNames.length)];
-                let cropInventoryButton = new InventoryButton(
+                let inventoryIndex = i + j * nbColumns;
+                let inventory = this.game.scene.getScene('ControllerScene').data.get('inventory');
+                let inventoryButton = new InventoryButton(
                     this,
                     x + marginButtons * i + sizeButton * (i + 0.5),
                     y + marginButtons * j + sizeButton * (j + 0.5),
                     sizeButton,
                     sizeButton,
                     15,
-                    cropName
+                    inventory[(inventoryIndex + inventoryOffset) % inventory.length]['name']
                 );
-                this.add.existing(cropInventoryButton);
-                inventoryGridButtons.push(cropInventoryButton);
+                this.add.existing(inventoryButton);
+                inventoryGridButtons.push(inventoryButton);
             }
         }
         return inventoryGridButtons;
     }
 
     create() {
-        this.inventoryBarButtons = this.add.group();
-        this.buildInventoryBar();
+        this.inventoryOpen = true;
 
+        this.inventoryBarButtons = this.add.group();
         this.inventoryGridButtons = this.add.group();
-        this.buildInventoryGrid();
+
+        this.buildInventory();
     }
 
     update(time, delta) {
