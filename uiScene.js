@@ -44,62 +44,31 @@ class UiScene extends Phaser.Scene {
     }
 
     makeInventoryButtonsGrid(nbColumns, nbRows, x, y, sizeButton, marginButtons) {
-        console.log(sizeButton);
-        let cropsTypes = [
-            {
-                item: 'wheat',
-                frame: 70
-            },
-            {
-                item: 'avocado',
-                frame: 101
-            },
-            {
-                item: 'melon',
-                frame: 29
-            },
-            {
-                item: 'lemon',
-                frame: 41
-            },
-            {
-                item: 'tomato',
-                frame: 35
-            },
-            {
-                item: 'potato',
-                frame: 95
-            },
-            {
-                item: 'grapes',
-                frame: 65
-            },
-            {
-                item: 'rose',
-                frame: 5
-            },
-            {
-                item: 'strawberry',
-                frame: 83
-            },
-            {
-                item: 'orange',
-                frame: 107
-            },
+        let cropsNames = [
+            'wheat',
+            'avocado',
+            'melon',
+            'lemon',
+            'tomato',
+            'potato',
+            'grapes',
+            'rose',
+            'strawberry',
+            'orange',
         ];
         let inventoryGridButtons = [];
         for(let j=0;j<nbRows;j+=1) {
             for(let i=0;i<nbColumns;i+=1) {
-                let cropType = cropsTypes[(i + j * nbColumns) % cropsTypes.length];
+                // let cropName = cropsNames[(i + j * nbColumns) % cropsNames.length];
+                let cropName = cropsNames[Math.floor(Math.random() * cropsNames.length)];
                 let cropInventoryButton = new InventoryButton(
                     this,
                     x + marginButtons * i + sizeButton * (i + 0.5),
                     y + marginButtons * j + sizeButton * (j + 0.5),
                     sizeButton,
                     sizeButton,
-                    cropType.item,
-                    'crops',
-                    cropType.frame
+                    15,
+                    cropName
                 );
                 this.add.existing(cropInventoryButton);
                 inventoryGridButtons.push(cropInventoryButton);

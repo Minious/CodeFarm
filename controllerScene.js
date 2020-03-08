@@ -3,6 +3,49 @@ class ControllerScene extends Phaser.Scene {
         super({
             key: "ControllerScene"
         });
+
+        this.LIST_ITEM = {
+            wheat: {
+                texture: 'crops',
+                frame: 70
+            },
+            avocado: {
+                texture: 'crops',
+                frame: 101
+            },
+            melon: {
+                texture: 'crops',
+                frame: 29
+            },
+            lemon: {
+                texture: 'crops',
+                frame: 41
+            },
+            tomato: {
+                texture: 'crops',
+                frame: 35
+            },
+            potato: {
+                texture: 'crops',
+                frame: 95
+            },
+            grapes: {
+                texture: 'crops',
+                frame: 65
+            },
+            rose: {
+                texture: 'crops',
+                frame: 5
+            },
+            strawberry: {
+                texture: 'crops',
+                frame: 83
+            },
+            orange: {
+                texture: 'crops',
+                frame: 107
+            },
+        };
     }
 
     preload() {
