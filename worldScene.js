@@ -101,34 +101,42 @@ class WorldScene extends Phaser.Scene {
     }
 
     actionClick(tilePos, layerFields, layerCrops){
-        let selectemItem = this.game.scene.getScene('ControllerScene').data.get('selectedItem');
-        if(selectemItem){
-            let noField = layerFields.getTileAt(tilePos.x, tilePos.y, true).index == -1;
-            if(noField){
-                if(selectemItem == 'hoe'){
-                    layerFields.putTileAt(192, tilePos.x, tilePos.y);
+        let selectedItemInventoryIndex = this.game.scene.getScene('ControllerScene').data.get('selectedItemInventoryIndex');
+        if(selectedItemInventoryIndex){
+            let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
+            if(selectedItemData.name){
+                let noField = layerFields.getTileAt(tilePos.x, tilePos.y, true).index == -1;
+                if(noField){
+                    if(selectedItemData.name == 'hoe'){
+                        layerFields.putTileAt(192, tilePos.x, tilePos.y);
+                    } else {
+                        console.log("can't plant here");
+                    }
+                } else {
+                    let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
+                    if(emptyField){
+                        let selectedCropToCropConstructor = {
+                            'avocado':  Avocado,
+                            'grapes':  Grapes,
+                            'lemon':  Lemon,
+                            'melon':  Melon,
+                            'orange':  Orange,
+                            'potato':  Potato,
+                            'rose':  Rose,
+                            'strawberry':  Strawberry,
+                            'tomato':  Tomato,
+                            'wheat':  Wheat,
+                        }
+                        if(selectedItemData.name in selectedCropToCropConstructor ){
+                            let cropConstructor = selectedCropToCropConstructor[selectedItemData.name];
+                            let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
+                            this.crops.add(crop);
+                            this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
+                        }
+                    }
                 }
             } else {
-                let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
-                if(emptyField){
-                    let selectedCropToCropConstructor = {
-                        'avocado':  Avocado,
-                        'grapes':  Grapes,
-                        'lemon':  Lemon,
-                        'melon':  Melon,
-                        'orange':  Orange,
-                        'potato':  Potato,
-                        'rose':  Rose,
-                        'strawberry':  Strawberry,
-                        'tomato':  Tomato,
-                        'wheat':  Wheat,
-                    }
-                    if(selectemItem in selectedCropToCropConstructor ){
-                        let cropConstructor = selectedCropToCropConstructor[selectemItem];
-                        let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
-                        this.crops.add(crop);
-                    }
-                }
+                console.log('no item in slot');
             }
         } else {
             console.log('no item selected')
