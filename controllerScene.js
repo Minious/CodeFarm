@@ -5,6 +5,14 @@ class ControllerScene extends Phaser.Scene {
         });
 
         this.LIST_ITEM = {
+            // scythe: {
+            //     texture: 'tools',
+            //     frame: 0
+            // },
+            hoe: {
+                texture: 'tools',
+                frame: 1
+            },
             wheat: {
                 texture: 'crops',
                 frame: 70
@@ -57,6 +65,10 @@ class ControllerScene extends Phaser.Scene {
         this.load.spritesheet('player', 
             'assets/tileset.png',
             { frameWidth: 32, frameHeight: 32 }
+        );
+        this.load.spritesheet('tools',
+            'assets/tools_tileset.png',
+            { frameWidth: 16, frameHeight: 16 }
         );
         this.load.image('ui_button', 'assets/ui_button.png');
         this.load.image('inventory_button', 'assets/bag.png');
