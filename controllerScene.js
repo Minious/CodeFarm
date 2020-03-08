@@ -78,18 +78,28 @@ class ControllerScene extends Phaser.Scene {
         this.scene.launch('WorldScene');
         this.scene.launch('UiScene');
 
-        this.data.set('selectedItem', null);
-        this.events.on('changedata-selectedItem', function (gameObject, value) {
-            console.log('Item selected : ' + value);
+        this.data.set('selectedItemInventoryIndex', null);
+        this.events.on('changedata-selectedItemInventoryIndex', function (scene, selectedItemInventoryIndex) {
+            console.log('Item selected : ' + scene.data.get('inventory')[selectedItemInventoryIndex].name);
         });
 
         let listItemsName = Object.keys(this.LIST_ITEM);
         this.data.set('inventory', new Array(70).fill({}).map(() => ({
-            name: listItemsName[Math.floor(Math.random() * listItemsName.length)]
+            name: listItemsName[Math.floor(Math.random() * listItemsName.length)],
+            quantity: 1 + Math.floor(Math.random() * 9)
         })));
-        this.events.on('changedata-inventory', function (gameObject, value) {
-            this.game.scene.getScene('UiScene').buildInventory();
+        this.events.on('changedata-inventory', function (parent, value) {
+            parent.game.scene.getScene('UiScene').buildInventory();
         });
+    }
+
+    modifyInventoryItemQuantity(itemInventoryIndex, quantityChange){
+        let inventory = this.data.get('inventory').slice();
+        inventory[itemInventoryIndex].quantity += quantityChange;
+        if(inventory[itemInventoryIndex].quantity <= 0){
+            inventory[itemInventoryIndex] = {};
+        }
+        this.data.set('inventory', inventory);
     }
 
     update(time, delta) {}
