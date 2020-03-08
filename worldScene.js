@@ -1,26 +1,18 @@
-class Scene1 extends Phaser.Scene {
+class WorldScene extends Phaser.Scene {
     constructor() {
-      super("codefarmScene");
+        super({
+            key: "WorldScene"
+        })
 
-      this.playerDest = new Phaser.Math.Vector2();
-      this.speed = 400;
+        this.playerDest = new Phaser.Math.Vector2();
+        this.speed = 400;
     }
 
-    preload() {
-        this.load.image('test', 'assets/test.png');
-        this.load.image('tileset', 'assets/tileset.png');
-        this.load.image('crops', 'assets/crops_tileset.png');
-        this.load.image('ui_button', 'assets/ui_button.png');
-        this.load.spritesheet('player', 
-            'assets/tileset.png',
-            { frameWidth: 32, frameHeight: 32 }
-        );
-    }
+    preload() {}
 
     create() {
         game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
-        // this.data.set('crops', []);
         this.crops = this.add.group();
 
         // this.cameras.main.setBackgroundColor('#DDDDDD')
@@ -33,8 +25,8 @@ class Scene1 extends Phaser.Scene {
             width: 100,
             height: 100
         });
-        var tileset = map.addTilesetImage('tileset', null, 16, 16);
-        var cropsTileset = map.addTilesetImage('crops', null, 16, 16);
+        var tileset = map.addTilesetImage('tileset', null);
+        var cropsTileset = map.addTilesetImage('crops', null);
 
         const layerGround = map.createBlankDynamicLayer("Ground", tileset);
         layerGround.setScale(2);
@@ -59,7 +51,6 @@ class Scene1 extends Phaser.Scene {
         layerObjects.setScale(2);
         layerObjects.setPosition(-1000, -1000);
 
-        // sprite = this.physics.add.sprite(0, 0, 'test');
         this.player = this.physics.add.sprite(0, 0, 'player');
 
         this.anims.create({
@@ -104,20 +95,40 @@ class Scene1 extends Phaser.Scene {
                 this.playerDest = mousePos;
             } else if (pointer.rightButtonDown()) {
                 let tilePos = map.worldToTileXY(mousePos.x, mousePos.y);
-
-                let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
-
-                if(emptyField){
-                    let wheatCrop = new Wheat(this, tilePos.x, tilePos.y, layerCrops);
-                    this.crops.add(wheatCrop);
-
-                    layerFields.putTileAt(192, tilePos.x, tilePos.y);
-                }
+                this.actionClick(tilePos, layerFields, layerCrops);
             }
         });
+    }
 
-        let uiButton = new UiButton(this, 0, 0);
-        this.add.existing(uiButton);
+    actionClick(tilePos, layerFields, layerCrops){
+        let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
+
+        if(emptyField){
+            layerFields.putTileAt(192, tilePos.x, tilePos.y);
+
+            let selectemItem = this.game.scene.getScene('ControllerScene').data.get('selectedItem');
+            if(selectemItem){
+                let selectedCropToCropConstructor = {
+                    'avocado':  Avocado,
+                    'grapes':  Grapes,
+                    'lemon':  Lemon,
+                    'melon':  Melon,
+                    'orange':  Orange,
+                    'potato':  Potato,
+                    'rose':  Rose,
+                    'strawberry':  Strawberry,
+                    'tomato':  Tomato,
+                    'wheat':  Wheat,
+                }
+                if(selectemItem in selectedCropToCropConstructor ){
+                    let cropConstructor = selectedCropToCropConstructor[selectemItem];
+                    let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
+                    this.crops.add(crop);
+                }
+            } else {
+                console.log('no item selected')
+            }
+        }
     }
 
     update(time, delta) {
@@ -156,10 +167,8 @@ class Scene1 extends Phaser.Scene {
 
         this.cameras.main.centerOn(Math.round(this.player.x), Math.round(this.player.y - 15));
 
-        // this.data.get('crops').forEach(crop => crop.update(time, delta));
         this.crops.getChildren().forEach(crop => crop.update(time, delta));
 
-        // console.log(this.make.updateList)
         // this.game.scene.pause('mainScene');
     }
 
