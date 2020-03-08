@@ -57,8 +57,7 @@ class UiScene extends Phaser.Scene {
         let inventoryGridButtons = [];
         for(let j=0;j<nbRows;j+=1) {
             for(let i=0;i<nbColumns;i+=1) {
-                let inventoryIndex = i + j * nbColumns;
-                let inventory = this.game.scene.getScene('ControllerScene').data.get('inventory');
+                let itemInventoryIndex = inventoryOffset + i + j * nbColumns;
                 let inventoryButton = new InventoryButton(
                     this,
                     x + marginButtons * i + sizeButton * (i + 0.5),
@@ -66,7 +65,7 @@ class UiScene extends Phaser.Scene {
                     sizeButton,
                     sizeButton,
                     15,
-                    inventory[(inventoryIndex + inventoryOffset) % inventory.length]['name']
+                    itemInventoryIndex,
                 );
                 this.add.existing(inventoryButton);
                 inventoryGridButtons.push(inventoryButton);
