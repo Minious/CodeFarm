@@ -101,33 +101,37 @@ class WorldScene extends Phaser.Scene {
     }
 
     actionClick(tilePos, layerFields, layerCrops){
-        let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
-
-        if(emptyField){
-            layerFields.putTileAt(192, tilePos.x, tilePos.y);
-
-            let selectemItem = this.game.scene.getScene('ControllerScene').data.get('selectedItem');
-            if(selectemItem){
-                let selectedCropToCropConstructor = {
-                    'avocado':  Avocado,
-                    'grapes':  Grapes,
-                    'lemon':  Lemon,
-                    'melon':  Melon,
-                    'orange':  Orange,
-                    'potato':  Potato,
-                    'rose':  Rose,
-                    'strawberry':  Strawberry,
-                    'tomato':  Tomato,
-                    'wheat':  Wheat,
-                }
-                if(selectemItem in selectedCropToCropConstructor ){
-                    let cropConstructor = selectedCropToCropConstructor[selectemItem];
-                    let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
-                    this.crops.add(crop);
+        let selectemItem = this.game.scene.getScene('ControllerScene').data.get('selectedItem');
+        if(selectemItem){
+            let noField = layerFields.getTileAt(tilePos.x, tilePos.y, true).index == -1;
+            if(noField){
+                if(selectemItem == 'hoe'){
+                    layerFields.putTileAt(192, tilePos.x, tilePos.y);
                 }
             } else {
-                console.log('no item selected')
+                let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
+                if(emptyField){
+                    let selectedCropToCropConstructor = {
+                        'avocado':  Avocado,
+                        'grapes':  Grapes,
+                        'lemon':  Lemon,
+                        'melon':  Melon,
+                        'orange':  Orange,
+                        'potato':  Potato,
+                        'rose':  Rose,
+                        'strawberry':  Strawberry,
+                        'tomato':  Tomato,
+                        'wheat':  Wheat,
+                    }
+                    if(selectemItem in selectedCropToCropConstructor ){
+                        let cropConstructor = selectedCropToCropConstructor[selectemItem];
+                        let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
+                        this.crops.add(crop);
+                    }
+                }
             }
+        } else {
+            console.log('no item selected')
         }
     }
 
