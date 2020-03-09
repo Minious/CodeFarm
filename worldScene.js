@@ -19,16 +19,16 @@ class WorldScene extends Phaser.Scene {
         this.cameras.main.centerOn(0, 0);
         this.cameras.main.roundPixels = true;
 
-        var map = this.make.tilemap({
+        this.map = this.make.tilemap({
             tileWidth: 16,
             tileHeight: 16,
             width: 100,
             height: 100
         });
-        var tileset = map.addTilesetImage('tileset', null);
-        var cropsTileset = map.addTilesetImage('crops', null);
+        var tileset = this.map.addTilesetImage('tileset', null);
+        var cropsTileset = this.map.addTilesetImage('crops', null);
 
-        const layerGround = map.createBlankDynamicLayer("Ground", tileset);
+        const layerGround = this.map.createBlankDynamicLayer("Ground", tileset);
         layerGround.setScale(2);
         layerGround.setPosition(-1000, -1000);
         var deco = [501, 469, 470, 438];
@@ -39,15 +39,15 @@ class WorldScene extends Phaser.Scene {
         );
         layerGround.putTilesAt(level, 0, 0);
 
-        const layerFields = map.createBlankDynamicLayer("Fields", tileset);
+        const layerFields = this.map.createBlankDynamicLayer("Fields", tileset);
         layerFields.setScale(2);
         layerFields.setPosition(-1000, -1000);
 
-        const layerCrops = map.createBlankDynamicLayer("Crops", cropsTileset);
+        const layerCrops = this.map.createBlankDynamicLayer("Crops", cropsTileset);
         layerCrops.setScale(2);
         layerCrops.setPosition(-1000, -1000);
 
-        const layerObjects = map.createBlankDynamicLayer("Objects", tileset);
+        const layerObjects = this.map.createBlankDynamicLayer("Objects", tileset);
         layerObjects.setScale(2);
         layerObjects.setPosition(-1000, -1000);
 
@@ -91,18 +91,17 @@ class WorldScene extends Phaser.Scene {
                 this.input.activePointer.worldX,
                 this.input.activePointer.worldY
             );
-            if (pointer.leftButtonDown()) {
-                this.playerDest = mousePos;
-            } else if (pointer.rightButtonDown()) {
-                let tilePos = map.worldToTileXY(mousePos.x, mousePos.y);
-                this.actionClick(tilePos, layerFields, layerCrops);
-            }
+            this.actionClick(mousePos, layerFields, layerCrops);
         });
     }
 
-    actionClick(tilePos, layerFields, layerCrops){
+    actionClick(mousePos, layerFields, layerCrops){
         let selectedItemInventoryIndex = this.game.scene.getScene('ControllerScene').data.get('selectedItemInventoryIndex');
-        if(selectedItemInventoryIndex){
+        if(selectedItemInventoryIndex == undefined){
+            console.log('no item selected')
+            this.playerDest = mousePos;
+        } else {
+            let tilePos = this.map.worldToTileXY(mousePos.x, mousePos.y);
             let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
             if(selectedItemData.name){
                 let noField = layerFields.getTileAt(tilePos.x, tilePos.y, true).index == -1;
@@ -111,8 +110,12 @@ class WorldScene extends Phaser.Scene {
                         layerFields.putTileAt(192, tilePos.x, tilePos.y);
                     } else {
                         console.log("can't plant here");
+                        this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
                     }
                 } else {
+                    if(selectedItemData.name == 'hoe'){
+                        this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
+                    }
                     let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
                     if(emptyField){
                         let selectedCropToCropConstructor = {
@@ -137,9 +140,8 @@ class WorldScene extends Phaser.Scene {
                 }
             } else {
                 console.log('no item in slot');
+                this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
             }
-        } else {
-            console.log('no item selected')
         }
     }
 
