@@ -80,7 +80,10 @@ class ControllerScene extends Phaser.Scene {
 
         this.data.set('selectedItemInventoryIndex', null);
         this.events.on('changedata-selectedItemInventoryIndex', function (scene, selectedItemInventoryIndex) {
-            console.log('Item selected : ' + scene.data.get('inventory')[selectedItemInventoryIndex].name);
+            if(selectedItemInventoryIndex != undefined)
+                console.log('Item selected : ' + scene.data.get('inventory')[selectedItemInventoryIndex].name + " (slot: " + selectedItemInventoryIndex + ")");
+            else
+                console.log('Item deselected')
         });
 
         let listItemsName = Object.keys(this.LIST_ITEM);
