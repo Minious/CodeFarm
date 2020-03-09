@@ -1,5 +1,5 @@
 class InventoryButton extends Phaser.GameObjects.Container {
-    constructor (scene, x, y, displayWidth, displayHeight, marginIcon, itemInventoryIndex) {
+    constructor (scene, x, y, displayWidth, displayHeight, marginIcon, itemInventoryIndex, externalCallback) {
         super(scene, x, y);
 
         this.backgroundImage = this.scene.add.image(0, 0, 'ui_button');
@@ -8,17 +8,19 @@ class InventoryButton extends Phaser.GameObjects.Container {
 
         this.itemInventoryIndex = itemInventoryIndex;
         let inventory = this.scene.game.scene.getScene('ControllerScene').data.get('inventory');
-        let inventoryItemData = inventory[itemInventoryIndex % inventory.length];
+        let inventoryItemData = inventory[this.itemInventoryIndex % inventory.length];
         this.item = inventoryItemData.name;
         this.quantity = inventoryItemData.quantity;
 
-        if(this.item != undefined){
-            this.callback = () => {
-                this.scene.game.scene.getScene('ControllerScene').data.set('selectedItemInventoryIndex', this.itemInventoryIndex)
-            };
+        this.isSelected = false;
+
+        if(externalCallback){
             this.backgroundImage.on('pointerdown', () => {
-                this.callback();
+                    externalCallback(this);
             });
+        }
+
+        if(this.item != undefined){
 
             let itemTypeData = this.scene.game.scene.getScene('ControllerScene').LIST_ITEM[this.item];
 
@@ -46,5 +48,14 @@ class InventoryButton extends Phaser.GameObjects.Container {
         const { width, height } = this.getBounds();
 
         this.setSize(width, height).setDisplaySize(displayWidth, displayHeight);
+    }
+
+    setSelected(isSelected){
+        this.isSelected = isSelected;
+        if(this.isSelected){
+            this.backgroundImage.setTint(0xffffbb, 0xffff00, 0xffff00, 0x999900);
+        } else {
+            this.backgroundImage.clearTint();
+        }
     }
 }

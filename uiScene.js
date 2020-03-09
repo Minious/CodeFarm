@@ -12,15 +12,56 @@ class UiScene extends Phaser.Scene {
         let nbColumns = 10;
         let nbRows = 1;
         let sizeButton = (this.cameras.main.displayWidth - marginButtons) / nbColumns - marginButtons;
+
         let inventoryBarButtons = this.makeInventoryButtonsGrid(
             nbColumns,
             nbRows,
             marginButtons,
             this.cameras.main.displayHeight - sizeButton - marginButtons,
             sizeButton,
-            marginButtons
+            marginButtons,
+            0,
+            (columnsIdx, rowIdx) => {
+                return (clickedButton) => {
+                    let clickedButtonPreviousIsSelectedValue = clickedButton.isSelected;
+                    if(clickedButtonPreviousIsSelectedValue)
+                        this.deselectButtonInventoryBar();
+                    else
+                        this.selectButtonInventoryBar(columnsIdx);
+                }
+            }
         );
-        inventoryBarButtons.forEach(inventoryButton => this.inventoryBarButtons.add(inventoryButton));
+
+        inventoryBarButtons.forEach((inventoryButton, i) => {
+            this.inventoryBarButtons.add(inventoryButton);
+            if(i == this.inventoryBarSelectedButtonIdx){
+                inventoryButton.setSelected(true);
+            }
+        });
+
+        this.input.off('wheel');
+        this.input.on('wheel', (pointer) => {
+            let idxChange = Math.sign(pointer.deltaY);
+            console.log("Mouse wheel " + idxChange);
+            if(this.inventoryBarSelectedButtonIdx == undefined){
+                this.inventoryBarSelectedButtonIdx = 0;
+                idxChange = 0;
+            }
+            this.selectButtonInventoryBar((nbColumns + this.inventoryBarSelectedButtonIdx + idxChange) % nbColumns);
+        });
+    }
+
+    selectButtonInventoryBar(buttonIdx){
+        this.deselectButtonInventoryBar();
+        this.inventoryBarSelectedButtonIdx = buttonIdx;
+        this.inventoryBarButtons.getChildren()[this.inventoryBarSelectedButtonIdx].setSelected(true);
+        this.game.scene.getScene('ControllerScene').data.set('selectedItemInventoryIndex', this.inventoryBarSelectedButtonIdx);
+    }
+
+    deselectButtonInventoryBar(){
+        this.inventoryBarSelectedButtonIdx = null;
+        this.inventoryBarButtons.getChildren().forEach(inventoryBarButton => inventoryBarButton.setSelected(false));
+        this.game.scene.getScene('ControllerScene').data.set('selectedItemInventoryIndex', this.inventoryBarSelectedButtonIdx)
     }
 
     buildInventoryGrid(){
@@ -41,23 +82,25 @@ class UiScene extends Phaser.Scene {
             marginButtons,
             10
         );
-        inventoryGridButtons.forEach(inventoryButton => this.inventoryBarButtons.add(inventoryButton));
+        inventoryGridButtons.forEach(inventoryButton => this.inventoryGridButtons.add(inventoryButton));
     }
 
     buildInventory(){
+        console.log("Building Inventory")
         this.inventoryBarButtons.clear(true, true);
         this.buildInventoryBar();
+        this.inventoryGridButtons.clear(true, true);
         if(this.inventoryOpen){
-            this.inventoryGridButtons.clear(true, true);
             this.buildInventoryGrid();
         }
     }
 
-    makeInventoryButtonsGrid(nbColumns, nbRows, x, y, sizeButton, marginButtons, inventoryOffset = 0) {
+    makeInventoryButtonsGrid(nbColumns, nbRows, x, y, sizeButton, marginButtons, inventoryOffset = 0, callbackFactory) {
         let inventoryGridButtons = [];
         for(let j=0;j<nbRows;j+=1) {
             for(let i=0;i<nbColumns;i+=1) {
                 let itemInventoryIndex = inventoryOffset + i + j * nbColumns;
+                let callback = callbackFactory ? callbackFactory(i, j) : null;
                 let inventoryButton = new InventoryButton(
                     this,
                     x + marginButtons * i + sizeButton * (i + 0.5),
@@ -66,6 +109,7 @@ class UiScene extends Phaser.Scene {
                     sizeButton,
                     15,
                     itemInventoryIndex,
+                    callback
                 );
                 this.add.existing(inventoryButton);
                 inventoryGridButtons.push(inventoryButton);
