@@ -4,7 +4,6 @@ class WorldScene extends Phaser.Scene {
             key: "WorldScene"
         })
 
-        this.playerDest = new Phaser.Math.Vector2();
         this.speed = 400;
     }
 
@@ -93,13 +92,34 @@ class WorldScene extends Phaser.Scene {
             );
             this.actionClick(mousePos, layerFields, layerCrops);
         });
+        this.input.on('pointerup', (pointer) => {
+            this.player.body.stop();
+            this.moving = false;
+        });
+        this.input.on('pointermove', () => {
+            if(this.moving){
+                let mousePos = new Phaser.Math.Vector2(
+                    this.input.activePointer.worldX,
+                    this.input.activePointer.worldY
+                );
+                this.actionClick(mousePos, layerFields, layerCrops);
+            }
+        })
+    }
+
+    movePlayerTo(target){
+        this.moving = true;
+        this.physics.moveToObject(this.player, target, 240);
     }
 
     actionClick(mousePos, layerFields, layerCrops){
+        if(this.moving){
+            this.movePlayerTo(mousePos);
+            return
+        }
         let selectedItemInventoryIndex = this.game.scene.getScene('ControllerScene').data.get('selectedItemInventoryIndex');
         if(selectedItemInventoryIndex == undefined){
-            console.log('no item selected')
-            this.playerDest = mousePos;
+            this.wrongAction('no item selected', mousePos);
         } else {
             let tilePos = this.map.worldToTileXY(mousePos.x, mousePos.y);
             let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
@@ -109,12 +129,11 @@ class WorldScene extends Phaser.Scene {
                     if(selectedItemData.name == 'hoe'){
                         layerFields.putTileAt(192, tilePos.x, tilePos.y);
                     } else {
-                        console.log("can't plant here");
-                        this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
+                        this.wrongAction("can't plant here", mousePos);
                     }
                 } else {
                     if(selectedItemData.name == 'hoe'){
-                        this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
+                        this.wrongAction("tile already a plot", mousePos);
                     }
                     let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
                     if(emptyField){
@@ -136,40 +155,35 @@ class WorldScene extends Phaser.Scene {
                             this.crops.add(crop);
                             this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
                         }
+                    } else {
+                        this.wrongAction("field already occupied", mousePos);
                     }
                 }
             } else {
-                console.log('no item in slot');
-                this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
+                this.wrongAction('no item in slot', mousePos);
             }
         }
     }
 
+    wrongAction(message, mousePos){
+        console.log(message);
+        this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
+        this.movePlayerTo(mousePos);
+    }
+
     update(time, delta) {
         let playerPos = new Phaser.Math.Vector2(this.player.x, this.player.y)
-        if (!this.playerDest.equals(playerPos)){
-            let move = new Phaser.Math.Vector2(this.playerDest).subtract(playerPos);
-            let distance = Phaser.Math.Distance.BetweenPoints(this.playerDest, this.player);
-            let travelledDistance = this.speed * delta / 1000;
-            let newPlayerPos;
-            if (travelledDistance > distance){
-                newPlayerPos = new Phaser.Math.Vector2(this.playerDest);
-            } else {
-                let travelledRatio = travelledDistance / distance;
-                newPlayerPos = new Phaser.Math.Vector2(move).scale(travelledRatio).add(playerPos);
-            }
-            this.player.setPosition(newPlayerPos.x, newPlayerPos.y);
+        if (this.player.body.velocity.length() > 0){
+            let moveDirection = new Phaser.Math.Vector2(this.player.body.velocity).normalize();
     
-            let normalizedMove = new Phaser.Math.Vector2(move).normalize();
-    
-            if (Math.abs(normalizedMove.x) > Math.abs(normalizedMove.y)){
-                if(normalizedMove.x > 0) {
+            if (Math.abs(moveDirection.x) > Math.abs(moveDirection.y)){
+                if(moveDirection.x > 0) {
                     this.player.anims.play('right', true);
                 } else {
                     this.player.anims.play('left', true);
                 }
             } else {
-                if (normalizedMove.y > 0) {
+                if (moveDirection.y > 0) {
                     this.player.anims.play('down', true);
                 } else {
                     this.player.anims.play('up', true);
