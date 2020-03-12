@@ -112,6 +112,85 @@ class WorldScene extends Phaser.Scene {
         this.physics.moveToObject(this.player, target, 240);
     }
 
+    getNeighborTiles(layer, tilePos){
+        return this.getNeighbors(tilePos, layer.layer.width - 1, layer.layer.height - 1).map(neighborPos =>
+            layer.getTileAt(neighborPos.x, neighborPos.y, true)
+        );
+    }
+
+    getNeighbors(pos, maxColumns, maxRows, diamond=true, radius=1){
+        let neighbors = [];
+        for(let i = Math.max(0, pos.x - radius); i <= Math.min(pos.x + 1, maxRows); i += 1){
+            for(let j = Math.max(0, pos.y - 1); j <= Math.min(pos.y + 1, maxColumns); j += 1){
+                if(i != pos.x || j != pos.y){
+                    if(diamond == false || Math.abs(pos.x - i) + Math.abs(pos.y - j) <= radius) {
+                        neighbors.push({x: i, y: j});
+                    }
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    createFieldTile(layerFields, tilePos){
+        this.updateFieldTile(layerFields, tilePos);
+        this.getNeighborTiles(layerFields, tilePos)
+        .filter(neighborTile => neighborTile.index != -1)
+        .forEach(
+            neighborTilePos => this.updateFieldTile(
+                layerFields,
+                {
+                    x: neighborTilePos.x,
+                    y: neighborTilePos.y
+                }
+            )
+        );
+    }
+
+    updateFieldTile(layerFields, tilePos){
+        let currentTile = layerFields.getTileAt(tilePos.x, tilePos.y, true)
+        currentTile.rotation = 0;
+
+        let neighborTilesPosOrder = [
+            {x:  0, y: -1},
+            {x:  1, y:  0},
+            {x:  0, y:  1},
+            {x: -1, y:  0},
+        ];
+        let neighborTiles = neighborTilesPosOrder.map(
+            neighborTilePos => layerFields.getTileAt(tilePos.x + neighborTilePos.x, tilePos.y + neighborTilePos.y, true)
+        );
+        let areNeighborTilesFields = neighborTiles.map(
+            neighborTile => neighborTile.index != -1
+        );
+
+        let tileIdx;
+        if (areNeighborTilesFields.filter(e => e).length == 4){
+            tileIdx = 197;
+        } else if (areNeighborTilesFields.filter(e => e).length == 3){
+            tileIdx = 196;
+            currentTile.rotation = Math.PI * areNeighborTilesFields.indexOf(false) / 2;
+        } else if (areNeighborTilesFields.filter(e => e).length == 2){
+            if(areNeighborTilesFields[0] == areNeighborTilesFields[2]){
+                tileIdx = 195;
+                if(areNeighborTilesFields.indexOf(true) == 0) {
+                    currentTile.rotation = Math.PI / 2;
+                }
+            } else {
+                tileIdx = 194;
+                let currentTileRotation = areNeighborTilesFields.indexOf(false) == 1 ? 3 : areNeighborTilesFields.indexOf(true);
+                currentTile.rotation = Math.PI * currentTileRotation / 2;
+            }
+        } else if (areNeighborTilesFields.filter(e => e).length == 1){
+            tileIdx = 193;
+            currentTile.rotation = Math.PI * areNeighborTilesFields.indexOf(true) / 2;
+        } else {
+            tileIdx = 192
+        }
+        if(tileIdx)
+            layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
+    }
+
     actionClick(mousePos, layerFields, layerCrops){
         if(this.moving){
             this.movePlayerTo(mousePos);
@@ -127,7 +206,7 @@ class WorldScene extends Phaser.Scene {
                 let noField = layerFields.getTileAt(tilePos.x, tilePos.y, true).index == -1;
                 if(noField){
                     if(selectedItemData.name == 'hoe'){
-                        layerFields.putTileAt(192, tilePos.x, tilePos.y);
+                        this.createFieldTile(layerFields, tilePos);
                     } else {
                         this.wrongAction("can't plant here", mousePos);
                     }
