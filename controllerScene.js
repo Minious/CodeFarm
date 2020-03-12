@@ -87,13 +87,37 @@ class ControllerScene extends Phaser.Scene {
         });
 
         let listItemsName = Object.keys(this.LIST_ITEM);
-        this.data.set('inventory', new Array(70).fill({}).map(() => ({
-            name: listItemsName[Math.floor(Math.random() * listItemsName.length)],
-            quantity: 1 + Math.floor(Math.random() * 9)
-        })));
+        this.data.set('inventory', new Array(70).fill({}).map((obj, i) => {
+            if(i == 0) {
+                return {
+                    name: 'hoe',
+                    quantity: 1
+                }
+            } else if(i < 15) {
+                return {
+                    name: listItemsName[Math.floor(Math.random() * (listItemsName.length - 1) + 1)],
+                    quantity: 1 + Math.floor(Math.random() * 9)
+                }
+            } else {
+                return {}
+            }
+        }));
         this.events.on('changedata-inventory', function (parent, value) {
             parent.game.scene.getScene('UiScene').buildInventory();
         });
+    }
+
+    swapInventoryItems(itemIdx1, itemIdx2){
+        if(itemIdx1 != itemIdx2){
+            let inventory = this.data.get('inventory');
+            if(inventory[itemIdx1].name && inventory[itemIdx2].name && inventory[itemIdx1].name == inventory[itemIdx2].name){
+                inventory[itemIdx2].quantity += inventory[itemIdx1].quantity;
+                inventory[itemIdx1] = {};
+            } else {
+                [inventory[itemIdx1], inventory[itemIdx2]] = [inventory[itemIdx2], inventory[itemIdx1]];
+            }
+            this.data.set('inventory', inventory);
+        }
     }
 
     modifyInventoryItemQuantity(itemInventoryIndex, quantityChange){
