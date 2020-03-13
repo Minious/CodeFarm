@@ -1,5 +1,9 @@
 class Melon extends Crop {
     constructor (scene, x, y, layerCrops) {
-        super(scene, x, y, layerCrops, 40, 28);
+        let lootConfig = {
+            'melon': 1,
+            'melonSeed': 1,
+        };
+        super(scene, x, y, layerCrops, 40, 28, lootConfig);
     }
 }
