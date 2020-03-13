@@ -217,16 +217,16 @@ class WorldScene extends Phaser.Scene {
                     let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
                     if(emptyField){
                         let selectedCropToCropConstructor = {
-                            'avocado':  Avocado,
-                            'grapes':  Grapes,
-                            'lemon':  Lemon,
-                            'melon':  Melon,
-                            'orange':  Orange,
-                            'potato':  Potato,
-                            'rose':  Rose,
-                            'strawberry':  Strawberry,
-                            'tomato':  Tomato,
-                            'wheat':  Wheat,
+                            avocadoSeed:  Avocado,
+                            grapesSeed:  Grapes,
+                            lemonSeed:  Lemon,
+                            melonSeed:  Melon,
+                            orangeSeed:  Orange,
+                            potatoSeed:  Potato,
+                            roseSeed:  Rose,
+                            strawberrySeed:  Strawberry,
+                            tomatoSeed:  Tomato,
+                            wheatSeed:  Wheat,
                         }
                         if(selectedItemData.name in selectedCropToCropConstructor ){
                             let cropConstructor = selectedCropToCropConstructor[selectedItemData.name];
