@@ -213,29 +213,64 @@ class WorldScene extends Phaser.Scene {
                 } else {
                     if(selectedItemData.name == 'hoe'){
                         this.wrongAction("tile already a plot", mousePos);
-                    }
-                    let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
-                    if(emptyField){
-                        let selectedCropToCropConstructor = {
-                            avocadoSeed:  Avocado,
-                            grapesSeed:  Grapes,
-                            lemonSeed:  Lemon,
-                            melonSeed:  Melon,
-                            orangeSeed:  Orange,
-                            potatoSeed:  Potato,
-                            roseSeed:  Rose,
-                            strawberrySeed:  Strawberry,
-                            tomatoSeed:  Tomato,
-                            wheatSeed:  Wheat,
-                        }
-                        if(selectedItemData.name in selectedCropToCropConstructor ){
-                            let cropConstructor = selectedCropToCropConstructor[selectedItemData.name];
-                            let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
-                            this.crops.add(crop);
-                            this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
+                    } else if(selectedItemData.name == 'scythe'){
+                        let crop = this.crops.getChildren().filter(crop => crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y)[0];
+                        if(crop && crop.state == 4){
+                            layerCrops.removeTileAt(tilePos.x, tilePos.y);
+
+                            let inventory = this.game.scene.getScene('ControllerScene').data.get('inventory');
+
+                            let diffuseConeAngle = Math.PI / 4;
+                            Object.entries(crop.lootConfig).forEach(([item, quantity], i, arr) => {
+                                let angle = - Math.PI / 2 + diffuseConeAngle / 2 - (diffuseConeAngle * (i / (arr.length - 1)));
+                                let lootAnim = new LootAnim(this, mousePos.x, mousePos.y, 0, 0, angle, item, quantity);
+                                lootAnim.setScale(2);
+                                this.add.existing(lootAnim);
+
+                                if(inventory.map(inventoryItemData => inventoryItemData.name).includes(item)){
+                                    let sameItemInInventoryIdx = inventory.findIndex(inventoryItemData => inventoryItemData.name == item);
+                                    this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(sameItemInInventoryIdx, quantity);
+                                } else {
+                                    let firstEmptyCellIdx = inventory.findIndex(inventoryItemData => Object.keys(inventoryItemData).length == 0);
+                                    if(firstEmptyCellIdx) {
+                                        let itemData = {
+                                            name: item,
+                                            quantity: quantity
+                                        };
+                                        this.game.scene.getScene('ControllerScene').setInventoryItemAt(firstEmptyCellIdx, itemData);
+                                    } else {
+                                        console.log("no space available in inventory")
+                                    }
+                                }
+                            });
+                            crop.destroy(this);
+                        } else {
+                            this.wrongAction("crop not ready", mousePos);
                         }
                     } else {
-                        this.wrongAction("field already occupied", mousePos);
+                        let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
+                        if(emptyField){
+                            let selectedCropToCropConstructor = {
+                                avocadoSeed:  Avocado,
+                                grapesSeed:  Grapes,
+                                lemonSeed:  Lemon,
+                                melonSeed:  Melon,
+                                orangeSeed:  Orange,
+                                potatoSeed:  Potato,
+                                roseSeed:  Rose,
+                                strawberrySeed:  Strawberry,
+                                tomatoSeed:  Tomato,
+                                wheatSeed:  Wheat,
+                            }
+                            if(selectedItemData.name in selectedCropToCropConstructor ){
+                                let cropConstructor = selectedCropToCropConstructor[selectedItemData.name];
+                                let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
+                                this.crops.add(crop);
+                                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
+                            }
+                        } else {
+                            this.wrongAction("field already occupied", mousePos);
+                        }
                     }
                 }
             } else {
