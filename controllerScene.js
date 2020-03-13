@@ -5,10 +5,10 @@ class ControllerScene extends Phaser.Scene {
         });
 
         this.LIST_ITEM = {
-            // scythe: {
-            //     texture: 'tools',
-            //     frame: 0
-            // },
+            scythe: {
+                texture: 'tools',
+                frame: 0
+            },
             hoe: {
                 texture: 'tools',
                 frame: 1
@@ -133,9 +133,14 @@ class ControllerScene extends Phaser.Scene {
                     name: 'hoe',
                     quantity: 1
                 }
+            } else if(i == 1) {
+                return {
+                    name: 'scythe',
+                    quantity: 1
+                }
             } else if(i < 15) {
                 return {
-                    name: listItemsName[Math.floor(Math.random() * 10) + 11],
+                    name: listItemsName[Math.floor(Math.random() * 11) + 11],
                     quantity: 1 + Math.floor(Math.random() * 9)
                 }
             } else {
@@ -166,6 +171,12 @@ class ControllerScene extends Phaser.Scene {
         if(inventory[itemInventoryIndex].quantity <= 0){
             inventory[itemInventoryIndex] = {};
         }
+        this.data.set('inventory', inventory);
+    }
+
+    setInventoryItemAt(idx, itemData){
+        let inventory = this.data.get('inventory').slice();
+        inventory[idx] = itemData;
         this.data.set('inventory', inventory);
     }
 
