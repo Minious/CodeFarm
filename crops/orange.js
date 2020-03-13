@@ -1,5 +1,9 @@
 class Orange extends Crop {
     constructor (scene, x, y, layerCrops) {
-        super(scene, x, y, layerCrops, 15, 119);
+        let lootConfig = {
+            'orange': 1,
+            'orangeSeed': 1,
+        };
+        super(scene, x, y, layerCrops, 15, 119, lootConfig);
     }
 }
