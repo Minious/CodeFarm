@@ -13,33 +13,29 @@ class ControllerScene extends Phaser.Scene {
                 texture: 'tools',
                 frame: 1
             },
-            wheat: {
-                texture: 'crops',
-                frame: 70
-            },
             avocado: {
                 texture: 'crops',
-                frame: 101
-            },
-            melon: {
-                texture: 'crops',
-                frame: 29
-            },
-            lemon: {
-                texture: 'crops',
-                frame: 41
-            },
-            tomato: {
-                texture: 'crops',
-                frame: 35
-            },
-            potato: {
-                texture: 'crops',
-                frame: 95
+                frame: 117
             },
             grapes: {
                 texture: 'crops',
-                frame: 65
+                frame: 75
+            },
+            lemon: {
+                texture: 'crops',
+                frame: 47
+            },
+            melon: {
+                texture: 'crops',
+                frame: 33
+            },
+            orange: {
+                texture: 'crops',
+                frame: 124
+            },
+            potato: {
+                texture: 'crops',
+                frame: 110
             },
             rose: {
                 texture: 'crops',
@@ -47,11 +43,55 @@ class ControllerScene extends Phaser.Scene {
             },
             strawberry: {
                 texture: 'crops',
-                frame: 83
+                frame: 96
             },
-            orange: {
+            tomato: {
                 texture: 'crops',
-                frame: 107
+                frame: 40
+            },
+            wheat: {
+                texture: 'crops',
+                frame: 82
+            },
+            avocadoSeed: {
+                texture: 'crops',
+                frame: 118
+            },
+            grapesSeed: {
+                texture: 'crops',
+                frame: 76
+            },
+            lemonSeed: {
+                texture: 'crops',
+                frame: 48
+            },
+            melonSeed: {
+                texture: 'crops',
+                frame: 34
+            },
+            orangeSeed: {
+                texture: 'crops',
+                frame: 125
+            },
+            potatoSeed: {
+                texture: 'crops',
+                frame: 111
+            },
+            roseSeed: {
+                texture: 'crops',
+                frame: 6
+            },
+            strawberrySeed: {
+                texture: 'crops',
+                frame: 97
+            },
+            tomatoSeed: {
+                texture: 'crops',
+                frame: 41
+            },
+            wheatSeed: {
+                texture: 'crops',
+                frame: 83
             },
         };
     }
@@ -95,7 +135,7 @@ class ControllerScene extends Phaser.Scene {
                 }
             } else if(i < 15) {
                 return {
-                    name: listItemsName[Math.floor(Math.random() * (listItemsName.length - 1) + 1)],
+                    name: listItemsName[Math.floor(Math.random() * 10) + 11],
                     quantity: 1 + Math.floor(Math.random() * 9)
                 }
             } else {
