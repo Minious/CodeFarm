@@ -150,6 +150,28 @@ class UiScene extends Phaser.Scene {
         this.joystickBase = this.add.image(0, 0, 'joystickBase');
         this.joystickHead = this.add.image(0, 0, 'joystickHead');
         this.hideJoystick();
+
+        this.moneyContainer = this.add.container(this.cameras.main.displayWidth - 45, 40);
+        this.moneyImage = this.add.image(0, 0, 'money').setScale(2);
+        this.moneyContainer.add(this.moneyImage);
+        this.moneyAmountText = this.add.text(
+            0,
+            0,
+            '0',
+            {
+                fontSize: '26px',
+                fontFamily: '"Roboto Condensed"',
+                resolution: 3
+            }
+        ).setOrigin(0.5, 0.5);
+        this.moneyContainer.add(this.moneyAmountText);
+        let {width, height} = this.moneyContainer.getBounds();
+        this.moneyContainer.setSize(width, height).setInteractive();
+        this.updateMoney();
+    }
+
+    updateMoney(){
+        this.moneyAmountText.setText(this.game.scene.getScene('ControllerScene').data.get('money'))
     }
 
     update(time, delta) {
