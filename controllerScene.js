@@ -112,6 +112,8 @@ class ControllerScene extends Phaser.Scene {
         );
         this.load.image('ui_button', 'assets/ui_button.png');
         this.load.image('inventory_button', 'assets/bag.png');
+        this.load.image('joystickBase', 'assets/joystickBase.png');
+        this.load.image('joystickHead', 'assets/joystickHead.png');
     }
 
     create() {
@@ -128,17 +130,7 @@ class ControllerScene extends Phaser.Scene {
 
         let listItemsName = Object.keys(this.LIST_ITEM);
         this.data.set('inventory', new Array(70).fill({}).map((obj, i) => {
-            if(i == 0) {
-                return {
-                    name: 'hoe',
-                    quantity: 1
-                }
-            } else if(i == 1) {
-                return {
-                    name: 'scythe',
-                    quantity: 1
-                }
-            } else if(i < 15) {
+            if(i < 15) {
                 return {
                     name: listItemsName[Math.floor(Math.random() * 11) + 11],
                     quantity: 1 + Math.floor(Math.random() * 9)
