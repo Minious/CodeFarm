@@ -253,7 +253,7 @@ class WorldScene extends Phaser.Scene {
                 this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(sameItemInInventoryIdx, quantity);
             } else {
                 let firstEmptyCellIdx = inventory.findIndex(inventoryItemData => Object.keys(inventoryItemData).length == 0);
-                if(firstEmptyCellIdx) {
+                if(firstEmptyCellIdx != -1) {
                     let itemData = {
                         name: item,
                         quantity: quantity

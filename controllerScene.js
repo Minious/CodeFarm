@@ -133,7 +133,7 @@ class ControllerScene extends Phaser.Scene {
         this.data.set('inventory', new Array(70).fill({}).map((obj, i) => {
             if(i < 15) {
                 return {
-                    name: listItemsName[Math.floor(Math.random() * 11) + 11],
+                    name: listItemsName[Math.floor(Math.random() * 10) + 12],
                     quantity: 1 + Math.floor(Math.random() * 9)
                 }
             } else {
