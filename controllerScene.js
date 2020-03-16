@@ -114,6 +114,7 @@ class ControllerScene extends Phaser.Scene {
         this.load.image('inventory_button', 'assets/bag.png');
         this.load.image('joystickBase', 'assets/joystickBase.png');
         this.load.image('joystickHead', 'assets/joystickHead.png');
+        this.load.image('money', 'assets/money.png');
     }
 
     create() {
@@ -141,6 +142,12 @@ class ControllerScene extends Phaser.Scene {
         }));
         this.events.on('changedata-inventory', function (parent, value) {
             parent.game.scene.getScene('UiScene').buildInventory();
+        });
+
+        this.data.set('money', 0);
+        this.events.on('changedata-money', function (scene, money) {
+            console.log('New money amount : ' + money);
+            parent.game.scene.getScene('UiScene').updateMoney();
         });
     }
 
@@ -170,6 +177,10 @@ class ControllerScene extends Phaser.Scene {
         let inventory = this.data.get('inventory').slice();
         inventory[idx] = itemData;
         this.data.set('inventory', inventory);
+    }
+
+    changeMoneyAmount(change){
+        this.data.set('money', this.data.get('money') + change);
     }
 
     update(time, delta) {}
