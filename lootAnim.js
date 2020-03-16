@@ -31,7 +31,7 @@ class LootAnim extends Phaser.GameObjects.Container {
         let distance = 40;
         this.scene.tweens.add({
             targets: this,
-            ease: 'Sine.easeInOut',
+            ease: 'Sine.easeOut',
             duration: 1000,
             delay: 0,
             x: {

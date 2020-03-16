@@ -4,7 +4,8 @@ class WorldScene extends Phaser.Scene {
             key: "WorldScene"
         })
 
-        this.speed = 400;
+        this.speed = 240;
+        this.lengthJoystick = 25;
     }
 
     preload() {}
@@ -27,28 +28,28 @@ class WorldScene extends Phaser.Scene {
         var tileset = this.map.addTilesetImage('tileset', null);
         var cropsTileset = this.map.addTilesetImage('crops', null);
 
-        const layerGround = this.map.createBlankDynamicLayer("Ground", tileset);
-        layerGround.setScale(2);
-        layerGround.setPosition(-1000, -1000);
+        this.layerGround = this.map.createBlankDynamicLayer("Ground", tileset);
+        this.layerGround.setScale(2);
+        this.layerGround.setPosition(-1000, -1000);
         var deco = [501, 469, 470, 438];
         var level = Array(100).fill().map(() => 
             Array(100).fill().map(() => 
                 Math.random() > 0.2 ? 502 : deco[Math.floor(Math.random() * deco.length)]
             )
         );
-        layerGround.putTilesAt(level, 0, 0);
+        this.layerGround.putTilesAt(level, 0, 0);
 
-        const layerFields = this.map.createBlankDynamicLayer("Fields", tileset);
-        layerFields.setScale(2);
-        layerFields.setPosition(-1000, -1000);
+        this.layerFields = this.map.createBlankDynamicLayer("Fields", tileset);
+        this.layerFields.setScale(2);
+        this.layerFields.setPosition(-1000, -1000);
 
-        const layerCrops = this.map.createBlankDynamicLayer("Crops", cropsTileset);
-        layerCrops.setScale(2);
-        layerCrops.setPosition(-1000, -1000);
+        this.layerCrops = this.map.createBlankDynamicLayer("Crops", cropsTileset);
+        this.layerCrops.setScale(2);
+        this.layerCrops.setPosition(-1000, -1000);
 
-        const layerObjects = this.map.createBlankDynamicLayer("Objects", tileset);
-        layerObjects.setScale(2);
-        layerObjects.setPosition(-1000, -1000);
+        this.layerObjects = this.map.createBlankDynamicLayer("Objects", tileset);
+        this.layerObjects.setScale(2);
+        this.layerObjects.setPosition(-1000, -1000);
 
         this.player = this.physics.add.sprite(0, 0, 'player');
 
@@ -85,31 +86,68 @@ class WorldScene extends Phaser.Scene {
         this.player.setScale(2);
         this.player.setOrigin(0.5, 1);
 
+        this.actionPopup;
+        this.popupClicked = false;
+
         this.input.on('pointerdown', (pointer) => {
             let mousePos = new Phaser.Math.Vector2(
-                this.input.activePointer.worldX,
-                this.input.activePointer.worldY
+                this.input.activePointer.x,
+                this.input.activePointer.y
             );
-            this.actionClick(mousePos, layerFields, layerCrops);
+
+            this.joystickPos = mousePos;
         });
         this.input.on('pointerup', (pointer) => {
             this.player.body.stop();
-            this.moving = false;
+            this.joystickPos = undefined;
+            let mousePos = new Phaser.Math.Vector2(
+                this.input.activePointer.x,
+                this.input.activePointer.y
+            );
+            if(this.moving){
+                this.moving = false;
+                this.game.scene.getScene('UiScene').hideJoystick();
+            } else {
+                if(this.input.hitTestPointer(pointer).length == 0){
+                    let mouseWorldPos = new Phaser.Math.Vector2(
+                        this.input.activePointer.worldX,
+                        this.input.activePointer.worldY
+                    );
+                    if(this.popupClicked){
+                        this.popupClicked = false;
+                    } else {
+                        this.destroyPopup();
+                        this.actionClick(mouseWorldPos);
+                    }
+                }
+            }
         });
         this.input.on('pointermove', () => {
-            if(this.moving){
+            if(this.joystickPos){
+                this.game.scene.getScene('UiScene').showJoystick();
+
                 let mousePos = new Phaser.Math.Vector2(
-                    this.input.activePointer.worldX,
-                    this.input.activePointer.worldY
+                    this.input.activePointer.x,
+                    this.input.activePointer.y
                 );
-                this.actionClick(mousePos, layerFields, layerCrops);
+                let distanceJoystick = mousePos.distance(this.joystickPos);
+                if(distanceJoystick > this.lengthJoystick){
+                    let newJoystickPos = mousePos.clone().add(this.joystickPos.clone().subtract(mousePos).scale(this.lengthJoystick).scale(1 / distanceJoystick))
+                    this.joystickPos = newJoystickPos;
+                }
+                let joystickMove = mousePos.clone().subtract(this.joystickPos);
+                let playerTarget = new Phaser.Math.Vector2(this.player.x, this.player.y).add(joystickMove);
+
+                this.moving = true;
+                this.movePlayerTo(playerTarget);
+
+                this.game.scene.getScene('UiScene').setPositionJoystick(this.joystickPos, mousePos);
             }
         })
     }
 
     movePlayerTo(target){
-        this.moving = true;
-        this.physics.moveToObject(this.player, target, 240);
+        this.physics.moveToObject(this.player, target, this.speed);
     }
 
     getNeighborTiles(layer, tilePos){
@@ -191,102 +229,97 @@ class WorldScene extends Phaser.Scene {
             layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
     }
 
-    actionClick(mousePos, layerFields, layerCrops){
-        if(this.moving){
-            this.movePlayerTo(mousePos);
-            return
+    destroyPopup(){
+        if(this.actionPopup){
+            this.input.removeDebug(this.actionPopup);
+            this.actionPopup.destroy(this);
         }
-        let selectedItemInventoryIndex = this.game.scene.getScene('ControllerScene').data.get('selectedItemInventoryIndex');
-        if(selectedItemInventoryIndex == undefined){
-            this.wrongAction('no item selected', mousePos);
-        } else {
-            let tilePos = this.map.worldToTileXY(mousePos.x, mousePos.y);
-            let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
-            if(selectedItemData.name){
-                let noField = layerFields.getTileAt(tilePos.x, tilePos.y, true).index == -1;
-                if(noField){
-                    if(selectedItemData.name == 'hoe'){
-                        this.createFieldTile(layerFields, tilePos);
-                    } else {
-                        this.wrongAction("can't plant here", mousePos);
-                    }
+    }
+
+    harvestCrop(tilePos, crop){
+        let tile = this.layerCrops.getTileAt(tilePos.x, tilePos.y);
+
+        let inventory = this.game.scene.getScene('ControllerScene').data.get('inventory');
+
+        let diffuseConeAngle = Math.PI / 4;
+        Object.entries(crop.lootConfig).forEach(([item, quantity], i, arr) => {
+            let angle = - Math.PI / 2 + diffuseConeAngle / 2 - (diffuseConeAngle * (i / (arr.length - 1)));
+            let lootAnim = new LootAnim(this, tile.getCenterX(this.cameras.main), tile.getCenterY(this.cameras.main), 0, 0, angle, item, quantity);
+            lootAnim.setScale(2);
+            this.add.existing(lootAnim);
+
+            if(inventory.map(inventoryItemData => inventoryItemData.name).includes(item)){
+                let sameItemInInventoryIdx = inventory.findIndex(inventoryItemData => inventoryItemData.name == item);
+                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(sameItemInInventoryIdx, quantity);
+            } else {
+                let firstEmptyCellIdx = inventory.findIndex(inventoryItemData => Object.keys(inventoryItemData).length == 0);
+                if(firstEmptyCellIdx) {
+                    let itemData = {
+                        name: item,
+                        quantity: quantity
+                    };
+                    this.game.scene.getScene('ControllerScene').setInventoryItemAt(firstEmptyCellIdx, itemData);
                 } else {
-                    if(selectedItemData.name == 'hoe'){
-                        this.wrongAction("tile already a plot", mousePos);
-                    } else if(selectedItemData.name == 'scythe'){
-                        let crop = this.crops.getChildren().filter(crop => crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y)[0];
-                        if(crop && crop.state == 4){
-                            layerCrops.removeTileAt(tilePos.x, tilePos.y);
+                    console.log("no space available in inventory")
+                }
+            }
+        });
+        this.layerCrops.removeTileAt(tilePos.x, tilePos.y);
+        crop.destroy(this);
+    }
 
-                            let inventory = this.game.scene.getScene('ControllerScene').data.get('inventory');
+    actionClick(mouseWorldPos){
+        let tilePos = this.map.worldToTileXY(mouseWorldPos.x, mouseWorldPos.y);
+        let layerFieldsTile = this.layerFields.getTileAt(tilePos.x, tilePos.y, true);
 
-                            let diffuseConeAngle = Math.PI / 4;
-                            Object.entries(crop.lootConfig).forEach(([item, quantity], i, arr) => {
-                                let angle = - Math.PI / 2 + diffuseConeAngle / 2 - (diffuseConeAngle * (i / (arr.length - 1)));
-                                let lootAnim = new LootAnim(this, mousePos.x, mousePos.y, 0, 0, angle, item, quantity);
-                                lootAnim.setScale(2);
-                                this.add.existing(lootAnim);
+        let noField = !this.layerFields.hasTileAt(tilePos.x, tilePos.y);
+        if(noField){
+            this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, 'hoe', () => this.createFieldTile(this.layerFields, tilePos));
+            this.add.existing(this.actionPopup);
 
-                                if(inventory.map(inventoryItemData => inventoryItemData.name).includes(item)){
-                                    let sameItemInInventoryIdx = inventory.findIndex(inventoryItemData => inventoryItemData.name == item);
-                                    this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(sameItemInInventoryIdx, quantity);
-                                } else {
-                                    let firstEmptyCellIdx = inventory.findIndex(inventoryItemData => Object.keys(inventoryItemData).length == 0);
-                                    if(firstEmptyCellIdx) {
-                                        let itemData = {
-                                            name: item,
-                                            quantity: quantity
-                                        };
-                                        this.game.scene.getScene('ControllerScene').setInventoryItemAt(firstEmptyCellIdx, itemData);
-                                    } else {
-                                        console.log("no space available in inventory")
-                                    }
-                                }
-                            });
-                            crop.destroy(this);
-                        } else {
-                            this.wrongAction("crop not ready", mousePos);
-                        }
-                    } else {
-                        let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
-                        if(emptyField){
-                            let selectedCropToCropConstructor = {
-                                avocadoSeed:  Avocado,
-                                grapesSeed:  Grapes,
-                                lemonSeed:  Lemon,
-                                melonSeed:  Melon,
-                                orangeSeed:  Orange,
-                                potatoSeed:  Potato,
-                                roseSeed:  Rose,
-                                strawberrySeed:  Strawberry,
-                                tomatoSeed:  Tomato,
-                                wheatSeed:  Wheat,
-                            }
-                            if(selectedItemData.name in selectedCropToCropConstructor ){
-                                let cropConstructor = selectedCropToCropConstructor[selectedItemData.name];
-                                let crop = new cropConstructor(this, tilePos.x, tilePos.y, layerCrops);
-                                this.crops.add(crop);
-                                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
-                            }
-                        } else {
-                            this.wrongAction("field already occupied", mousePos);
-                        }
+        } else {
+            let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
+
+            let selectedItemInventoryIndex = this.game.scene.getScene('ControllerScene').data.get('selectedItemInventoryIndex');
+            let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
+            
+            if(emptyField && selectedItemData && selectedItemData.name){
+                let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
+                let selectedCropToCropConstructor = {
+                    avocadoSeed:  Avocado,
+                    grapesSeed:  Grapes,
+                    lemonSeed:  Lemon,
+                    melonSeed:  Melon,
+                    orangeSeed:  Orange,
+                    potatoSeed:  Potato,
+                    roseSeed:  Rose,
+                    strawberrySeed:  Strawberry,
+                    tomatoSeed:  Tomato,
+                    wheatSeed:  Wheat,
+                }
+                if(selectedItemData.name in selectedCropToCropConstructor ){
+                    let cropConstructor = selectedCropToCropConstructor[selectedItemData.name];
+
+                    let callback = () => {
+                        let crop = new cropConstructor(this, tilePos.x, tilePos.y, this.layerCrops);
+                        this.crops.add(crop);
+                        this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
                     }
+                
+                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, selectedItemData.name, callback);
+                    this.add.existing(this.actionPopup);
                 }
             } else {
-                this.wrongAction('no item in slot', mousePos);
+                let crop = this.crops.getChildren().filter(crop => crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y)[0];
+                if(crop && crop.state == 4){
+                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, 'scythe', () => this.harvestCrop(tilePos, crop));
+                    this.add.existing(this.actionPopup);
+                }
             }
         }
     }
 
-    wrongAction(message, mousePos){
-        console.log(message);
-        this.game.scene.getScene('UiScene').deselectButtonInventoryBar();
-        this.movePlayerTo(mousePos);
-    }
-
     update(time, delta) {
-        let playerPos = new Phaser.Math.Vector2(this.player.x, this.player.y)
         if (this.player.body.velocity.length() > 0){
             let moveDirection = new Phaser.Math.Vector2(this.player.body.velocity).normalize();
     
