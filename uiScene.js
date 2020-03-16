@@ -118,6 +118,21 @@ class UiScene extends Phaser.Scene {
         return inventoryGridButtons;
     }
 
+    hideJoystick(){
+        this.joystickBase.visible = false;
+        this.joystickHead.visible = false;
+    }
+
+    showJoystick(){
+        this.joystickBase.visible = true;
+        this.joystickHead.visible = true;
+    }
+
+    setPositionJoystick(posBase, posHead){
+        this.joystickBase.setPosition(posBase.x, posBase.y);
+        this.joystickHead.setPosition(posHead.x, posHead.y);
+    }
+
     create() {
         this.inventoryOpen = false;
 
@@ -131,6 +146,10 @@ class UiScene extends Phaser.Scene {
             this.inventoryOpen = !this.inventoryOpen;
             this.buildInventory();
         });
+
+        this.joystickBase = this.add.image(0, 0, 'joystickBase');
+        this.joystickHead = this.add.image(0, 0, 'joystickHead');
+        this.hideJoystick();
     }
 
     update(time, delta) {
