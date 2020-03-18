@@ -14,6 +14,7 @@ class WorldScene extends Phaser.Scene {
         game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
         this.crops = this.add.group();
+        this.objects = this.add.group();
 
         // this.cameras.main.setBackgroundColor('#DDDDDD')
         this.cameras.main.centerOn(0, 0);
@@ -52,6 +53,8 @@ class WorldScene extends Phaser.Scene {
         this.layerObjects.setPosition(-1000, -1000);
 
         this.player = this.physics.add.sprite(0, 0, 'player');
+        this.player.setSize(12, 12);
+        this.player.setOffset(this.player.width / 2 - this.player.body.width / 2, this.player.height - this.player.body.height);
 
         this.anims.create({
             key: 'turn',
@@ -144,6 +147,25 @@ class WorldScene extends Phaser.Scene {
                 this.game.scene.getScene('UiScene').setPositionJoystick(this.joystickPos, mousePos);
             }
         })
+
+        let posMarket = {x: 30, y: 30};
+        this.createBuilding('market', posMarket);
+
+        this.physics.add.collider(this.player, this.objects);
+
+        this.physics.world.createDebugGraphic();
+    }
+
+    createBuilding(buildingName, pos){
+        let buildingNameToConstructor = {
+            market: Market
+        }
+        if(buildingName in buildingNameToConstructor){
+            let buildingConstructor = buildingNameToConstructor[buildingName];
+            let building = new buildingConstructor(this, pos.x, pos.y);
+            this.objects.add(building);
+            this.add.existing(building);
+        }
     }
 
     movePlayerTo(target){
@@ -343,6 +365,7 @@ class WorldScene extends Phaser.Scene {
         this.cameras.main.centerOn(Math.round(this.player.x), Math.round(this.player.y - 15));
 
         this.crops.getChildren().forEach(crop => crop.update(time, delta));
+        this.objects.getChildren().forEach(object => object.update(time, delta));
 
         // this.game.scene.pause('mainScene');
     }
