@@ -115,6 +115,7 @@ class ControllerScene extends Phaser.Scene {
         this.load.image('joystickBase', 'assets/joystickBase.png');
         this.load.image('joystickHead', 'assets/joystickHead.png');
         this.load.image('money', 'assets/money.png');
+        this.load.image('closeIcon', 'assets/closeIcon.png');
     }
 
     create() {

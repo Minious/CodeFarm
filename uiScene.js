@@ -85,14 +85,34 @@ class UiScene extends Phaser.Scene {
         inventoryGridButtons.forEach(inventoryButton => this.inventoryGridButtons.add(inventoryButton));
     }
 
+    buildInventoryOpenButton(){
+        this.inventoryOpenButton = this.add.image(60, 45, 'inventory_button').setScale(2).setInteractive();
+        this.inventoryOpenButton.name = "inventoryOpenButton";
+        this.inventoryOpenButton.on('pointerdown', () => {
+            this.inventoryOpen = !this.inventoryOpen;
+            this.buildInventory();
+        });
+        this.input.enableDebug(this.inventoryOpenButton);
+    }
+
+    clearInventory(){
+        if(this.inventoryOpenButton){
+            this.input.removeDebug(this.inventoryOpenButton);
+            this.inventoryOpenButton.destroy(this);
+        }
+        this.inventoryBarButtons.clear(true, true);
+        this.inventoryGridButtons.clear(true, true);
+    }
+
     buildInventory(){
         console.log("Building Inventory")
-        this.inventoryBarButtons.clear(true, true);
+        this.clearInventory();
         this.buildInventoryBar();
-        this.inventoryGridButtons.clear(true, true);
         if(this.inventoryOpen){
             this.buildInventoryGrid();
         }
+
+        this.buildInventoryOpenButton();
     }
 
     makeInventoryButtonsGrid(nbColumns, nbRows, x, y, sizeButton, marginButtons, inventoryOffset = 0, callbackFactory) {
@@ -133,6 +153,42 @@ class UiScene extends Phaser.Scene {
         this.joystickHead.setPosition(posHead.x, posHead.y);
     }
 
+    closeMarket(){
+        this.marketContainer.removeAll(true);
+        this.buildInventory();
+    }
+
+    openMarket(){
+        this.clearInventory();
+
+        let backgroundImage = this.add.image(0, 0, 'ui_button');
+        let backgroundMargin = 40;
+        backgroundImage.setDisplaySize(this.cameras.main.displayWidth - 2 * backgroundMargin, this.cameras.main.displayHeight - 2 * backgroundMargin);
+        this.marketContainer.add(backgroundImage);
+
+        let closeIconOffset = 28;
+        let closeIconPos = {
+            x: - this.cameras.main.displayWidth / 2 + backgroundMargin + closeIconOffset,
+            y: - this.cameras.main.displayHeight / 2 + backgroundMargin + closeIconOffset
+        };
+        let closeIcon = this.add.image(
+            closeIconPos.x,
+            closeIconPos.y,
+            'closeIcon'
+        ).setScale(2).setInteractive();
+
+        closeIcon.on('pointerdown', () => {
+            this.closeMarket();
+        });
+        this.input.enableDebug(closeIcon);
+        closeIcon.input.hitAreaDebug.name = 'marketCloseIconDebug';
+
+        this.marketContainer.add(closeIcon);
+        this.marketContainer.add(closeIcon.input.hitAreaDebug);
+
+        this.children.sendToBack(this.marketContainer);
+    }
+
     create() {
         this.inventoryOpen = false;
 
@@ -141,17 +197,14 @@ class UiScene extends Phaser.Scene {
 
         this.buildInventory();
 
-        let inventoryOpenButton = this.add.image(60, 45, 'inventory_button').setScale(2).setInteractive();
-        inventoryOpenButton.on('pointerdown', () => {
-            this.inventoryOpen = !this.inventoryOpen;
-            this.buildInventory();
-        });
-
         this.joystickBase = this.add.image(0, 0, 'joystickBase');
+        this.joystickBase.name = 'joystickBase';
         this.joystickHead = this.add.image(0, 0, 'joystickHead');
+        this.joystickHead.name = 'joystickHead';
         this.hideJoystick();
 
         this.moneyContainer = this.add.container(this.cameras.main.displayWidth - 45, 40);
+        this.moneyContainer.name = 'moneyContainer';
         this.moneyImage = this.add.image(0, 0, 'money').setScale(2);
         this.moneyContainer.add(this.moneyImage);
         this.moneyAmountText = this.add.text(
@@ -168,6 +221,9 @@ class UiScene extends Phaser.Scene {
         let {width, height} = this.moneyContainer.getBounds();
         this.moneyContainer.setSize(width, height).setInteractive();
         this.updateMoney();
+
+        this.marketContainer = this.add.container(this.cameras.main.displayWidth / 2, this.cameras.main.displayHeight / 2);
+        this.marketContainer.name = 'marketContainer';
     }
 
     updateMoney(){
