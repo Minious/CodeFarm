@@ -9,7 +9,9 @@ class Market extends Building {
             width: size.x * 32 - 2 * margin,
             height: heightMarket
         };
-        let externalCallback = () => {};
+        let externalCallback = () => {
+            this.scene.game.scene.getScene('UiScene').openMarket();
+        };
         super(scene, x, y, 306, size, colliderPosition, externalCallback);
     }
 }
