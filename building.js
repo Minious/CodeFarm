@@ -39,8 +39,6 @@ class Building extends Phaser.Physics.Arcade.Sprite {
         for(let i=0;i<this.size.x;i+=1){
             for(let j=0;j<this.size.y;j+=1){
                 let layer = i >= this.foreground.minX && i <= this.foreground.maxX && j >= this.foreground.minY && j <= this.foreground.maxY ? this.scene.layerObjectsForeground : this.scene.layerObjectsBackground;
-                console.log(i, ' >= ', this.foreground.minX, ' && ', i, ' <= ', this.foreground.maxX,' && ', j, ' >= ', this.foreground.minY, ' && ', j, ' <= ', this.foreground.maxY)
-                console.log(i >= this.foreground.minX && i <= this.foreground.maxX && j >= this.foreground.minY && j <= this.foreground.maxY)
                 layer.putTileAt(this.baseTileIdx + i + j * 32, this.mapPosition.x + i, this.mapPosition.y + j);
             }
         }
