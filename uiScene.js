@@ -41,6 +41,17 @@ class UiScene extends Phaser.Scene {
                 this.closeMarket();
             }
         );
+        this.events.on('changedata-money', function (scene, money) {
+            parent.game.scene.getScene('UiScene').updateMoney();
+        });
+        this.game.scene.getScene('ControllerScene').events.on('setdata', (parent, key, marketConfig) => {
+            if(key == 'marketConfig') {
+                this.marketInterface.loadOffers(marketConfig);
+            }
+        });
+        this.game.scene.getScene('ControllerScene').events.on('changedata-marketConfig', (parent, marketConfig, previousMarketConfig) => {
+            this.marketInterface.loadOffers(marketConfig);
+        });
         this.add.existing(this.marketInterface);
         this.marketInterface.setVisible(false);
 

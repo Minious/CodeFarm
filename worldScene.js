@@ -295,7 +295,7 @@ class WorldScene extends Phaser.Scene {
 
         let noField = !this.layerFields.hasTileAt(tilePos.x, tilePos.y);
         if(noField){
-            this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, 'hoe', () => this.createFieldTile(this.layerFields, tilePos));
+            this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, () => this.createFieldTile(this.layerFields, tilePos), 'tools', 1);
             this.add.existing(this.actionPopup);
 
         } else {
@@ -326,14 +326,15 @@ class WorldScene extends Phaser.Scene {
                         this.crops.add(crop);
                         this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantityByIndex(selectedItemInventoryIndex, -1);
                     }
-                
-                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, selectedItemData.name, callback);
+
+                    let itemData = this.game.scene.getScene('ControllerScene').LIST_ITEM[selectedItemData.name];
+                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, callback, itemData.texture, itemData.frame);
                     this.add.existing(this.actionPopup);
                 }
             } else {
                 let crop = this.crops.getChildren().filter(crop => crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y)[0];
                 if(crop && crop.state == 4){
-                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, 'scythe', () => this.harvestCrop(tilePos, crop));
+                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, () => this.harvestCrop(tilePos, crop), 'tools', 0);
                     this.add.existing(this.actionPopup);
                 }
             }

@@ -5,14 +5,6 @@ class ControllerScene extends Phaser.Scene {
         });
 
         this.LIST_ITEM = {
-            scythe: {
-                texture: 'tools',
-                frame: 0
-            },
-            hoe: {
-                texture: 'tools',
-                frame: 1
-            },
             avocado: {
                 texture: 'crops',
                 frame: 117
@@ -135,7 +127,7 @@ class ControllerScene extends Phaser.Scene {
         this.data.set('inventory', new Array(70).fill({}).map((obj, i) => {
             if(i < 15) {
                 return {
-                    name: listItemsName[Math.floor(Math.random() * 10) + 12],
+                    name: listItemsName[Math.floor(Math.random() * 10) + 10],
                     quantity: 1 + Math.floor(Math.random() * 9)
                 }
             } else {
@@ -150,6 +142,49 @@ class ControllerScene extends Phaser.Scene {
         this.events.on('changedata-money', function (scene, money) {
             console.log('New money amount : ' + money);
             parent.game.scene.getScene('UiScene').updateMoney();
+        });
+
+        this.startMarketConfigGenerator();
+    }
+
+    generateMarketConfig(){
+        let cropsOrder = [
+            'wheat',      //  1
+            'tomato',     // 10
+            'lemon',      // 15
+            'orange',     // 18
+            'potato',     // 20
+            'avocado',    // 23
+            'strawberry', // 25
+            'melon',      // 40
+            'grapes',     // 50
+            'rose',       // 60
+        ];
+        let listBuyingOffers = cropsOrder.map((crop, idx) => ({
+            item: crop + 'Seed',
+            price: idx
+        }));
+        let listSellingOffers = cropsOrder.map((crop, idx) => ({
+            item: crop,
+            price: idx
+        }));
+        let marketConfig = {
+            buyingOffer: Utils.getRandomSetInArray(listBuyingOffers, 5),
+            sellingOffer: Utils.getRandomSetInArray(listSellingOffers, 5)
+        };
+        return marketConfig;
+    }
+
+    startMarketConfigGenerator(){
+        let delayRefreshMarket = 10;
+        this.marketConfigGeneratorTimedEvent = this.time.addEvent({
+            delay: delayRefreshMarket * 1000,
+            startAt: delayRefreshMarket * 1000 - 1,
+            callback: () => {
+                this.data.set('marketConfig', this.generateMarketConfig())
+            },
+            callbackScope: this,
+            loop: true
         });
     }
 
