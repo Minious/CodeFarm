@@ -49,20 +49,22 @@ class ActionPopup extends Phaser.GameObjects.Container {
                 getEnd: () => scale
             },
             onComplete: () => {
-                let hitArea = Phaser.Geom.Rectangle.Clone(actionPopupBounds);
-                hitArea.setPosition(
-                    hitArea.x - this.x + hitArea.width / 2,
-                    hitArea.y - this.y + hitArea.height / 2,
-                )
-                this.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+                if(this.scene) {
+                    let hitArea = Phaser.Geom.Rectangle.Clone(actionPopupBounds);
+                    hitArea.setPosition(
+                        hitArea.x - this.x + hitArea.width / 2,
+                        hitArea.y - this.y + hitArea.height / 2,
+                    )
+                    this.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
 
-                this.scene.input.enableDebug(this);
-                this.on('pointerdown', () => {
-                    externalCallback();
-                    this.scene.input.removeDebug(this);
-                    this.scene.popupClicked = true;
-                    this.destroy(this.scene);
-                });
+                    this.scene.input.enableDebug(this);
+                    this.on('pointerdown', () => {
+                        externalCallback();
+                        this.scene.input.removeDebug(this);
+                        this.scene.popupClicked = true;
+                        this.destroy(this.scene);
+                    });
+                }
             }
         });
     }
