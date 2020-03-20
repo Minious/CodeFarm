@@ -271,8 +271,7 @@ class WorldScene extends Phaser.Scene {
             this.add.existing(lootAnim);
 
             if(inventory.map(inventoryItemData => inventoryItemData.name).includes(item)){
-                let sameItemInInventoryIdx = inventory.findIndex(inventoryItemData => inventoryItemData.name == item);
-                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(sameItemInInventoryIdx, quantity);
+                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(item, quantity);
             } else {
                 let firstEmptyCellIdx = inventory.findIndex(inventoryItemData => Object.keys(inventoryItemData).length == 0);
                 if(firstEmptyCellIdx != -1) {
@@ -325,7 +324,7 @@ class WorldScene extends Phaser.Scene {
                     let callback = () => {
                         let crop = new cropConstructor(this, tilePos.x, tilePos.y, this.layerCrops);
                         this.crops.add(crop);
-                        this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
+                        this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantityByIndex(selectedItemInventoryIndex, -1);
                     }
                 
                     this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, selectedItemData.name, callback);

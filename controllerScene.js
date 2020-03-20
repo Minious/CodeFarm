@@ -116,6 +116,7 @@ class ControllerScene extends Phaser.Scene {
         this.load.image('joystickHead', 'assets/joystickHead.png');
         this.load.image('money', 'assets/money.png');
         this.load.image('closeIcon', 'assets/closeIcon.png');
+        this.load.image('arrow', 'assets/arrow.png');
     }
 
     create() {
@@ -152,6 +153,23 @@ class ControllerScene extends Phaser.Scene {
         });
     }
 
+    getInventoryItemQuantity(item){
+        let quantity = this.data.get('inventory')
+            .filter(inventoryItem => inventoryItem.name == item)
+            .map(inventoryItem => inventoryItem.quantity)
+            .reduce((totalQuantity, curQuantity) => totalQuantity + curQuantity, 0);
+        return quantity;
+    }
+
+    inventoryContains(item, quantity){
+        if(quantity){
+            let itemQuantity = this.getInventoryItemQuantity(item);
+            return itemQuantity >= quantity;
+        } else {
+            return this.data.get('inventory').map(inventoryItem => inventoryItem.name).includes(item);
+        }
+    }
+
     swapInventoryItems(itemIdx1, itemIdx2){
         if(itemIdx1 != itemIdx2){
             let inventory = this.data.get('inventory');
@@ -165,11 +183,39 @@ class ControllerScene extends Phaser.Scene {
         }
     }
 
-    modifyInventoryItemQuantity(itemInventoryIndex, quantityChange){
+    modifyInventoryItemQuantityByIndex(itemInventoryIndex, quantityChange){
         let inventory = this.data.get('inventory').slice();
         inventory[itemInventoryIndex].quantity += quantityChange;
         if(inventory[itemInventoryIndex].quantity <= 0){
             inventory[itemInventoryIndex] = {};
+        }
+        this.data.set('inventory', inventory);
+    }
+
+    modifyInventoryItemQuantity(item, quantityChange){
+        let inventory = this.data.get('inventory').slice();
+        if(quantityChange > 0){
+            if(this.inventoryContains(item)) {
+                inventory.find(inventoryItem => inventoryItem.name == item).quantity += quantityChange;
+            } else {
+                let firstEmptyInventorySlot = inventory.find(inventoryItem => !inventoryItem.name);
+                firstEmptyInventorySlot.name = item;
+                firstEmptyInventorySlot.quantity = quantityChange;
+            }
+        } else {
+            let remainingAmount = - quantityChange;
+            inventory.filter(inventoryItem => inventoryItem.name == item)
+                .forEach(inventoryItem => {
+                    inventoryItem.quantity -= remainingAmount;
+                    if(inventoryItem.quantity <= 0){
+                        remainingAmount = - inventoryItem.quantity;
+
+                        delete inventoryItem.quantity;
+                        delete inventoryItem.name;
+                    } else {
+                        remainingAmount = 0;
+                    }
+                });
         }
         this.data.set('inventory', inventory);
     }
