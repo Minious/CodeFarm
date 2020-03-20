@@ -14,6 +14,7 @@ class WorldScene extends Phaser.Scene {
         game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
         this.crops = this.add.group();
+        this.objects = this.add.group();
 
         // this.cameras.main.setBackgroundColor('#DDDDDD')
         this.cameras.main.centerOn(0, 0);
@@ -47,11 +48,18 @@ class WorldScene extends Phaser.Scene {
         this.layerCrops.setScale(2);
         this.layerCrops.setPosition(-1000, -1000);
 
-        this.layerObjects = this.map.createBlankDynamicLayer("Objects", tileset);
-        this.layerObjects.setScale(2);
-        this.layerObjects.setPosition(-1000, -1000);
+        this.layerObjectsBackground = this.map.createBlankDynamicLayer("Objects", tileset);
+        this.layerObjectsBackground.setScale(2);
+        this.layerObjectsBackground.setPosition(-1000, -1000);
+
+        this.layerObjectsForeground = this.map.createBlankDynamicLayer("ObjectsForeground", tileset);
+        this.layerObjectsForeground.setScale(2);
+        this.layerObjectsForeground.setPosition(-1000, -1000);
+        this.layerObjectsForeground.setDepth(100)
 
         this.player = this.physics.add.sprite(0, 0, 'player');
+        this.player.setSize(12, 12);
+        this.player.setOffset(this.player.width / 2 - this.player.body.width / 2, this.player.height - this.player.body.height);
 
         this.anims.create({
             key: 'turn',
@@ -144,6 +152,25 @@ class WorldScene extends Phaser.Scene {
                 this.game.scene.getScene('UiScene').setPositionJoystick(this.joystickPos, mousePos);
             }
         })
+
+        let posMarket = {x: 30, y: 30};
+        this.createBuilding('market', posMarket);
+
+        this.physics.add.collider(this.player, this.objects);
+
+        this.physics.world.createDebugGraphic();
+    }
+
+    createBuilding(buildingName, pos){
+        let buildingNameToConstructor = {
+            market: Market
+        }
+        if(buildingName in buildingNameToConstructor){
+            let buildingConstructor = buildingNameToConstructor[buildingName];
+            let building = new buildingConstructor(this, pos.x, pos.y);
+            this.objects.add(building);
+            this.add.existing(building);
+        }
     }
 
     movePlayerTo(target){
@@ -232,7 +259,7 @@ class WorldScene extends Phaser.Scene {
     destroyPopup(){
         if(this.actionPopup){
             this.input.removeDebug(this.actionPopup);
-            this.actionPopup.destroy(this);
+            this.actionPopup.destroy();
         }
     }
 
@@ -249,8 +276,7 @@ class WorldScene extends Phaser.Scene {
             this.add.existing(lootAnim);
 
             if(inventory.map(inventoryItemData => inventoryItemData.name).includes(item)){
-                let sameItemInInventoryIdx = inventory.findIndex(inventoryItemData => inventoryItemData.name == item);
-                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(sameItemInInventoryIdx, quantity);
+                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(item, quantity);
             } else {
                 let firstEmptyCellIdx = inventory.findIndex(inventoryItemData => Object.keys(inventoryItemData).length == 0);
                 if(firstEmptyCellIdx != -1) {
@@ -265,7 +291,7 @@ class WorldScene extends Phaser.Scene {
             }
         });
         this.layerCrops.removeTileAt(tilePos.x, tilePos.y);
-        crop.destroy(this);
+        crop.destroy();
     }
 
     actionClick(mouseWorldPos){
@@ -274,7 +300,7 @@ class WorldScene extends Phaser.Scene {
 
         let noField = !this.layerFields.hasTileAt(tilePos.x, tilePos.y);
         if(noField){
-            this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, 'hoe', () => this.createFieldTile(this.layerFields, tilePos));
+            this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, () => this.createFieldTile(this.layerFields, tilePos), 'tools', 1);
             this.add.existing(this.actionPopup);
 
         } else {
@@ -303,16 +329,17 @@ class WorldScene extends Phaser.Scene {
                     let callback = () => {
                         let crop = new cropConstructor(this, tilePos.x, tilePos.y, this.layerCrops);
                         this.crops.add(crop);
-                        this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(selectedItemInventoryIndex, -1);
+                        this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantityByIndex(selectedItemInventoryIndex, -1);
                     }
-                
-                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, selectedItemData.name, callback);
+
+                    let itemData = this.game.scene.getScene('ControllerScene').LIST_ITEM[selectedItemData.name];
+                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, callback, itemData.texture, itemData.frame);
                     this.add.existing(this.actionPopup);
                 }
             } else {
                 let crop = this.crops.getChildren().filter(crop => crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y)[0];
                 if(crop && crop.state == 4){
-                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, 'scythe', () => this.harvestCrop(tilePos, crop));
+                    this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, () => this.harvestCrop(tilePos, crop), 'tools', 0);
                     this.add.existing(this.actionPopup);
                 }
             }
@@ -343,6 +370,7 @@ class WorldScene extends Phaser.Scene {
         this.cameras.main.centerOn(Math.round(this.player.x), Math.round(this.player.y - 15));
 
         this.crops.getChildren().forEach(crop => crop.update(time, delta));
+        this.objects.getChildren().forEach(object => object.update(time, delta));
 
         // this.game.scene.pause('mainScene');
     }

@@ -4,6 +4,6 @@ class Orange extends Crop {
             'orange': 1,
             'orangeSeed': 1,
         };
-        super(scene, x, y, layerCrops, 15, 119, lootConfig);
+        super(scene, x, y, layerCrops, 18, 119, lootConfig);
     }
 }

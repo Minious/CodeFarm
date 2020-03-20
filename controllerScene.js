@@ -5,14 +5,6 @@ class ControllerScene extends Phaser.Scene {
         });
 
         this.LIST_ITEM = {
-            scythe: {
-                texture: 'tools',
-                frame: 0
-            },
-            hoe: {
-                texture: 'tools',
-                frame: 1
-            },
             avocado: {
                 texture: 'crops',
                 frame: 117
@@ -115,6 +107,8 @@ class ControllerScene extends Phaser.Scene {
         this.load.image('joystickBase', 'assets/joystickBase.png');
         this.load.image('joystickHead', 'assets/joystickHead.png');
         this.load.image('money', 'assets/money.png');
+        this.load.image('closeIcon', 'assets/closeIcon.png');
+        this.load.image('arrow', 'assets/arrow.png');
     }
 
     create() {
@@ -133,7 +127,7 @@ class ControllerScene extends Phaser.Scene {
         this.data.set('inventory', new Array(70).fill({}).map((obj, i) => {
             if(i < 15) {
                 return {
-                    name: listItemsName[Math.floor(Math.random() * 10) + 12],
+                    name: listItemsName[Math.floor(Math.random() * 10) + 10],
                     quantity: 1 + Math.floor(Math.random() * 9)
                 }
             } else {
@@ -141,7 +135,7 @@ class ControllerScene extends Phaser.Scene {
             }
         }));
         this.events.on('changedata-inventory', function (parent, value) {
-            parent.game.scene.getScene('UiScene').buildInventory();
+            parent.game.scene.getScene('UiScene').inventoryInterface.buildInventory();
         });
 
         this.data.set('money', 0);
@@ -149,6 +143,66 @@ class ControllerScene extends Phaser.Scene {
             console.log('New money amount : ' + money);
             parent.game.scene.getScene('UiScene').updateMoney();
         });
+
+        this.startMarketConfigGenerator();
+    }
+
+    generateMarketConfig(){
+        let cropsOrder = [
+            'wheat',      //  1
+            'tomato',     // 10
+            'lemon',      // 15
+            'orange',     // 18
+            'potato',     // 20
+            'avocado',    // 23
+            'strawberry', // 25
+            'melon',      // 40
+            'grapes',     // 50
+            'rose',       // 60
+        ];
+        let listBuyingOffers = cropsOrder.map((crop, idx) => ({
+            item: crop + 'Seed',
+            price: idx
+        }));
+        let listSellingOffers = cropsOrder.map((crop, idx) => ({
+            item: crop,
+            price: idx
+        }));
+        let marketConfig = {
+            buyingOffer: Utils.getRandomSetInArray(listBuyingOffers, 5),
+            sellingOffer: Utils.getRandomSetInArray(listSellingOffers, 5)
+        };
+        return marketConfig;
+    }
+
+    startMarketConfigGenerator(){
+        let delayRefreshMarket = 10;
+        this.marketConfigGeneratorTimedEvent = this.time.addEvent({
+            delay: delayRefreshMarket * 1000,
+            startAt: delayRefreshMarket * 1000 - 1,
+            callback: () => {
+                this.data.set('marketConfig', this.generateMarketConfig())
+            },
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    getInventoryItemQuantity(item){
+        let quantity = this.data.get('inventory')
+            .filter(inventoryItem => inventoryItem.name == item)
+            .map(inventoryItem => inventoryItem.quantity)
+            .reduce((totalQuantity, curQuantity) => totalQuantity + curQuantity, 0);
+        return quantity;
+    }
+
+    inventoryContains(item, quantity){
+        if(quantity){
+            let itemQuantity = this.getInventoryItemQuantity(item);
+            return itemQuantity >= quantity;
+        } else {
+            return this.data.get('inventory').map(inventoryItem => inventoryItem.name).includes(item);
+        }
     }
 
     swapInventoryItems(itemIdx1, itemIdx2){
@@ -164,11 +218,39 @@ class ControllerScene extends Phaser.Scene {
         }
     }
 
-    modifyInventoryItemQuantity(itemInventoryIndex, quantityChange){
+    modifyInventoryItemQuantityByIndex(itemInventoryIndex, quantityChange){
         let inventory = this.data.get('inventory').slice();
         inventory[itemInventoryIndex].quantity += quantityChange;
         if(inventory[itemInventoryIndex].quantity <= 0){
             inventory[itemInventoryIndex] = {};
+        }
+        this.data.set('inventory', inventory);
+    }
+
+    modifyInventoryItemQuantity(item, quantityChange){
+        let inventory = this.data.get('inventory').slice();
+        if(quantityChange > 0){
+            if(this.inventoryContains(item)) {
+                inventory.find(inventoryItem => inventoryItem.name == item).quantity += quantityChange;
+            } else {
+                let firstEmptyInventorySlot = inventory.find(inventoryItem => !inventoryItem.name);
+                firstEmptyInventorySlot.name = item;
+                firstEmptyInventorySlot.quantity = quantityChange;
+            }
+        } else {
+            let remainingAmount = - quantityChange;
+            inventory.filter(inventoryItem => inventoryItem.name == item)
+                .forEach(inventoryItem => {
+                    inventoryItem.quantity -= remainingAmount;
+                    if(inventoryItem.quantity <= 0){
+                        remainingAmount = - inventoryItem.quantity;
+
+                        delete inventoryItem.quantity;
+                        delete inventoryItem.name;
+                    } else {
+                        remainingAmount = 0;
+                    }
+                });
         }
         this.data.set('inventory', inventory);
     }
