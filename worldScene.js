@@ -116,17 +116,15 @@ class WorldScene extends Phaser.Scene {
                 this.moving = false;
                 this.game.scene.getScene('UiScene').hideJoystick();
             } else {
-                if(this.input.hitTestPointer(pointer).length == 0){
-                    let mouseWorldPos = new Phaser.Math.Vector2(
-                        this.input.activePointer.worldX,
-                        this.input.activePointer.worldY
-                    );
-                    if(this.popupClicked){
-                        this.popupClicked = false;
-                    } else {
-                        this.destroyPopup();
-                        this.actionClick(mouseWorldPos);
-                    }
+                let mouseWorldPos = new Phaser.Math.Vector2(
+                    this.input.activePointer.worldX,
+                    this.input.activePointer.worldY
+                );
+                if(this.popupClicked){
+                    this.popupClicked = false;
+                } else {
+                    this.destroyPopup();
+                    this.actionClick(mouseWorldPos);
                 }
             }
         });
