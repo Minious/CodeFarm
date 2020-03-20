@@ -4,6 +4,6 @@ class Avocado extends Crop {
             'avocado': 1,
             'avocadoSeed': 1,
         };
-        super(scene, x, y, layerCrops, 20, 112, lootConfig);
+        super(scene, x, y, layerCrops, 23, 112, lootConfig);
     }
 }

@@ -1,5 +1,5 @@
 class ActionPopup extends Phaser.GameObjects.Container {
-    constructor (scene, x, y, displayWidth, item, externalCallback) {
+    constructor (scene, x, y, displayWidth, externalCallback, texture, frame) {
         super(scene, x, y);
 
         this.externalCallback = externalCallback;
@@ -17,11 +17,8 @@ class ActionPopup extends Phaser.GameObjects.Container {
 
         this.bringToTop(this.backgroundImage1);
 
-        this.item = item;
-        let itemTypeData = this.scene.game.scene.getScene('ControllerScene').LIST_ITEM[this.item];
-
         let marginIcon = 14;
-        this.itemIcon = this.scene.add.sprite(0, - backgroundImage1Bounds.height, itemTypeData.texture, itemTypeData.frame);
+        this.itemIcon = this.scene.add.sprite(0, - backgroundImage1Bounds.height, texture, frame);
         this.itemIcon.setDisplaySize(
             backgroundImage1Bounds.width - marginIcon,
             backgroundImage1Bounds.height - marginIcon

@@ -25,33 +25,16 @@ class MarketInterface extends Phaser.GameObjects.Container {
         this.scene.input.enableDebug(closeIcon);
         closeIcon.input.hitAreaDebug.name = 'marketCloseIconDebug';
 
-        this.createMarketOffers();
+        this.offers = this.scene.add.container(0, 0);
+        this.add(this.offers);
     }
 
-    createMarketOffers(){
-        let marketConfig = {
-            buyingOffer: [
-                {
-                    item: 'wheatSeed',
-                    price: 1
-                },
-                {
-                    item: 'tomatoSeed',
-                    price: 2
-                }
-            ],
-            sellingOffer: [
-                {
-                    item: 'wheat',
-                    price: 2
-                },
-                {
-                    item: 'tomato',
-                    price: 4
-                }
-            ]
-        };
+    loadOffers(marketConfig){
+        this.offers.removeAll(true);
+        this.createMarketOffers(marketConfig);
+    }
 
+    createMarketOffers(marketConfig){
         let marginColumn = 120;
         let marginOffer = 60;
 
@@ -126,7 +109,7 @@ class MarketInterface extends Phaser.GameObjects.Container {
             moneyContainer.add(moneyAmountText);
             offerContainer.add(moneyContainer);
 
-            this.add(offerContainer);
+            this.offers.add(offerContainer);
         }
         marketConfig.buyingOffer.forEach((offer, idx) => createOffer('buying', offer, idx));
         marketConfig.sellingOffer.forEach((offer, idx) => createOffer('selling', offer, idx));
