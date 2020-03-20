@@ -1,5 +1,5 @@
 class Building extends Phaser.Physics.Arcade.Sprite {
-    constructor (scene, x, y, baseTileIdx, size, colliderPosition, externalCallback) {
+    constructor (scene, x, y, baseTileIdx, size, foreground, colliderPosition, externalCallback) {
         super(scene, 0, 0, null, null);
 
         this.scene.physics.add.existing(this, true);
@@ -7,12 +7,13 @@ class Building extends Phaser.Physics.Arcade.Sprite {
         this.mapPosition = new Phaser.Math.Vector2(x, y);
         this.baseTileIdx = baseTileIdx;
         this.size = size;
+        this.foreground = foreground;
 
         this.setDisplaySize(this.size.x * 32, this.size.y * 32);
 
         this.updateTiles();
 
-        let originTile = this.scene.layerObjects.getTileAt(this.mapPosition.x, this.mapPosition.y);
+        let originTile = this.scene.layerObjectsBackground.getTileAt(this.mapPosition.x, this.mapPosition.y, true);
         this.worldPosition = new Phaser.Math.Vector2(originTile.getLeft(this.scene.cameras.main), originTile.getTop(this.scene.cameras.main));
         this.setPosition(this.worldPosition.x, this.worldPosition.y);
         this.setOrigin(0, 0);
@@ -37,7 +38,10 @@ class Building extends Phaser.Physics.Arcade.Sprite {
     updateTiles(){
         for(let i=0;i<this.size.x;i+=1){
             for(let j=0;j<this.size.y;j+=1){
-                this.scene.layerObjects.putTileAt(this.baseTileIdx + i + j * 32, this.mapPosition.x + i, this.mapPosition.y + j);
+                let layer = i >= this.foreground.minX && i <= this.foreground.maxX && j >= this.foreground.minY && j <= this.foreground.maxY ? this.scene.layerObjectsForeground : this.scene.layerObjectsBackground;
+                console.log(i, ' >= ', this.foreground.minX, ' && ', i, ' <= ', this.foreground.maxX,' && ', j, ' >= ', this.foreground.minY, ' && ', j, ' <= ', this.foreground.maxY)
+                console.log(i >= this.foreground.minX && i <= this.foreground.maxX && j >= this.foreground.minY && j <= this.foreground.maxY)
+                layer.putTileAt(this.baseTileIdx + i + j * 32, this.mapPosition.x + i, this.mapPosition.y + j);
             }
         }
     }
