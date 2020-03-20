@@ -48,9 +48,14 @@ class WorldScene extends Phaser.Scene {
         this.layerCrops.setScale(2);
         this.layerCrops.setPosition(-1000, -1000);
 
-        this.layerObjects = this.map.createBlankDynamicLayer("Objects", tileset);
-        this.layerObjects.setScale(2);
-        this.layerObjects.setPosition(-1000, -1000);
+        this.layerObjectsBackground = this.map.createBlankDynamicLayer("Objects", tileset);
+        this.layerObjectsBackground.setScale(2);
+        this.layerObjectsBackground.setPosition(-1000, -1000);
+
+        this.layerObjectsForeground = this.map.createBlankDynamicLayer("ObjectsForeground", tileset);
+        this.layerObjectsForeground.setScale(2);
+        this.layerObjectsForeground.setPosition(-1000, -1000);
+        this.layerObjectsForeground.setDepth(100)
 
         this.player = this.physics.add.sprite(0, 0, 'player');
         this.player.setSize(12, 12);
