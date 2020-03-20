@@ -70,14 +70,14 @@ class InventoryButton extends Phaser.GameObjects.Container {
         });
 
         this.on('dragstart', function (pointer, dragX, dragY) {
-            this.scene.children.bringToTop(this);
+            this.parentContainer.bringToTop(this);
         });
 
         this.on('drag', function (pointer, dragX, dragY) {
             if(this.contentContainer){
-                x = Utils.clamp(dragX, this.displayWidth / 2, this.scene.cameras.main.displayWidth - this.displayWidth / 2);
-                y = Utils.clamp(dragY, this.displayHeight / 2, this.scene.cameras.main.displayHeight - this.displayHeight / 2);
-                let containerSpacePos = this.pointToContainer({x, y})
+                let x = Utils.clamp(dragX, this.displayWidth / 2, this.scene.cameras.main.displayWidth - this.displayWidth / 2);
+                let y = Utils.clamp(dragY, this.displayHeight / 2, this.scene.cameras.main.displayHeight - this.displayHeight / 2);
+                let containerSpacePos = this.pointToContainer({x, y});
                 this.contentContainer.x = containerSpacePos.x;
                 this.contentContainer.y = containerSpacePos.y;
             }
@@ -98,18 +98,6 @@ class InventoryButton extends Phaser.GameObjects.Container {
         this.isSelected = isSelected;
         this.updateColor();
     }
-
-    // static getContainerBounds(container){
-    //     let bounds = container.list[0].getBounds();
-    //     container.list.slice(1).forEach(obj => {
-    //         let curBounds = obj.getBounds();
-    //         bounds.x = bounds.x > curBounds.x? curBounds.x : bounds.x
-    //         bounds.y = bounds.y > curBounds.y ? curBounds.y : bounds.y
-    //         bounds.width = bounds.x + bounds.width < curBounds.x + curBounds.width ? (curBounds.x + curBounds.width) - bounds.x : bounds.width
-    //         bounds.height = bounds.y + bounds.height < curBounds.y + curBounds.height ? (curBounds.y + curBounds.height) - bounds.y : bounds.height
-    //     })
-    //     return bounds;
-    // }
 
     updateColor(){
         if(this.isSelected){
