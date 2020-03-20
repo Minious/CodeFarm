@@ -142,7 +142,7 @@ class ControllerScene extends Phaser.Scene {
             }
         }));
         this.events.on('changedata-inventory', function (parent, value) {
-            parent.game.scene.getScene('UiScene').buildInventory();
+            parent.game.scene.getScene('UiScene').inventoryInterface.buildInventory();
         });
 
         this.data.set('money', 0);

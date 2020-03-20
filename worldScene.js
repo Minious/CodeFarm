@@ -254,7 +254,7 @@ class WorldScene extends Phaser.Scene {
     destroyPopup(){
         if(this.actionPopup){
             this.input.removeDebug(this.actionPopup);
-            this.actionPopup.destroy(this);
+            this.actionPopup.destroy();
         }
     }
 
@@ -287,7 +287,7 @@ class WorldScene extends Phaser.Scene {
             }
         });
         this.layerCrops.removeTileAt(tilePos.x, tilePos.y);
-        crop.destroy(this);
+        crop.destroy();
     }
 
     actionClick(mouseWorldPos){
