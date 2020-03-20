@@ -27,9 +27,21 @@ class MarketInterface extends Phaser.GameObjects.Container {
 
         this.offers = this.scene.add.container(0, 0);
         this.add(this.offers);
+
+        this.scene.game.scene.getScene('ControllerScene').events.on('changedata-inventory', (parent, newInventory, oldInventory) => {
+            this.reloadOffers();
+        });
+    }
+
+    reloadOffers(){
+        if(this.marketConfig){
+            this.loadOffers(this.marketConfig);
+        }
     }
 
     loadOffers(marketConfig){
+        this.marketConfig = marketConfig;
+
         this.offers.removeAll(true);
         this.createMarketOffers(marketConfig);
     }
@@ -89,9 +101,23 @@ class MarketInterface extends Phaser.GameObjects.Container {
             arrowContainer.add(arrowText);
             offerContainer.add(arrowContainer);
 
+            let itemContainer = this.scene.add.container(-70, 0);
             let itemTypeData = this.scene.game.scene.getScene('ControllerScene').LIST_ITEM[offer.item];
-            let itemIcon = this.scene.add.sprite(-70, 0, itemTypeData.texture, itemTypeData.frame).setScale(3);
-            offerContainer.add(itemIcon);
+            let itemIcon = this.scene.add.sprite(0, 0, itemTypeData.texture, itemTypeData.frame).setScale(3);
+            itemContainer.add(itemIcon);
+            let inventoryItemQuantity = this.scene.game.scene.getScene('ControllerScene').getInventoryItemQuantity(offer.item);
+            let itemQuantityText = this.scene.add.text(
+                -25,
+                0,
+                inventoryItemQuantity,
+                {
+                    fontSize: '16px',
+                    fontFamily: '"Roboto Condensed"',
+                    resolution: 3,
+                }
+            ).setOrigin(1, 0.5);
+            itemContainer.add(itemQuantityText);
+            offerContainer.add(itemContainer);
 
             let moneyContainer = this.scene.add.container(70, 0);
             let moneyImage = this.scene.add.image(0, 0, 'money').setScale(2);
