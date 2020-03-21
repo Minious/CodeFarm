@@ -21,7 +21,7 @@ class MarketInterface extends Phaser.GameObjects.Container {
         this.add(closeIcon);
         closeIcon.name = 'marketInterfaceCloseIcon';
 
-        closeIcon.on('pointerdown', externalCallback);
+        closeIcon.on('pointerup', externalCallback);
         this.scene.input.enableDebug(closeIcon);
         closeIcon.input.hitAreaDebug.name = 'marketCloseIconDebug';
 

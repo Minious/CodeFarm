@@ -92,7 +92,7 @@ class InventoryInterface extends Phaser.GameObjects.Container {
     buildInventoryOpenButton(){
         this.inventoryOpenButton = this.scene.add.image(60, 45, 'inventory_button').setScale(2).setInteractive();
         this.inventoryOpenButton.name = "inventoryOpenButton";
-        this.inventoryOpenButton.on('pointerdown', () => {
+        this.inventoryOpenButton.on('pointerup', () => {
             this.inventoryOpen = !this.inventoryOpen;
             this.inventoryGridButtons.setVisible(this.inventoryOpen);
         });
