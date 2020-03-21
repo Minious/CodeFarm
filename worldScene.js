@@ -143,9 +143,10 @@ class WorldScene extends Phaser.Scene {
                 }
                 let joystickMove = mousePos.clone().subtract(this.joystickPos);
                 let playerTarget = new Phaser.Math.Vector2(this.player.x, this.player.y).add(joystickMove);
+                let speedFactor = Utils.clamp(distanceJoystick / this.lengthJoystick, 0, 1);
 
                 this.moving = true;
-                this.movePlayerTo(playerTarget);
+                this.movePlayerTo(playerTarget, speedFactor);
 
                 this.game.scene.getScene('UiScene').setPositionJoystick(this.joystickPos, mousePos);
             }
@@ -171,8 +172,8 @@ class WorldScene extends Phaser.Scene {
         }
     }
 
-    movePlayerTo(target){
-        this.physics.moveToObject(this.player, target, this.speed);
+    movePlayerTo(target, speedFactor){
+        this.physics.moveToObject(this.player, target, this.speed * speedFactor);
     }
 
     getNeighborTiles(layer, tilePos){

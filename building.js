@@ -22,7 +22,7 @@ class Building extends Phaser.Physics.Arcade.Sprite {
         this.setInteractive();
         this.input.alwaysEnabled = true;
         this.scene.input.enableDebug(this);
-        this.on('pointerdown', () => {
+        this.on('pointerup', () => {
             externalCallback();
         });
 
