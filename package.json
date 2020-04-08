@@ -1,0 +1,31 @@
+{
+  "name": "codefarm",
+  "version": "0.1.0",
+  "description": "CodeFarm is the prototype of a farming game which is on its way of becoming the GREATEST farming game ever !\r The player personifies a farmer which needs to expand his farm by growing crops and selling goods. He will have to protect his farm against an mysterious alien invasion.",
+  "private": true,
+  "scripts": {
+    "start": "webpack-dev-server --config webpack.dev.js --open",
+    "build": "webpack --config webpack.prod.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Minious/CodeFarm.git"
+  },
+  "author": "Eliot Godard",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Minious/CodeFarm/issues"
+  },
+  "homepage": "https://github.com/Minious/CodeFarm#readme",
+  "dependencies": {
+    "phaser": "github:Minious/phaser#f4ba7c4e3ac87bfccae8bbfd6f6b9c07a0adcb1b"
+  },
+  "devDependencies": {
+    "file-loader": "^6.0.0",
+    "html-webpack-plugin": "^4.0.4",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3",
+    "webpack-merge": "^4.2.2"
+  }
+}
