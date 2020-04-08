@@ -21,6 +21,7 @@
     "phaser": "github:Minious/phaser#f4ba7c4e3ac87bfccae8bbfd6f6b9c07a0adcb1b"
   },
   "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
     "file-loader": "^6.0.0",
     "html-webpack-plugin": "^4.0.4",
     "webpack": "^4.42.1",
