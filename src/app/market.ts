@@ -1,9 +1,10 @@
 import * as Phaser from "phaser";
 
 import { Building } from "./building";
+import { UiScene } from "./uiScene";
 
 export class Market extends Building {
-    constructor (scene, x, y) {
+    constructor (scene: Phaser.Scene, x: number, y: number) {
         let margin = 15;
         let heightMarket = 50;
         let size = {x: 3, y: 4};
@@ -14,13 +15,13 @@ export class Market extends Building {
             height: heightMarket
         };
         let foreground = {
-            minX: 0,
-            maxX: 2,
-            minY: 0,
-            maxY: 2,
+            x: 0,
+            y: 0,
+            width: 2,
+            height: 2,
         }
         let externalCallback = () => {
-            this.scene.game.scene.getScene('UiScene').openMarket();
+            (this.scene.game.scene.getScene('UiScene') as UiScene).openMarket();
         };
         super(scene, x, y, 306, size, foreground, colliderPosition, externalCallback);
     }

@@ -5,7 +5,7 @@ import { WorldScene } from "./worldScene";
 import { UiScene } from "./uiScene";
 
 export function run() {
-        var config = {
+    let config/*: Phaser.Types.Core.GameConfig*/ = {
         type: Phaser.AUTO,
         width: 700,
         height: 500,
