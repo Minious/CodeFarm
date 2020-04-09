@@ -1,31 +1,33 @@
 import * as Phaser from "phaser";
+import { WorldScene } from "./worldScene";
 
 export class ActionPopup extends Phaser.GameObjects.Container {
-    constructor (scene, x, y, displayWidth, externalCallback, texture, frame) {
+    private externalCallback: Function;
+
+    constructor (scene: Phaser.Scene, x: number, y: number, displayWidth: number, externalCallback: Function, texture: string, frame: number) {
         super(scene, x, y);
 
         this.externalCallback = externalCallback;
 
-        this.backgroundImage1 = this.scene.add.image(0, 0, 'ui_button');
-        this.add(this.backgroundImage1);
-        let backgroundImage1Bounds = this.backgroundImage1.getBounds();
-        this.backgroundImage1.setPosition(0, - backgroundImage1Bounds.height);
+        let backgroundImage1 = this.scene.add.image(0, 0, 'ui_button');
+        this.add(backgroundImage1);
+        let backgroundImage1Bounds = backgroundImage1.getBounds();
+        backgroundImage1.setPosition(0, - backgroundImage1Bounds.height);
         
-        this.backgroundImage2 = this.scene.add.image(0, - backgroundImage1Bounds.height / 2, 'ui_button');
-        this.backgroundImage2.setDisplaySize(backgroundImage1Bounds.width / Math.sqrt(2), backgroundImage1Bounds.width / Math.sqrt(2));
-        this.backgroundImage2.rotation = Math.PI / 4;
-        this.add(this.backgroundImage2);
+        let backgroundImage2 = this.scene.add.image(0, - backgroundImage1Bounds.height / 2, 'ui_button');
+        backgroundImage2.setDisplaySize(backgroundImage1Bounds.width / Math.sqrt(2), backgroundImage1Bounds.width / Math.sqrt(2));
+        backgroundImage2.rotation = Math.PI / 4;
+        this.add(backgroundImage2);
 
-
-        this.bringToTop(this.backgroundImage1);
+        this.bringToTop(backgroundImage1);
 
         let marginIcon = 14;
-        this.itemIcon = this.scene.add.sprite(0, - backgroundImage1Bounds.height, texture, frame);
-        this.itemIcon.setDisplaySize(
+        let itemIcon = this.scene.add.sprite(0, - backgroundImage1Bounds.height, texture, frame);
+        itemIcon.setDisplaySize(
             backgroundImage1Bounds.width - marginIcon,
             backgroundImage1Bounds.height - marginIcon
         );
-        this.add(this.itemIcon);
+        this.add(itemIcon);
 
         const actionPopupBounds = this.getBounds();
         this.setSize(actionPopupBounds.width, actionPopupBounds.height);
@@ -61,7 +63,7 @@ export class ActionPopup extends Phaser.GameObjects.Container {
                     this.on('pointerdown', () => {
                         externalCallback();
                         this.scene.input.removeDebug(this);
-                        this.scene.popupClicked = true;
+                        (this.scene as WorldScene).popupClicked = true;
                         this.destroy();
                     });
                 }

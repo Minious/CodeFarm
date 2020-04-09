@@ -1,0 +1,9 @@
+TO DO
+- take joystick and money count out of UiScene
+- use visibilty and update content of inventoryButton instead of detroying/creating it again in Inventory
+- fix joystick issues
+
+DONE
+- look at modifyInventoryItemQuantityByIndex calls and use ControllerScene inventory utility fonctions
+- fix player behind buildings
+- fix drag inventory item

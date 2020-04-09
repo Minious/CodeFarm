@@ -18,11 +18,13 @@
   },
   "homepage": "https://github.com/Minious/CodeFarm#readme",
   "dependencies": {
-    "phaser": "github:Minious/phaser#f4ba7c4e3ac87bfccae8bbfd6f6b9c07a0adcb1b"
+    "phaser": "github:Minious/phaser#5fd94d76a778daa5312c27675ab25716044a0c37"
   },
   "devDependencies": {
     "file-loader": "^6.0.0",
     "html-webpack-plugin": "^4.0.4",
+    "ts-loader": "^6.2.2",
+    "typescript": "^3.8.3",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3",
