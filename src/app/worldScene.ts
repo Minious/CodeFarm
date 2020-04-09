@@ -15,15 +15,49 @@ import { Rose } from './crops/rose';
 import { Strawberry } from './crops/strawberry';
 import { Tomato } from './crops/tomato';
 import { Wheat } from './crops/wheat';
+import { Vector2 } from "./types/vector2.type";
+import { UiScene } from "./uiScene";
+import { BuildingType, getBuildingConstructor } from "./enums/buildingType.enum";
+import { Crop } from "./crop";
+import { Inventory } from "./types/inventory.type";
+import { ControllerScene } from "./controllerScene";
+import { getCropFromSeed } from "./enums/itemType.enum";
+import { getItemData } from "./interfaces/itemData.interface";
 
 export class WorldScene extends Phaser.Scene {
+    private _layerObjectsBackground: Phaser.Tilemaps.DynamicTilemapLayer;
+    private _layerObjectsForeground: Phaser.Tilemaps.DynamicTilemapLayer;
+    private _popupClicked: boolean;
+    private speed = 240;
+    private crops: Phaser.GameObjects.Group;
+    private objects: Phaser.GameObjects.Group;
+    private map: Phaser.Tilemaps.Tilemap;
+    private layerGround: Phaser.Tilemaps.DynamicTilemapLayer;
+    private layerFields: Phaser.Tilemaps.DynamicTilemapLayer;
+    private layerCrops: Phaser.Tilemaps.DynamicTilemapLayer;
+    private player: Phaser.Physics.Arcade.Sprite;
+    private lengthJoystick: number = 25;
+    private joystickPos: Vector2;
+    private moving: boolean;
+    private actionPopup: ActionPopup;
+
+    get layerObjectsBackground(){
+        return this._layerObjectsBackground;
+    }
+
+    get layerObjectsForeground(){
+        return this._layerObjectsForeground;
+    }
+
+    set popupClicked(popupClicked: boolean){
+        this._popupClicked = popupClicked;
+    }
+
     constructor() {
         super({
             key: "WorldScene"
         })
 
-        this.speed = 240;
-        this.lengthJoystick = 25;
     }
 
     preload() {}
@@ -51,8 +85,8 @@ export class WorldScene extends Phaser.Scene {
         this.layerGround.setScale(2);
         this.layerGround.setPosition(-1000, -1000);
         var deco = [501, 469, 470, 438];
-        var level = Array(100).fill().map(() => 
-            Array(100).fill().map(() => 
+        var level = Array(100).fill(undefined).map(() => 
+            Array(100).fill(undefined).map(() => 
                 Math.random() > 0.2 ? 502 : deco[Math.floor(Math.random() * deco.length)]
             )
         );
@@ -66,14 +100,14 @@ export class WorldScene extends Phaser.Scene {
         this.layerCrops.setScale(2);
         this.layerCrops.setPosition(-1000, -1000);
 
-        this.layerObjectsBackground = this.map.createBlankDynamicLayer("Objects", tileset);
-        this.layerObjectsBackground.setScale(2);
-        this.layerObjectsBackground.setPosition(-1000, -1000);
+        this._layerObjectsBackground = this.map.createBlankDynamicLayer("Objects", tileset);
+        this._layerObjectsBackground.setScale(2);
+        this._layerObjectsBackground.setPosition(-1000, -1000);
 
-        this.layerObjectsForeground = this.map.createBlankDynamicLayer("ObjectsForeground", tileset);
-        this.layerObjectsForeground.setScale(2);
-        this.layerObjectsForeground.setPosition(-1000, -1000);
-        this.layerObjectsForeground.setDepth(100)
+        this._layerObjectsForeground = this.map.createBlankDynamicLayer("ObjectsForeground", tileset);
+        this._layerObjectsForeground.setScale(2);
+        this._layerObjectsForeground.setPosition(-1000, -1000);
+        this._layerObjectsForeground.setDepth(100)
 
         this.player = this.physics.add.sprite(0, 0, 'player');
         this.player.setSize(12, 12);
@@ -112,10 +146,9 @@ export class WorldScene extends Phaser.Scene {
         this.player.setScale(2);
         this.player.setOrigin(0.5, 1);
 
-        this.actionPopup;
-        this.popupClicked = false;
+        this._popupClicked = false;
 
-        this.input.on('pointerdown', (pointer) => {
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             let mousePos = new Phaser.Math.Vector2(
                 this.input.activePointer.x,
                 this.input.activePointer.y
@@ -123,7 +156,7 @@ export class WorldScene extends Phaser.Scene {
 
             this.joystickPos = mousePos;
         });
-        this.input.on('pointerup', (pointer) => {
+        this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
             this.player.body.stop();
             this.joystickPos = undefined;
             let mousePos = new Phaser.Math.Vector2(
@@ -132,14 +165,14 @@ export class WorldScene extends Phaser.Scene {
             );
             if(this.moving){
                 this.moving = false;
-                this.game.scene.getScene('UiScene').hideJoystick();
+                (this.game.scene.getScene('UiScene') as UiScene).hideJoystick();
             } else {
                 let mouseWorldPos = new Phaser.Math.Vector2(
                     this.input.activePointer.worldX,
                     this.input.activePointer.worldY
                 );
-                if(this.popupClicked){
-                    this.popupClicked = false;
+                if(this._popupClicked){
+                    this._popupClicked = false;
                 } else {
                     this.destroyPopup();
                     this.actionClick(mouseWorldPos);
@@ -148,59 +181,55 @@ export class WorldScene extends Phaser.Scene {
         });
         this.input.on('pointermove', () => {
             if(this.joystickPos){
-                this.game.scene.getScene('UiScene').showJoystick();
+                (this.game.scene.getScene('UiScene') as UiScene).showJoystick();
 
                 let mousePos = new Phaser.Math.Vector2(
                     this.input.activePointer.x,
                     this.input.activePointer.y
                 );
-                let distanceJoystick = mousePos.distance(this.joystickPos);
+                let joystickPosPhaserVector2 = new Phaser.Math.Vector2(this.joystickPos.x, this.joystickPos.y)
+                let distanceJoystick = mousePos.distance(joystickPosPhaserVector2);
                 if(distanceJoystick > this.lengthJoystick){
-                    let newJoystickPos = mousePos.clone().add(this.joystickPos.clone().subtract(mousePos).scale(this.lengthJoystick).scale(1 / distanceJoystick))
+                    let newJoystickPos = mousePos.clone().add(joystickPosPhaserVector2.clone().subtract(mousePos).scale(this.lengthJoystick).scale(1 / distanceJoystick))
                     this.joystickPos = newJoystickPos;
                 }
-                let joystickMove = mousePos.clone().subtract(this.joystickPos);
+                let joystickMove = mousePos.clone().subtract(joystickPosPhaserVector2);
                 let playerTarget = new Phaser.Math.Vector2(this.player.x, this.player.y).add(joystickMove);
                 let speedFactor = Utils.clamp(distanceJoystick / this.lengthJoystick, 0, 1);
 
                 this.moving = true;
                 this.movePlayerTo(playerTarget, speedFactor);
 
-                this.game.scene.getScene('UiScene').setPositionJoystick(this.joystickPos, mousePos);
+                (this.game.scene.getScene('UiScene') as UiScene).setPositionJoystick(this.joystickPos, mousePos);
             }
         })
 
         let posMarket = {x: 30, y: 30};
-        this.createBuilding('market', posMarket);
+        this.createBuilding(BuildingType.Market, posMarket);
 
         this.physics.add.collider(this.player, this.objects);
 
         this.physics.world.createDebugGraphic();
     }
 
-    createBuilding(buildingName, pos){
-        let buildingNameToConstructor = {
-            market: Market
-        }
-        if(buildingName in buildingNameToConstructor){
-            let buildingConstructor = buildingNameToConstructor[buildingName];
-            let building = new buildingConstructor(this, pos.x, pos.y);
-            this.objects.add(building);
-            this.add.existing(building);
-        }
+    createBuilding(buildingType: BuildingType, pos: Vector2){
+        let buildingConstructor = getBuildingConstructor(buildingType);
+        let building = new buildingConstructor(this, pos.x, pos.y);
+        this.objects.add(building);
+        this.add.existing(building);
     }
 
-    movePlayerTo(target, speedFactor){
+    movePlayerTo(target: Vector2, speedFactor: number){
         this.physics.moveToObject(this.player, target, this.speed * speedFactor);
     }
 
-    getNeighborTiles(layer, tilePos){
+    getNeighborTiles(layer: Phaser.Tilemaps.DynamicTilemapLayer, tilePos: Vector2){
         return this.getNeighbors(tilePos, layer.layer.width - 1, layer.layer.height - 1).map(neighborPos =>
             layer.getTileAt(neighborPos.x, neighborPos.y, true)
         );
     }
 
-    getNeighbors(pos, maxColumns, maxRows, diamond=true, radius=1){
+    getNeighbors(pos: Vector2, maxColumns: number, maxRows: number, diamond=true, radius=1){
         let neighbors = [];
         for(let i = Math.max(0, pos.x - radius); i <= Math.min(pos.x + 1, maxRows); i += 1){
             for(let j = Math.max(0, pos.y - 1); j <= Math.min(pos.y + 1, maxColumns); j += 1){
@@ -214,7 +243,7 @@ export class WorldScene extends Phaser.Scene {
         return neighbors;
     }
 
-    createFieldTile(layerFields, tilePos){
+    createFieldTile(layerFields: Phaser.Tilemaps.DynamicTilemapLayer, tilePos: Vector2){
         this.updateFieldTile(layerFields, tilePos);
         this.getNeighborTiles(layerFields, tilePos)
         .filter(neighborTile => neighborTile.index != -1)
@@ -229,7 +258,7 @@ export class WorldScene extends Phaser.Scene {
         );
     }
 
-    updateFieldTile(layerFields, tilePos){
+    updateFieldTile(layerFields: Phaser.Tilemaps.DynamicTilemapLayer, tilePos: Vector2){
         let currentTile = layerFields.getTileAt(tilePos.x, tilePos.y, true)
         currentTile.rotation = 0;
 
@@ -280,38 +309,23 @@ export class WorldScene extends Phaser.Scene {
         }
     }
 
-    harvestCrop(tilePos, crop){
+    harvestCrop(tilePos: Vector2, crop: Crop){
         let tile = this.layerCrops.getTileAt(tilePos.x, tilePos.y);
 
-        let inventory = this.game.scene.getScene('ControllerScene').data.get('inventory');
-
         let diffuseConeAngle = Math.PI / 4;
-        Object.entries(crop.lootConfig).forEach(([item, quantity], i, arr) => {
+        crop.lootConfig.forEach((loot, i, arr) => {
             let angle = - Math.PI / 2 + diffuseConeAngle / 2 - (diffuseConeAngle * (i / (arr.length - 1)));
-            let lootAnim = new LootAnim(this, tile.getCenterX(this.cameras.main), tile.getCenterY(this.cameras.main), 0, 0, angle, item, quantity);
+            let lootAnim = new LootAnim(this, tile.getCenterX(this.cameras.main), tile.getCenterY(this.cameras.main), 0, 0, angle, loot.item, loot.quantity);
             lootAnim.setScale(2);
             this.add.existing(lootAnim);
 
-            if(inventory.map(inventoryItemData => inventoryItemData.name).includes(item)){
-                this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantity(item, quantity);
-            } else {
-                let firstEmptyCellIdx = inventory.findIndex(inventoryItemData => Object.keys(inventoryItemData).length == 0);
-                if(firstEmptyCellIdx != -1) {
-                    let itemData = {
-                        name: item,
-                        quantity: quantity
-                    };
-                    this.game.scene.getScene('ControllerScene').setInventoryItemAt(firstEmptyCellIdx, itemData);
-                } else {
-                    console.log("no space available in inventory")
-                }
-            }
+            (this.game.scene.getScene('ControllerScene') as ControllerScene).modifyInventoryItemQuantity(loot.item, loot.quantity);
         });
         this.layerCrops.removeTileAt(tilePos.x, tilePos.y);
         crop.destroy();
     }
 
-    actionClick(mouseWorldPos){
+    actionClick(mouseWorldPos: Vector2){
         let tilePos = this.map.worldToTileXY(mouseWorldPos.x, mouseWorldPos.y);
         let layerFieldsTile = this.layerFields.getTileAt(tilePos.x, tilePos.y, true);
 
@@ -321,41 +335,27 @@ export class WorldScene extends Phaser.Scene {
             this.add.existing(this.actionPopup);
 
         } else {
-            let emptyField = !this.crops.getChildren().some(crop => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
+            let emptyField = !this.crops.getChildren().some((crop: Crop) => tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y)
 
-            let selectedItemInventoryIndex = this.game.scene.getScene('ControllerScene').data.get('selectedItemInventoryIndex');
-            let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
-            
-            if(emptyField && selectedItemData && selectedItemData.name){
-                let selectedItemData = this.game.scene.getScene('ControllerScene').data.get('inventory')[selectedItemInventoryIndex];
-                let selectedCropToCropConstructor = {
-                    avocadoSeed:  Avocado,
-                    grapesSeed:  Grapes,
-                    lemonSeed:  Lemon,
-                    melonSeed:  Melon,
-                    orangeSeed:  Orange,
-                    potatoSeed:  Potato,
-                    roseSeed:  Rose,
-                    strawberrySeed:  Strawberry,
-                    tomatoSeed:  Tomato,
-                    wheatSeed:  Wheat,
-                }
-                if(selectedItemData.name in selectedCropToCropConstructor ){
-                    let cropConstructor = selectedCropToCropConstructor[selectedItemData.name];
+            let selectedInventoryItemData = (this.game.scene.getScene('ControllerScene') as ControllerScene).getSelectedInventoryItemData();
+            if(emptyField && selectedInventoryItemData){
 
+                let cropConstructor = getCropFromSeed(selectedInventoryItemData.item);
+
+                if(cropConstructor){
                     let callback = () => {
                         let crop = new cropConstructor(this, tilePos.x, tilePos.y, this.layerCrops);
                         this.crops.add(crop);
-                        this.game.scene.getScene('ControllerScene').modifyInventoryItemQuantityByIndex(selectedItemInventoryIndex, -1);
+                        (this.game.scene.getScene('ControllerScene') as ControllerScene).modifySelectedInventoryItemQuantity(-1);
                     }
 
-                    let itemData = this.game.scene.getScene('ControllerScene').LIST_ITEM[selectedItemData.name];
+                    let itemData = getItemData(selectedInventoryItemData.item);
                     this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, callback, itemData.texture, itemData.frame);
                     this.add.existing(this.actionPopup);
                 }
             } else {
-                let crop = this.crops.getChildren().filter(crop => crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y)[0];
-                if(crop && crop.state == 4){
+                let crop = (this.crops.getChildren() as Array<Crop>).find(crop => crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y);
+                if(crop && crop.isReadyToHarvest){
                     this.actionPopup = new ActionPopup(this, layerFieldsTile.getCenterX(this.cameras.main), layerFieldsTile.getCenterY(this.cameras.main), 40, () => this.harvestCrop(tilePos, crop), 'tools', 0);
                     this.add.existing(this.actionPopup);
                 }
@@ -363,7 +363,7 @@ export class WorldScene extends Phaser.Scene {
         }
     }
 
-    update(time, delta) {
+    update(time: number, delta: number) {
         if (this.player.body.velocity.length() > 0){
             let moveDirection = new Phaser.Math.Vector2(this.player.body.velocity).normalize();
     

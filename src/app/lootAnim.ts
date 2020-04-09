@@ -1,22 +1,21 @@
 import * as Phaser from "phaser";
+import { ItemType } from "./enums/itemType.enum";
+import { getItemData } from "./interfaces/itemData.interface";
 
 export class LootAnim extends Phaser.GameObjects.Container {
-    constructor (scene, x, y, displayWidth, displayHeight, angle, item, quantity) {
+    constructor (scene: Phaser.Scene, x: number, y: number, displayWidth: number, displayHeight: number, angle: number, itemType: ItemType, quantity: number) {
         super(scene, x, y);
 
-        this.item = item;
-        let itemTypeData = this.scene.game.scene.getScene('ControllerScene').LIST_ITEM[this.item];
+        let itemTypeData = getItemData(itemType);
 
-        this.quantity = quantity;
+        let itemIcon = this.scene.add.sprite(0, 0, itemTypeData.texture, itemTypeData.frame);
+        this.add(itemIcon);
 
-        this.itemIcon = this.scene.add.sprite(0, 0, itemTypeData.texture, itemTypeData.frame);
-        this.add(this.itemIcon);
-
-        let itemIconBounds = this.itemIcon.getBounds();
-        this.itemCountText = this.scene.add.text(
+        let itemIconBounds = itemIcon.getBounds();
+        let itemCountText = this.scene.add.text(
             0,
             itemIconBounds.height / 2,
-            this.quantity,
+            quantity.toString(),
             {
                 fontSize: '12px',
                 fontFamily: '"Roboto Condensed"',
@@ -25,8 +24,8 @@ export class LootAnim extends Phaser.GameObjects.Container {
                 resolution: 3
             }
         );
-        this.itemCountText.setOrigin(0.5, 0.5);
-        this.add(this.itemCountText);
+        itemCountText.setOrigin(0.5, 0.5);
+        this.add(itemCountText);
 
         let dir = new Phaser.Math.Vector2().setToPolar(angle);
 
@@ -49,7 +48,7 @@ export class LootAnim extends Phaser.GameObjects.Container {
                 getEnd: () => 0
             },
             onComplete: () => {
-                this.destroy(this.scene);
+                this.destroy();
             }
         });
     }

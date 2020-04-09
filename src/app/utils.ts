@@ -1,9 +1,9 @@
 export class Utils {
-    static clamp(n, min, max) {
+    static clamp(n: number, min: number, max: number) {
         return Math.min(Math.max(n, min), max);
     }
 
-    static getRandomSetInArray(arr, n) {
+    static getRandomSetInArray(arr: Array<any>, n: number) {
         var result = new Array(n),
             len = arr.length,
             taken = new Array(len);
@@ -15,5 +15,10 @@ export class Utils {
             taken[x] = --len in taken ? taken[len] : len;
         }
         return result;
+    }
+
+    static randomEnum<T>(anEnum: T): T[keyof T] {
+        const enumValues = Object.keys(anEnum) as unknown as T[keyof T][]
+        return enumValues[Math.floor(Math.random() * enumValues.length)]
     }
 }
