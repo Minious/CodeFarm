@@ -1,11 +1,10 @@
 import * as Phaser from "phaser";
 
-import { Inventory } from "./types/inventory.type";
-import { getItemData } from "./interfaces/itemData.interface";
-import { Utils } from "./utils";
-import { ControllerScene } from "./controllerScene";
-import { Vector2 } from "./types/vector2.type";
-import { InventoryItem } from "./interfaces/inventoryItem.interface";
+import { getItemData } from "../../interfaces/itemData.interface";
+import { Utils } from "../../utils/utils";
+import { ControllerScene } from "../../scenes/controllerScene";
+import { Vector2 } from "../../types/vector2.type";
+import { InventoryItem } from "../../interfaces/inventoryItem.interface";
 
 export class InventoryButton extends Phaser.GameObjects.Container {
     private backgroundImage: Phaser.GameObjects.Image;

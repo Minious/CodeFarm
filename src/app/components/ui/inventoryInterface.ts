@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 
 import {InventoryButton} from './inventoryButton';
-import { Inventory } from "./types/inventory.type";
+import { Inventory } from "../../types/inventory.type";
 
 export class InventoryInterface extends Phaser.GameObjects.Container {
     private inventoryBarButtons: Phaser.GameObjects.Group;

@@ -1,5 +1,5 @@
-import { Crop } from '../crop';
-import { ItemType } from '../enums/itemType.enum';
+import { Crop } from './crop';
+import { ItemType } from '../../enums/itemType.enum';
 
 export class Potato extends Crop {
     constructor (scene: Phaser.Scene, x: number, y: number, layerCrops: Phaser.Tilemaps.DynamicTilemapLayer) {

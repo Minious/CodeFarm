@@ -1,8 +1,8 @@
 import * as Phaser from "phaser";
 
-import { ControllerScene } from "./controllerScene";
-import { WorldScene } from "./worldScene";
-import { UiScene } from "./uiScene";
+import { ControllerScene } from "./scenes/controllerScene";
+import { WorldScene } from "./scenes/worldScene";
+import { UiScene } from "./scenes/uiScene";
 
 export function run() {
     let config/*: Phaser.Types.Core.GameConfig*/ = {

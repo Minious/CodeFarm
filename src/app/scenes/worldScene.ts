@@ -1,28 +1,16 @@
 import * as Phaser from "phaser";
 
-import { Market } from './market';
-import { Utils } from './utils';
-import { ActionPopup } from './actionPopup';
-import { LootAnim } from './lootAnim';
+import { Utils } from '../utils/utils';
+import { ActionPopup } from '../components/worldWidgets/actionPopup';
+import { LootAnim } from '../components/worldWidgets/lootAnim';
 
-import { Avocado } from './crops/avocado';
-import { Grapes } from './crops/grapes';
-import { Lemon } from './crops/lemon';
-import { Melon } from './crops/melon';
-import { Orange } from './crops/orange';
-import { Potato } from './crops/potato';
-import { Rose } from './crops/rose';
-import { Strawberry } from './crops/strawberry';
-import { Tomato } from './crops/tomato';
-import { Wheat } from './crops/wheat';
-import { Vector2 } from "./types/vector2.type";
+import { Vector2 } from "../types/vector2.type";
 import { UiScene } from "./uiScene";
-import { BuildingType, getBuildingConstructor } from "./enums/buildingType.enum";
-import { Crop } from "./crop";
-import { Inventory } from "./types/inventory.type";
+import { BuildingType, getBuildingConstructor } from "../enums/buildingType.enum";
+import { Crop } from "../components/crops/crop";
 import { ControllerScene } from "./controllerScene";
-import { getCropFromSeed } from "./enums/itemType.enum";
-import { getItemData } from "./interfaces/itemData.interface";
+import { getCropFromSeed } from "../enums/itemType.enum";
+import { getItemData } from "../interfaces/itemData.interface";
 
 export class WorldScene extends Phaser.Scene {
     private _layerObjectsBackground: Phaser.Tilemaps.DynamicTilemapLayer;
