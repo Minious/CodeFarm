@@ -1,18 +1,18 @@
-import { Crop } from '../crop';
-import { ItemType } from '../enums/itemType.enum';
+import { Crop } from './crop';
+import { ItemType } from '../../enums/itemType.enum';
 
-export class Rose extends Crop {
+export class Lemon extends Crop {
     constructor (scene: Phaser.Scene, x: number, y: number, layerCrops: Phaser.Tilemaps.DynamicTilemapLayer) {
         let lootConfig = [
             {
-                item: ItemType.Rose,
+                item: ItemType.Lemon,
                 quantity: 1
             },
             {
-                item: ItemType.RoseSeed,
+                item: ItemType.LemonSeed,
                 quantity: 1
             }
         ];
-        super(scene, x, y, layerCrops, 60, 0, lootConfig);
+        super(scene, x, y, layerCrops, 15, 42, lootConfig);
     }
 }

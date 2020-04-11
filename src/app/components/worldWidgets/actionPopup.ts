@@ -1,13 +1,10 @@
 import * as Phaser from "phaser";
-import { WorldScene } from "./worldScene";
+
+import { WorldScene } from "../../scenes/worldScene";
 
 export class ActionPopup extends Phaser.GameObjects.Container {
-    private externalCallback: Function;
-
     constructor (scene: Phaser.Scene, x: number, y: number, displayWidth: number, externalCallback: Function, texture: string, frame: number) {
         super(scene, x, y);
-
-        this.externalCallback = externalCallback;
 
         let backgroundImage1 = this.scene.add.image(0, 0, 'ui_button');
         this.add(backgroundImage1);

@@ -1,4 +1,4 @@
-import { Market } from "../market";
+import { Market } from "../components/buildings/market";
 
 export enum BuildingType {
     Market = "MARKET"

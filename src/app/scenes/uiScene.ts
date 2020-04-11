@@ -1,10 +1,10 @@
 import * as Phaser from "phaser";
 
-import { MarketInterface } from "./marketInterface";
-import { InventoryInterface } from "./inventoryInterface";
-import { Inventory } from "./types/inventory.type";
-import { MarketConfig } from "./interfaces/marketConfig.interface";
-import { Vector2 } from "./types/vector2.type";
+import { MarketInterface } from "../components/ui/marketInterface";
+import { InventoryInterface } from "../components/ui/inventoryInterface";
+import { Inventory } from "../types/inventory.type";
+import { MarketConfig } from "../interfaces/marketConfig.interface";
+import { Vector2 } from "../types/vector2.type";
 import { ControllerScene } from "./controllerScene";
 
 export class UiScene extends Phaser.Scene {

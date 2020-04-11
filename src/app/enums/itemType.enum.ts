@@ -1,13 +1,13 @@
-import { Avocado } from "../crops/avocado";
-import { Grapes } from "../crops/grapes";
-import { Lemon } from "../crops/lemon";
-import { Melon } from "../crops/melon";
-import { Orange } from "../crops/orange";
-import { Potato } from "../crops/potato";
-import { Rose } from "../crops/rose";
-import { Strawberry } from "../crops/strawberry";
-import { Tomato } from "../crops/tomato";
-import { Wheat } from "../crops/wheat";
+import { Avocado } from "../components/crops/avocado";
+import { Grapes } from "../components/crops/grapes";
+import { Lemon } from "../components/crops/lemon";
+import { Melon } from "../components/crops/melon";
+import { Orange } from "../components/crops/orange";
+import { Potato } from "../components/crops/potato";
+import { Rose } from "../components/crops/rose";
+import { Strawberry } from "../components/crops/strawberry";
+import { Tomato } from "../components/crops/tomato";
+import { Wheat } from "../components/crops/wheat";
 
 export enum ItemType {
     Avocado = "AVOCADO",

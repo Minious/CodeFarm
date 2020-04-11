@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
-import { ItemType } from "./enums/itemType.enum";
-import { getItemData } from "./interfaces/itemData.interface";
+
+import { ItemType } from "../../enums/itemType.enum";
+import { getItemData } from "../../interfaces/itemData.interface";
 
 export class LootAnim extends Phaser.GameObjects.Container {
     constructor (scene: Phaser.Scene, x: number, y: number, displayWidth: number, displayHeight: number, angle: number, itemType: ItemType, quantity: number) {

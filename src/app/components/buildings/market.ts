@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 
 import { Building } from "./building";
-import { UiScene } from "./uiScene";
+import { UiScene } from "../../scenes/uiScene";
 
 export class Market extends Building {
     constructor (scene: Phaser.Scene, x: number, y: number) {
