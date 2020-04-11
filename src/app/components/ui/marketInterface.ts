@@ -1,10 +1,10 @@
 import * as Phaser from "phaser";
 
-import { MarketConfig } from "./interfaces/marketConfig.interface";
-import { ControllerScene } from "./controllerScene";
-import { MarketOfferType } from "./enums/marketOfferType.enum";
-import { MarketOffer } from "./interfaces/marketOffer.interface";
-import { getItemData } from "./interfaces/itemData.interface";
+import { MarketConfig } from "../../interfaces/marketConfig.interface";
+import { ControllerScene } from "../../scenes/controllerScene";
+import { MarketOfferType } from "../../enums/marketOfferType.enum";
+import { MarketOffer } from "../../interfaces/marketOffer.interface";
+import { getItemData } from "../../interfaces/itemData.interface";
 
 export class MarketInterface extends Phaser.GameObjects.Container {
     private offers: Phaser.GameObjects.Container;

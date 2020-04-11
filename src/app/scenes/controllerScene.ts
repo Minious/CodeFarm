@@ -1,22 +1,21 @@
 import * as Phaser from "phaser";
 
-import * as tileset from "../assets/tileset.png";
-import * as crops_tileset from "../assets/crops_tileset.png";
-import * as tools_tileset from "../assets/tools_tileset.png";
-import * as ui_button from "../assets/ui_button.png";
-import * as inventory_button from "../assets/inventory_button.png";
-import * as joystickBase from "../assets/joystickBase.png";
-import * as joystickHead from "../assets/joystickHead.png";
-import * as money from "../assets/money.png";
-import * as closeIcon from "../assets/closeIcon.png";
-import * as arrow from "../assets/arrow.png";
+import * as tileset from "../../assets/tileset.png";
+import * as crops_tileset from "../../assets/crops_tileset.png";
+import * as tools_tileset from "../../assets/tools_tileset.png";
+import * as ui_button from "../../assets/ui_button.png";
+import * as inventory_button from "../../assets/inventory_button.png";
+import * as joystickBase from "../../assets/joystickBase.png";
+import * as joystickHead from "../../assets/joystickHead.png";
+import * as money from "../../assets/money.png";
+import * as closeIcon from "../../assets/closeIcon.png";
+import * as arrow from "../../assets/arrow.png";
 
-import { Utils } from "./utils";
-import { MarketConfig } from "./interfaces/marketConfig.interface"
-import { ItemType } from "./enums/itemType.enum";
-import { InventoryItem } from "./interfaces/inventoryItem.interface";
-import { Inventory } from "./types/inventory.type";
-import { ItemData, getItemData } from "./interfaces/itemData.interface";
+import { Utils } from "../utils/utils";
+import { MarketConfig } from "../interfaces/marketConfig.interface"
+import { ItemType } from "../enums/itemType.enum";
+import { InventoryItem } from "../interfaces/inventoryItem.interface";
+import { Inventory } from "../types/inventory.type";
 import { UiScene } from "./uiScene";
 
 export class ControllerScene extends Phaser.Scene {

@@ -1,8 +1,8 @@
 import * as Phaser from "phaser";
 
-import { Vector2 } from "./types/vector2.type";
-import { BoundingBox } from "./interfaces/boundingBox.interface";
-import { WorldScene } from "./worldScene";
+import { Vector2 } from "../../types/vector2.type";
+import { BoundingBox } from "../../interfaces/boundingBox.interface";
+import { WorldScene } from "../../scenes/worldScene";
 
 export class Building extends Phaser.Physics.Arcade.Sprite {
     constructor (scene: Phaser.Scene, x: number, y: number, baseTileIdx: number, size: Vector2, foreground: BoundingBox, colliderPosition: BoundingBox, externalCallback: Function) {

@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 
-import { LootConfig } from "./types/lootConfig.type";
-import { Vector2 } from "./types/vector2.type";
+import { LootConfig } from "../../types/lootConfig.type";
+import { Vector2 } from "../../types/vector2.type";
 
 export class Crop extends Phaser.GameObjects.GameObject {
     private _mapPosition: Vector2;
