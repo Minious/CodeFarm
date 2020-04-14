@@ -117,8 +117,8 @@ export class InventoryButton extends Phaser.GameObjects.Container {
             this.scene.cameras.main.displayHeight - this.displayHeight / 2
           );
           const containerSpacePos: Vector2 = this.pointToContainer({
-            xPointer,
-            yPointer,
+            x: xPointer,
+            y: yPointer,
           }) as Vector2;
           contentContainer.x = containerSpacePos.x;
           contentContainer.y = containerSpacePos.y;
