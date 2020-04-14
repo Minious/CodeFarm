@@ -1,0 +1,42 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:latest", "tslint-config-prettier"],
+  "jsRules": {},
+  "rules": {
+    "array-type": [true, "generic"],
+    "no-reference": false,
+    "no-console": false,
+    "member-access": [
+      true,
+      "check-accessor",
+      "check-constructor",
+      "check-parameter-property"
+    ],
+    "member-ordering": [true, { "order": "fields-first" }],
+    "only-arrow-functions": true,
+    "prefer-for-of": true,
+    "typedef": [
+      true,
+      "call-signature",
+      "arrow-call-signature",
+      "parameter",
+      "arrow-parameter",
+      "property-declaration",
+      "variable-declaration",
+      "variable-declaration-ignore-function",
+      "member-variable-declaration",
+      "object-destructuring",
+      "array-destructuring"
+    ],
+    "curly": true,
+    "no-conditional-assignment": true,
+    "no-null-keyword": true,
+    "no-string-literal": true,
+    "no-sparse-arrays": true,
+    "no-unnecessary-class": [true, "allow-static-only"],
+    "prefer-conditional-expression": [true, "check-else-if"],
+    "class-name": true,
+    "no-parameter-properties": true
+  },
+  "rulesDirectory": []
+}

@@ -14,20 +14,21 @@ export class UiScene extends Phaser.Scene {
   private joystickHead: Phaser.GameObjects.Image;
   private moneyAmountText: Phaser.GameObjects.Text;
 
-  constructor() {
+  public constructor() {
     super({
       key: "UiScene",
     });
   }
 
-  preload() {}
+  // tslint:disable-next-line: no-empty
+  public preload(): void {}
 
-  create() {
+  public create(): void {
     this.marketInterface = new MarketInterface(
       this,
       this.cameras.main.displayWidth / 2,
       this.cameras.main.displayHeight / 2,
-      () => {
+      (): void => {
         this.closeMarket();
       }
     );
@@ -40,15 +41,15 @@ export class UiScene extends Phaser.Scene {
 
     (this.game.scene.getScene("ControllerScene") as ControllerScene).events.on(
       "setdata",
-      (parent: any, key: string, inventory: Inventory) => {
-        if (key == "inventory") {
+      (parent: any, key: string, inventory: Inventory): void => {
+        if (key === "inventory") {
           this.refreshInventory(inventory);
         }
       }
     );
     (this.game.scene.getScene("ControllerScene") as ControllerScene).events.on(
       "changedata-inventory",
-      (parent: any, inventory: Inventory) => {
+      (parent: any, inventory: Inventory): void => {
         this.refreshInventory(inventory);
       }
     );
@@ -64,12 +65,14 @@ export class UiScene extends Phaser.Scene {
     this.joystickHead.name = "joystickHead";
     this.hideJoystick();
 
-    let moneyContainer = this.add.container(
+    const moneyContainer: Phaser.GameObjects.Container = this.add.container(
       this.cameras.main.displayWidth - 45,
       40
     );
     moneyContainer.name = "moneyContainer";
-    let moneyImage = this.add.image(0, 0, "money").setScale(2);
+    const moneyImage: Phaser.GameObjects.Image = this.add
+      .image(0, 0, "money")
+      .setScale(2);
     moneyContainer.add(moneyImage);
     this.moneyAmountText = this.add
       .text(0, 0, "0", {
@@ -79,12 +82,12 @@ export class UiScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0.5);
     moneyContainer.add(this.moneyAmountText);
-    let { width, height } = moneyContainer.getBounds();
+    const { width, height }: Phaser.Geom.Rectangle = moneyContainer.getBounds();
     moneyContainer.setSize(width, height).setInteractive();
 
     (this.game.scene.getScene("ControllerScene") as ControllerScene).events.on(
       "changedata-money",
-      (parent: any, money: number) => {
+      (parent: any, money: number): void => {
         console.log("New money amount : " + money);
         this.updateMoney(money);
       }
@@ -96,42 +99,43 @@ export class UiScene extends Phaser.Scene {
     );
   }
 
-  refreshInventory(inventory: Inventory) {
-    this.inventoryInterface.buildInventory(inventory);
-  }
+  // tslint:disable-next-line: no-empty
+  public update(time: number, delta: number): void {}
 
-  changeMarketConfig(marketConfig: MarketConfig) {
+  public changeMarketConfig(marketConfig: MarketConfig): void {
     this.marketInterface.loadOffers(marketConfig);
   }
 
-  hideJoystick() {
+  public hideJoystick(): void {
     this.joystickBase.visible = false;
     this.joystickHead.visible = false;
   }
 
-  showJoystick() {
+  public showJoystick(): void {
     this.joystickBase.visible = true;
     this.joystickHead.visible = true;
   }
 
-  setPositionJoystick(posBase: Vector2, posHead: Vector2) {
+  public setPositionJoystick(posBase: Vector2, posHead: Vector2): void {
     this.joystickBase.setPosition(posBase.x, posBase.y);
     this.joystickHead.setPosition(posHead.x, posHead.y);
   }
 
-  closeMarket() {
-    this.inventoryInterface.setVisible(true);
-    this.marketInterface.setVisible(false);
-  }
-
-  openMarket() {
+  public openMarket(): void {
     this.inventoryInterface.setVisible(false);
     this.marketInterface.setVisible(true);
   }
 
-  updateMoney(moneyAmount: number) {
+  private closeMarket(): void {
+    this.inventoryInterface.setVisible(true);
+    this.marketInterface.setVisible(false);
+  }
+
+  private updateMoney(moneyAmount: number): void {
     this.moneyAmountText.setText(moneyAmount.toString());
   }
 
-  update(time: number, delta: number) {}
+  private refreshInventory(inventory: Inventory): void {
+    this.inventoryInterface.buildInventory(inventory);
+  }
 }

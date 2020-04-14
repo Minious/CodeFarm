@@ -4,31 +4,36 @@ import { MarketConfig } from "../../interfaces/marketConfig.interface";
 import { ControllerScene } from "../../scenes/controllerScene";
 import { MarketOfferType } from "../../enums/marketOfferType.enum";
 import { MarketOffer } from "../../interfaces/marketOffer.interface";
-import { getItemData } from "../../interfaces/itemData.interface";
+import { getItemData, ItemData } from "../../interfaces/itemData.interface";
+import { Vector2 } from "../../types/vector2.type";
 
 export class MarketInterface extends Phaser.GameObjects.Container {
   private offers: Phaser.GameObjects.Container;
   private marketConfig: MarketConfig;
 
-  constructor(
+  public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
-    externalCallback: Function
+    externalCallback: () => void
   ) {
     super(scene, x, y);
     this.name = "marketInterface";
 
-    let backgroundImage = this.scene.add.image(0, 0, "ui_button");
-    let backgroundMargin = 40;
+    const backgroundImage: Phaser.GameObjects.Image = this.scene.add.image(
+      0,
+      0,
+      "ui_button"
+    );
+    const backgroundMargin: number = 40;
     backgroundImage.setDisplaySize(
       this.scene.cameras.main.displayWidth - 2 * backgroundMargin,
       this.scene.cameras.main.displayHeight - 2 * backgroundMargin
     );
     this.add(backgroundImage);
 
-    let closeIconOffset = 28;
-    let closeIconPos = {
+    const closeIconOffset: number = 28;
+    const closeIconPos: Vector2 = {
       x:
         -this.scene.cameras.main.displayWidth / 2 +
         backgroundMargin +
@@ -38,7 +43,7 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         backgroundMargin +
         closeIconOffset,
     };
-    let closeIcon = this.scene.add
+    const closeIcon: Phaser.GameObjects.Image = this.scene.add
       .image(closeIconPos.x, closeIconPos.y, "closeIcon")
       .setScale(2)
       .setInteractive();
@@ -56,72 +61,75 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       .getScene("ControllerScene")
       .events.on(
         "changedata-inventory",
-        (parent: any, newInventory: any, oldInventory: any) => {
+        (parent: any, newInventory: any, oldInventory: any): void => {
           this.reloadOffers();
         }
       );
   }
 
-  reloadOffers() {
-    if (this.marketConfig) {
-      this.loadOffers(this.marketConfig);
-    }
-  }
-
-  loadOffers(marketConfig: MarketConfig) {
+  public loadOffers(marketConfig: MarketConfig): void {
     this.marketConfig = marketConfig;
 
     this.offers.removeAll(true);
     this.createMarketOffers(marketConfig);
   }
 
-  createMarketOffers(marketConfig: MarketConfig) {
-    let marginColumn = 120;
-    let marginOffer = 60;
+  private reloadOffers(): void {
+    if (this.marketConfig) {
+      this.loadOffers(this.marketConfig);
+    }
+  }
 
-    let controllerScene = this.scene.game.scene.getScene(
+  private createMarketOffers(marketConfig: MarketConfig): void {
+    const marginColumn: number = 120;
+    const marginOffer: number = 60;
+
+    const controllerScene: ControllerScene = this.scene.game.scene.getScene(
       "ControllerScene"
     ) as ControllerScene;
 
-    let createOffer = (
+    const createOffer = (
       type: MarketOfferType,
       offer: MarketOffer,
       idx: number
-    ) => {
-      let offerContainer = this.scene.add.container(
-        (type == MarketOfferType.Buying ? -1 : 1) * marginColumn,
+    ): void => {
+      const offerContainer: Phaser.GameObjects.Container = this.scene.add.container(
+        (type === MarketOfferType.Buying ? -1 : 1) * marginColumn,
         idx * marginOffer - 130
       );
 
-      let arrowContainer = this.scene.add.container(0, 0);
-      let arrow = this.scene.add
+      const arrowContainer: Phaser.GameObjects.Container = this.scene.add.container(
+        0,
+        0
+      );
+      const arrow: Phaser.GameObjects.Image = this.scene.add
         .image(0, 0, "arrow")
         .setScale(2)
         .setInteractive();
-      if (type == MarketOfferType.Buying) {
+      if (type === MarketOfferType.Buying) {
         arrow.setRotation(Math.PI);
         arrow.setOrigin(0.4, 0.5);
         arrow.setTint(0x66ff66);
       }
-      if (type == MarketOfferType.Selling) {
+      if (type === MarketOfferType.Selling) {
         arrow.setFlipY(true);
         arrow.setOrigin(0.6, 0.5);
         arrow.setTint(0xff6666);
       }
-      arrow.on("pointerover", () => {
+      arrow.on("pointerover", (): void => {
         arrow.setFlipY(!arrow.flipY);
       });
-      arrow.on("pointerout", () => {
+      arrow.on("pointerout", (): void => {
         arrow.setFlipY(!arrow.flipY);
       });
-      arrow.on("pointerdown", () => {
-        if (type == MarketOfferType.Buying) {
+      arrow.on("pointerdown", (): void => {
+        if (type === MarketOfferType.Buying) {
           if (controllerScene.data.get("money") >= offer.price) {
             controllerScene.modifyInventoryItemQuantity(offer.item, 1);
             controllerScene.changeMoneyAmount(-offer.price);
           }
         }
-        if (type == MarketOfferType.Selling) {
+        if (type === MarketOfferType.Selling) {
           if (controllerScene.inventoryContains(offer.item)) {
             controllerScene.modifyInventoryItemQuantity(offer.item, -1);
             controllerScene.changeMoneyAmount(offer.price);
@@ -129,9 +137,10 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         }
       });
       arrowContainer.add(arrow);
-      let arrowTextPosX = type == MarketOfferType.Buying ? 5 : -15;
-      let arrowTextContent = type == MarketOfferType.Buying ? "BUY" : "SELL";
-      let arrowText = this.scene.add
+      const arrowTextPosX: number = type === MarketOfferType.Buying ? 5 : -15;
+      const arrowTextContent: string =
+        type === MarketOfferType.Buying ? "BUY" : "SELL";
+      const arrowText: Phaser.GameObjects.Text = this.scene.add
         .text(arrowTextPosX, 0, arrowTextContent, {
           fontSize: "16px",
           fontFamily: '"Roboto Condensed"',
@@ -141,16 +150,19 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       arrowContainer.add(arrowText);
       offerContainer.add(arrowContainer);
 
-      let itemContainer = this.scene.add.container(-70, 0);
-      let itemTypeData = getItemData(offer.item);
-      let itemIcon = this.scene.add
+      const itemContainer: Phaser.GameObjects.Container = this.scene.add.container(
+        -70,
+        0
+      );
+      const itemTypeData: ItemData = getItemData(offer.item);
+      const itemIcon: Phaser.GameObjects.Sprite = this.scene.add
         .sprite(0, 0, itemTypeData.texture, itemTypeData.frame)
         .setScale(3);
       itemContainer.add(itemIcon);
-      let inventoryItemQuantity = controllerScene.getInventoryItemQuantity(
+      const inventoryItemQuantity: number = controllerScene.getInventoryItemQuantity(
         offer.item
       );
-      let itemQuantityText = this.scene.add
+      const itemQuantityText: Phaser.GameObjects.Text = this.scene.add
         .text(-25, 0, inventoryItemQuantity.toString(), {
           fontSize: "16px",
           fontFamily: '"Roboto Condensed"',
@@ -160,10 +172,15 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       itemContainer.add(itemQuantityText);
       offerContainer.add(itemContainer);
 
-      let moneyContainer = this.scene.add.container(70, 0);
-      let moneyImage = this.scene.add.image(0, 0, "money").setScale(2);
+      const moneyContainer: Phaser.GameObjects.Container = this.scene.add.container(
+        70,
+        0
+      );
+      const moneyImage: Phaser.GameObjects.Image = this.scene.add
+        .image(0, 0, "money")
+        .setScale(2);
       moneyContainer.add(moneyImage);
-      let moneyAmountText = this.scene.add
+      const moneyAmountText: Phaser.GameObjects.Text = this.scene.add
         .text(0, 0, offer.price.toString(), {
           fontSize: "26px",
           fontFamily: '"Roboto Condensed"',
@@ -175,11 +192,12 @@ export class MarketInterface extends Phaser.GameObjects.Container {
 
       this.offers.add(offerContainer);
     };
-    marketConfig.buyingOffers.forEach((offer, idx) =>
+    marketConfig.buyingOffers.forEach((offer: MarketOffer, idx: number): void =>
       createOffer(MarketOfferType.Buying, offer, idx)
     );
-    marketConfig.sellingOffers.forEach((offer, idx) =>
-      createOffer(MarketOfferType.Selling, offer, idx)
+    marketConfig.sellingOffers.forEach(
+      (offer: MarketOffer, idx: number): void =>
+        createOffer(MarketOfferType.Selling, offer, idx)
     );
   }
 }
