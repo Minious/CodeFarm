@@ -5,7 +5,7 @@ export interface ItemData {
   frame: number;
 }
 
-export function getItemData(itemType: ItemType): ItemData {
+export const getItemData = (itemType: ItemType): ItemData => {
   switch (itemType) {
     case ItemType.Avocado:
       return {
@@ -108,4 +108,4 @@ export function getItemData(itemType: ItemType): ItemData {
         frame: 83,
       };
   }
-}
+};

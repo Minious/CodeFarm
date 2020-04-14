@@ -2,13 +2,14 @@ import * as Phaser from "phaser";
 
 import { InventoryButton } from "./inventoryButton";
 import { Inventory } from "../../types/inventory.type";
+import { InventoryItem } from "../../interfaces/inventoryItem.interface";
 
 export class InventoryInterface extends Phaser.GameObjects.Container {
   private inventoryBarButtons: Phaser.GameObjects.Group;
   private inventoryGridButtons: Phaser.GameObjects.Group;
   private inventoryOpen: boolean;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  public constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
     this.name = "inventoryInterface";
 
@@ -18,15 +19,25 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     this.inventoryOpen = false;
   }
 
-  buildInventoryBar(inventory: Inventory) {
-    let marginButtons = 8;
-    let nbColumns = 10;
-    let nbRows = 1;
-    let sizeButton =
+  public buildInventory(inventory: Inventory): void {
+    console.log("Building Inventory");
+    this.clearInventory();
+    this.buildInventoryBar(inventory);
+    this.buildInventoryGrid(inventory);
+    this.inventoryGridButtons.setVisible(this.inventoryOpen);
+
+    this.buildInventoryOpenButton();
+  }
+
+  private buildInventoryBar(inventory: Inventory): void {
+    const marginButtons: number = 8;
+    const nbColumns: number = 10;
+    const nbRows: number = 1;
+    const sizeButton: number =
       (this.scene.cameras.main.displayWidth - marginButtons) / nbColumns -
       marginButtons;
 
-    let inventoryBarButtons = this.makeInventoryButtonsGrid(
+    const inventoryBarButtons: Array<InventoryButton> = this.makeInventoryButtonsGrid(
       inventory,
       nbColumns,
       nbRows,
@@ -35,36 +46,41 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       sizeButton,
       marginButtons,
       0,
-      (columnsIdx: number, rowIdx: number) => {
-        return (clickedButton: InventoryButton) => {
-          let clickedButtonPreviousIsSelectedValue = clickedButton.isSelected;
-          if (clickedButtonPreviousIsSelectedValue)
+      (columnsIdx: number): ((clickedButton: InventoryButton) => void) => {
+        return (clickedButton: InventoryButton): void => {
+          const clickedButtonPreviousIsSelectedValue: boolean =
+            clickedButton.isSelected;
+          if (clickedButtonPreviousIsSelectedValue) {
             this.deselectButtonInventoryBar();
-          else this.selectButtonInventoryBar(columnsIdx);
+          } else {
+            this.selectButtonInventoryBar(columnsIdx);
+          }
         };
       }
     );
 
-    inventoryBarButtons.forEach((inventoryButton, i) => {
-      this.inventoryBarButtons.add(inventoryButton);
-      if (
-        i ==
-        this.scene.game.scene
-          .getScene("ControllerScene")
-          .data.get("selectedItemInventoryIndex")
-      ) {
-        inventoryButton.isSelected = true;
+    inventoryBarButtons.forEach(
+      (inventoryButton: InventoryButton, i: number): void => {
+        this.inventoryBarButtons.add(inventoryButton);
+        if (
+          i ===
+          this.scene.game.scene
+            .getScene("ControllerScene")
+            .data.get("selectedItemInventoryIndex")
+        ) {
+          inventoryButton.isSelected = true;
+        }
       }
-    });
+    );
 
     this.scene.input.off("wheel");
-    this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer) => {
-      let idxChange = Math.sign(pointer.deltaY);
+    this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer): void => {
+      let idxChange: number = Math.sign(pointer.deltaY);
       console.log("Mouse wheel " + idxChange);
       if (
         this.scene.game.scene
           .getScene("ControllerScene")
-          .data.get("selectedItemInventoryIndex") == undefined
+          .data.get("selectedItemInventoryIndex") === undefined
       ) {
         idxChange = 0;
         this.scene.game.scene
@@ -82,7 +98,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     });
   }
 
-  selectButtonInventoryBar(buttonIdx: number) {
+  private selectButtonInventoryBar(buttonIdx: number): void {
     this.deselectButtonInventoryBar();
     (this.inventoryBarButtons.getChildren()[
       buttonIdx
@@ -92,30 +108,31 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       .data.set("selectedItemInventoryIndex", buttonIdx);
   }
 
-  deselectButtonInventoryBar() {
+  private deselectButtonInventoryBar(): void {
     this.inventoryBarButtons
       .getChildren()
-      .forEach(
-        (inventoryBarButton: InventoryButton) =>
-          (inventoryBarButton.isSelected = false)
-      );
+      .forEach((inventoryBarButton: InventoryButton): void => {
+        inventoryBarButton.isSelected = false;
+      });
     this.scene.game.scene
       .getScene("ControllerScene")
       .data.set("selectedItemInventoryIndex", undefined);
   }
 
-  buildInventoryGrid(inventory: Inventory) {
-    let sizeButton = 50;
-    let marginButtons = 8;
-    let marginButtonsInventoryBar = 8;
-    let nbColumns = 10;
-    let nbRows = 6;
-    let widthGrid = sizeButton * nbColumns + marginButtons * (nbColumns - 1);
-    let heightGrid = sizeButton * nbRows + marginButtons * (nbRows - 1);
-    let sizeButtonInventoryBar =
+  private buildInventoryGrid(inventory: Inventory): void {
+    const sizeButton: number = 50;
+    const marginButtons: number = 8;
+    const marginButtonsInventoryBar: number = 8;
+    const nbColumns: number = 10;
+    const nbRows: number = 6;
+    const widthGrid: number =
+      sizeButton * nbColumns + marginButtons * (nbColumns - 1);
+    const heightGrid: number =
+      sizeButton * nbRows + marginButtons * (nbRows - 1);
+    const sizeButtonInventoryBar: number =
       (this.scene.cameras.main.displayWidth - marginButtons) / nbColumns -
       marginButtons;
-    let inventoryGridButtons = this.makeInventoryButtonsGrid(
+    const inventoryGridButtons: Array<InventoryButton> = this.makeInventoryButtonsGrid(
       inventory,
       nbColumns,
       nbRows,
@@ -128,18 +145,18 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       marginButtons,
       10
     );
-    inventoryGridButtons.forEach((inventoryButton) =>
-      this.inventoryGridButtons.add(inventoryButton)
-    );
+    inventoryGridButtons.forEach((inventoryButton: InventoryButton): void => {
+      this.inventoryGridButtons.add(inventoryButton);
+    });
   }
 
-  buildInventoryOpenButton() {
-    let inventoryOpenButton = this.scene.add
+  private buildInventoryOpenButton(): void {
+    const inventoryOpenButton: Phaser.GameObjects.Image = this.scene.add
       .image(60, 45, "inventory_button")
       .setScale(2)
       .setInteractive();
     inventoryOpenButton.name = "inventoryOpenButton";
-    inventoryOpenButton.on("pointerup", () => {
+    inventoryOpenButton.on("pointerup", (): void => {
       this.inventoryOpen = !this.inventoryOpen;
       this.inventoryGridButtons.setVisible(this.inventoryOpen);
     });
@@ -148,21 +165,11 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     this.add(inventoryOpenButton.input.hitAreaDebug);
   }
 
-  clearInventory() {
+  private clearInventory(): void {
     this.removeAll(true);
   }
 
-  buildInventory(inventory: Inventory) {
-    console.log("Building Inventory");
-    this.clearInventory();
-    this.buildInventoryBar(inventory);
-    this.buildInventoryGrid(inventory);
-    this.inventoryGridButtons.setVisible(this.inventoryOpen);
-
-    this.buildInventoryOpenButton();
-  }
-
-  makeInventoryButtonsGrid(
+  private makeInventoryButtonsGrid(
     inventory: Inventory,
     nbColumns: number,
     nbRows: number,
@@ -171,15 +178,20 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     sizeButton: number,
     marginButtons: number,
     inventoryOffset: number = 0,
-    callbackFactory?: (x: number, y: number) => Function
-  ) {
-    let inventoryGridButtons = [];
-    for (let j = 0; j < nbRows; j += 1) {
-      for (let i = 0; i < nbColumns; i += 1) {
-        let itemInventoryIndex = inventoryOffset + i + j * nbColumns;
-        let inventoryItem = inventory[itemInventoryIndex];
-        let callback = callbackFactory ? callbackFactory(i, j) : null;
-        let inventoryButton = new InventoryButton(
+    callbackFactory?: (
+      x: number,
+      y: number
+    ) => (clickedButton: InventoryButton) => void
+  ): Array<InventoryButton> {
+    const inventoryGridButtons: Array<InventoryButton> = [];
+    for (let j: number = 0; j < nbRows; j += 1) {
+      for (let i: number = 0; i < nbColumns; i += 1) {
+        const itemInventoryIndex: number = inventoryOffset + i + j * nbColumns;
+        const inventoryItem: InventoryItem = inventory[itemInventoryIndex];
+        const callback: (
+          clickedButton: InventoryButton
+        ) => void = callbackFactory ? callbackFactory(i, j) : undefined;
+        const inventoryButton: InventoryButton = new InventoryButton(
           this.scene,
           x + marginButtons * i + sizeButton * (i + 0.5),
           y + marginButtons * j + sizeButton * (j + 0.5),

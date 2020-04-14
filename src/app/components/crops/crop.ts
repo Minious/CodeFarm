@@ -13,19 +13,7 @@ export class Crop extends Phaser.GameObjects.GameObject {
   private baseTileIdx: number;
   private _lootConfig: LootConfig;
 
-  get isReadyToHarvest(): boolean {
-    return this.growthState == 4;
-  }
-
-  get lootConfig(): LootConfig {
-    return this._lootConfig;
-  }
-
-  get mapPosition(): Vector2 {
-    return this._mapPosition;
-  }
-
-  constructor(
+  public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
@@ -34,7 +22,7 @@ export class Crop extends Phaser.GameObjects.GameObject {
     baseTileIdx: number,
     lootConfig: LootConfig
   ) {
-    super(scene, null);
+    super(scene, undefined);
 
     this._mapPosition = { x, y };
     this.layerCrops = layerCrops;
@@ -48,7 +36,19 @@ export class Crop extends Phaser.GameObjects.GameObject {
     this.updateTile();
   }
 
-  update(time: number, delta: number) {
+  public get isReadyToHarvest(): boolean {
+    return this.growthState === 4;
+  }
+
+  public get lootConfig(): LootConfig {
+    return this._lootConfig;
+  }
+
+  public get mapPosition(): Vector2 {
+    return this._mapPosition;
+  }
+
+  public update(time: number, delta: number): void {
     if (this.growthState < 4) {
       this.growth += (this.growthRate * delta) / 1000;
       if (this.growth >= 1) {
@@ -59,7 +59,7 @@ export class Crop extends Phaser.GameObjects.GameObject {
     }
   }
 
-  updateTile() {
+  private updateTile(): void {
     this.layerCrops.putTileAt(
       this.baseTileIdx + this.growthState,
       this.mapPosition.x,

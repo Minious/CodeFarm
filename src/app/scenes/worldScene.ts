@@ -13,13 +13,27 @@ import {
 import { Crop } from "../components/crops/crop";
 import { ControllerScene } from "./controllerScene";
 import { getCropFromSeed } from "../enums/itemType.enum";
-import { getItemData } from "../interfaces/itemData.interface";
+import { getItemData, ItemData } from "../interfaces/itemData.interface";
+import { Building } from "../components/buildings/building";
+import { Market } from "../components/buildings/market";
+import { Avocado } from "../components/crops/avocado";
+import { Grapes } from "../components/crops/grapes";
+import { Lemon } from "../components/crops/lemon";
+import { Melon } from "../components/crops/melon";
+import { Orange } from "../components/crops/orange";
+import { Potato } from "../components/crops/potato";
+import { Rose } from "../components/crops/rose";
+import { Strawberry } from "../components/crops/strawberry";
+import { Tomato } from "../components/crops/tomato";
+import { Wheat } from "../components/crops/wheat";
+import { InventoryItem } from "../interfaces/inventoryItem.interface";
+import { Loot } from "../interfaces/loot.interface";
 
 export class WorldScene extends Phaser.Scene {
   private _layerObjectsBackground: Phaser.Tilemaps.DynamicTilemapLayer;
   private _layerObjectsForeground: Phaser.Tilemaps.DynamicTilemapLayer;
   private _popupClicked: boolean;
-  private speed = 240;
+  private speed: number = 240;
   private crops: Phaser.GameObjects.Group;
   private objects: Phaser.GameObjects.Group;
   private map: Phaser.Tilemaps.Tilemap;
@@ -32,27 +46,28 @@ export class WorldScene extends Phaser.Scene {
   private moving: boolean;
   private actionPopup: ActionPopup;
 
-  get layerObjectsBackground() {
-    return this._layerObjectsBackground;
-  }
-
-  get layerObjectsForeground() {
-    return this._layerObjectsForeground;
-  }
-
-  set popupClicked(popupClicked: boolean) {
-    this._popupClicked = popupClicked;
-  }
-
-  constructor() {
+  public constructor() {
     super({
       key: "WorldScene",
     });
   }
 
-  preload() {}
+  public get layerObjectsBackground(): Phaser.Tilemaps.DynamicTilemapLayer {
+    return this._layerObjectsBackground;
+  }
 
-  create() {
+  public get layerObjectsForeground(): Phaser.Tilemaps.DynamicTilemapLayer {
+    return this._layerObjectsForeground;
+  }
+
+  public set popupClicked(popupClicked: boolean) {
+    this._popupClicked = popupClicked;
+  }
+
+  // tslint:disable-next-line: no-empty
+  public preload(): void {}
+
+  public create(): void {
     // game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
 
     this.crops = this.add.group();
@@ -68,23 +83,28 @@ export class WorldScene extends Phaser.Scene {
       width: 100,
       height: 100,
     });
-    var tileset = this.map.addTilesetImage("tileset", null);
-    var cropsTileset = this.map.addTilesetImage("crops", null);
+    const tileset: Phaser.Tilemaps.Tileset = this.map.addTilesetImage(
+      "tileset"
+    );
+    const cropsTileset: Phaser.Tilemaps.Tileset = this.map.addTilesetImage(
+      "crops"
+    );
 
     this.layerGround = this.map.createBlankDynamicLayer("Ground", tileset);
     this.layerGround.setScale(2);
     this.layerGround.setPosition(-1000, -1000);
-    var deco = [501, 469, 470, 438];
-    var level = Array(100)
+    const deco: Array<number> = [501, 469, 470, 438];
+    const level: Array<Array<number>> = Array(100)
       .fill(undefined)
-      .map(() =>
-        Array(100)
-          .fill(undefined)
-          .map(() =>
-            Math.random() > 0.2
-              ? 502
-              : deco[Math.floor(Math.random() * deco.length)]
-          )
+      .map(
+        (): Array<number> =>
+          Array(100)
+            .fill(undefined)
+            .map((): number =>
+              Math.random() > 0.2
+                ? 502
+                : deco[Math.floor(Math.random() * deco.length)]
+            )
       );
     this.layerGround.putTilesAt(level, 0, 0);
 
@@ -153,26 +173,22 @@ export class WorldScene extends Phaser.Scene {
 
     this._popupClicked = false;
 
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      let mousePos = new Phaser.Math.Vector2(
+    this.input.on("pointerdown", (_pointer: Phaser.Input.Pointer): void => {
+      const mousePos: Vector2 = new Phaser.Math.Vector2(
         this.input.activePointer.x,
         this.input.activePointer.y
       );
 
       this.joystickPos = mousePos;
     });
-    this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+    this.input.on("pointerup", (_pointer: Phaser.Input.Pointer): void => {
       this.player.body.stop();
       this.joystickPos = undefined;
-      let mousePos = new Phaser.Math.Vector2(
-        this.input.activePointer.x,
-        this.input.activePointer.y
-      );
       if (this.moving) {
         this.moving = false;
         (this.game.scene.getScene("UiScene") as UiScene).hideJoystick();
       } else {
-        let mouseWorldPos = new Phaser.Math.Vector2(
+        const mouseWorldPos: Vector2 = new Phaser.Math.Vector2(
           this.input.activePointer.worldX,
           this.input.activePointer.worldY
         );
@@ -184,21 +200,23 @@ export class WorldScene extends Phaser.Scene {
         }
       }
     });
-    this.input.on("pointermove", () => {
+    this.input.on("pointermove", (): void => {
       if (this.joystickPos) {
         (this.game.scene.getScene("UiScene") as UiScene).showJoystick();
 
-        let mousePos = new Phaser.Math.Vector2(
+        const mousePos: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
           this.input.activePointer.x,
           this.input.activePointer.y
         );
-        let joystickPosPhaserVector2 = new Phaser.Math.Vector2(
+        const joystickPosPhaserVector2: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
           this.joystickPos.x,
           this.joystickPos.y
         );
-        let distanceJoystick = mousePos.distance(joystickPosPhaserVector2);
+        const distanceJoystick: number = mousePos.distance(
+          joystickPosPhaserVector2
+        );
         if (distanceJoystick > this.lengthJoystick) {
-          let newJoystickPos = mousePos.clone().add(
+          const newJoystickPos: Vector2 = mousePos.clone().add(
             joystickPosPhaserVector2
               .clone()
               .subtract(mousePos)
@@ -207,12 +225,14 @@ export class WorldScene extends Phaser.Scene {
           );
           this.joystickPos = newJoystickPos;
         }
-        let joystickMove = mousePos.clone().subtract(joystickPosPhaserVector2);
-        let playerTarget = new Phaser.Math.Vector2(
+        const joystickMove: Phaser.Math.Vector2 = mousePos
+          .clone()
+          .subtract(joystickPosPhaserVector2);
+        const playerTarget: Vector2 = new Phaser.Math.Vector2(
           this.player.x,
           this.player.y
         ).add(joystickMove);
-        let speedFactor = Utils.clamp(
+        const speedFactor: number = Utils.clamp(
           distanceJoystick / this.lengthJoystick,
           0,
           1
@@ -228,7 +248,7 @@ export class WorldScene extends Phaser.Scene {
       }
     });
 
-    let posMarket = { x: 30, y: 30 };
+    const posMarket: Vector2 = { x: 30, y: 30 };
     this.createBuilding(BuildingType.Market, posMarket);
 
     this.physics.add.collider(this.player, this.objects);
@@ -236,253 +256,9 @@ export class WorldScene extends Phaser.Scene {
     this.physics.world.createDebugGraphic();
   }
 
-  createBuilding(buildingType: BuildingType, pos: Vector2) {
-    let buildingConstructor = getBuildingConstructor(buildingType);
-    let building = new buildingConstructor(this, pos.x, pos.y);
-    this.objects.add(building);
-    this.add.existing(building);
-  }
-
-  movePlayerTo(target: Vector2, speedFactor: number) {
-    this.physics.moveToObject(this.player, target, this.speed * speedFactor);
-  }
-
-  getNeighborTiles(
-    layer: Phaser.Tilemaps.DynamicTilemapLayer,
-    tilePos: Vector2
-  ) {
-    return this.getNeighbors(
-      tilePos,
-      layer.layer.width - 1,
-      layer.layer.height - 1
-    ).map((neighborPos) => layer.getTileAt(neighborPos.x, neighborPos.y, true));
-  }
-
-  getNeighbors(
-    pos: Vector2,
-    maxColumns: number,
-    maxRows: number,
-    diamond = true,
-    radius = 1
-  ) {
-    let neighbors = [];
-    for (
-      let i = Math.max(0, pos.x - radius);
-      i <= Math.min(pos.x + 1, maxRows);
-      i += 1
-    ) {
-      for (
-        let j = Math.max(0, pos.y - 1);
-        j <= Math.min(pos.y + 1, maxColumns);
-        j += 1
-      ) {
-        if (i != pos.x || j != pos.y) {
-          if (
-            diamond == false ||
-            Math.abs(pos.x - i) + Math.abs(pos.y - j) <= radius
-          ) {
-            neighbors.push({ x: i, y: j });
-          }
-        }
-      }
-    }
-    return neighbors;
-  }
-
-  createFieldTile(
-    layerFields: Phaser.Tilemaps.DynamicTilemapLayer,
-    tilePos: Vector2
-  ) {
-    this.updateFieldTile(layerFields, tilePos);
-    this.getNeighborTiles(layerFields, tilePos)
-      .filter((neighborTile) => neighborTile.index != -1)
-      .forEach((neighborTilePos) =>
-        this.updateFieldTile(layerFields, {
-          x: neighborTilePos.x,
-          y: neighborTilePos.y,
-        })
-      );
-  }
-
-  updateFieldTile(
-    layerFields: Phaser.Tilemaps.DynamicTilemapLayer,
-    tilePos: Vector2
-  ) {
-    let currentTile = layerFields.getTileAt(tilePos.x, tilePos.y, true);
-    currentTile.rotation = 0;
-
-    let neighborTilesPosOrder = [
-      { x: 0, y: -1 },
-      { x: 1, y: 0 },
-      { x: 0, y: 1 },
-      { x: -1, y: 0 },
-    ];
-    let neighborTiles = neighborTilesPosOrder.map((neighborTilePos) =>
-      layerFields.getTileAt(
-        tilePos.x + neighborTilePos.x,
-        tilePos.y + neighborTilePos.y,
-        true
-      )
-    );
-    let areNeighborTilesFields = neighborTiles.map(
-      (neighborTile) => neighborTile.index != -1
-    );
-
-    let tileIdx;
-    if (areNeighborTilesFields.filter((e) => e).length == 4) {
-      tileIdx = 197;
-    } else if (areNeighborTilesFields.filter((e) => e).length == 3) {
-      tileIdx = 196;
-      currentTile.rotation =
-        (Math.PI * areNeighborTilesFields.indexOf(false)) / 2;
-    } else if (areNeighborTilesFields.filter((e) => e).length == 2) {
-      if (areNeighborTilesFields[0] == areNeighborTilesFields[2]) {
-        tileIdx = 195;
-        if (areNeighborTilesFields.indexOf(true) == 0) {
-          currentTile.rotation = Math.PI / 2;
-        }
-      } else {
-        tileIdx = 194;
-        let currentTileRotation =
-          areNeighborTilesFields.indexOf(false) == 1
-            ? 3
-            : areNeighborTilesFields.indexOf(true);
-        currentTile.rotation = (Math.PI * currentTileRotation) / 2;
-      }
-    } else if (areNeighborTilesFields.filter((e) => e).length == 1) {
-      tileIdx = 193;
-      currentTile.rotation =
-        (Math.PI * areNeighborTilesFields.indexOf(true)) / 2;
-    } else {
-      tileIdx = 192;
-    }
-    if (tileIdx) layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
-  }
-
-  destroyPopup() {
-    if (this.actionPopup) {
-      this.input.removeDebug(this.actionPopup);
-      this.actionPopup.destroy();
-    }
-  }
-
-  harvestCrop(tilePos: Vector2, crop: Crop) {
-    let tile = this.layerCrops.getTileAt(tilePos.x, tilePos.y);
-
-    let diffuseConeAngle = Math.PI / 4;
-    crop.lootConfig.forEach((loot, i, arr) => {
-      let angle =
-        -Math.PI / 2 +
-        diffuseConeAngle / 2 -
-        diffuseConeAngle * (i / (arr.length - 1));
-      let lootAnim = new LootAnim(
-        this,
-        tile.getCenterX(this.cameras.main),
-        tile.getCenterY(this.cameras.main),
-        0,
-        0,
-        angle,
-        loot.item,
-        loot.quantity
-      );
-      lootAnim.setScale(2);
-      this.add.existing(lootAnim);
-
-      (this.game.scene.getScene(
-        "ControllerScene"
-      ) as ControllerScene).modifyInventoryItemQuantity(
-        loot.item,
-        loot.quantity
-      );
-    });
-    this.layerCrops.removeTileAt(tilePos.x, tilePos.y);
-    crop.destroy();
-  }
-
-  actionClick(mouseWorldPos: Vector2) {
-    let tilePos = this.map.worldToTileXY(mouseWorldPos.x, mouseWorldPos.y);
-    let layerFieldsTile = this.layerFields.getTileAt(
-      tilePos.x,
-      tilePos.y,
-      true
-    );
-
-    let noField = !this.layerFields.hasTileAt(tilePos.x, tilePos.y);
-    if (noField) {
-      this.actionPopup = new ActionPopup(
-        this,
-        layerFieldsTile.getCenterX(this.cameras.main),
-        layerFieldsTile.getCenterY(this.cameras.main),
-        40,
-        () => this.createFieldTile(this.layerFields, tilePos),
-        "tools",
-        1
-      );
-      this.add.existing(this.actionPopup);
-    } else {
-      let emptyField = !this.crops
-        .getChildren()
-        .some(
-          (crop: Crop) =>
-            tilePos.x == crop.mapPosition.x && tilePos.y == crop.mapPosition.y
-        );
-
-      let selectedInventoryItemData = (this.game.scene.getScene(
-        "ControllerScene"
-      ) as ControllerScene).getSelectedInventoryItemData();
-      if (emptyField && selectedInventoryItemData) {
-        let cropConstructor = getCropFromSeed(selectedInventoryItemData.item);
-
-        if (cropConstructor) {
-          let callback = () => {
-            let crop = new cropConstructor(
-              this,
-              tilePos.x,
-              tilePos.y,
-              this.layerCrops
-            );
-            this.crops.add(crop);
-            (this.game.scene.getScene(
-              "ControllerScene"
-            ) as ControllerScene).modifySelectedInventoryItemQuantity(-1);
-          };
-
-          let itemData = getItemData(selectedInventoryItemData.item);
-          this.actionPopup = new ActionPopup(
-            this,
-            layerFieldsTile.getCenterX(this.cameras.main),
-            layerFieldsTile.getCenterY(this.cameras.main),
-            40,
-            callback,
-            itemData.texture,
-            itemData.frame
-          );
-          this.add.existing(this.actionPopup);
-        }
-      } else {
-        let crop = (this.crops.getChildren() as Array<Crop>).find(
-          (crop) =>
-            crop.mapPosition.x == tilePos.x && crop.mapPosition.y == tilePos.y
-        );
-        if (crop && crop.isReadyToHarvest) {
-          this.actionPopup = new ActionPopup(
-            this,
-            layerFieldsTile.getCenterX(this.cameras.main),
-            layerFieldsTile.getCenterY(this.cameras.main),
-            40,
-            () => this.harvestCrop(tilePos, crop),
-            "tools",
-            0
-          );
-          this.add.existing(this.actionPopup);
-        }
-      }
-    }
-  }
-
-  update(time: number, delta: number) {
+  public update(time: number, delta: number): void {
     if (this.player.body.velocity.length() > 0) {
-      let moveDirection = new Phaser.Math.Vector2(
+      const moveDirection: Vector2 = new Phaser.Math.Vector2(
         this.player.body.velocity
       ).normalize();
 
@@ -508,9 +284,298 @@ export class WorldScene extends Phaser.Scene {
       Math.round(this.player.y - 15)
     );
 
-    this.crops.getChildren().forEach((crop) => crop.update(time, delta));
-    this.objects.getChildren().forEach((object) => object.update(time, delta));
+    this.crops
+      .getChildren()
+      .forEach((crop: Crop): void => crop.update(time, delta));
+    this.objects
+      .getChildren()
+      .forEach((object: any): void => object.update(time, delta));
 
     // this.game.scene.pause('mainScene');
+  }
+
+  private createBuilding(buildingType: BuildingType, pos: Vector2): void {
+    const buildingConstructor: typeof Market = getBuildingConstructor(
+      buildingType
+    );
+    const building: Building = new buildingConstructor(this, pos.x, pos.y);
+    this.objects.add(building);
+    this.add.existing(building);
+  }
+
+  private movePlayerTo(target: Vector2, speedFactor: number): void {
+    this.physics.moveToObject(this.player, target, this.speed * speedFactor);
+  }
+
+  private getNeighborTiles(
+    layer: Phaser.Tilemaps.DynamicTilemapLayer,
+    tilePos: Vector2
+  ): Array<Phaser.Tilemaps.Tile> {
+    const neighborTiles: Array<Phaser.Tilemaps.Tile> = this.getNeighbors(
+      tilePos,
+      layer.layer.width - 1,
+      layer.layer.height - 1
+    ).map(
+      (neighborPos: Vector2): Phaser.Tilemaps.Tile =>
+        layer.getTileAt(neighborPos.x, neighborPos.y, true)
+    );
+    return neighborTiles;
+  }
+
+  private getNeighbors(
+    pos: Vector2,
+    maxColumns: number,
+    maxRows: number,
+    diamond: boolean = true,
+    radius: number = 1
+  ): Array<Vector2> {
+    const neighbors: Array<Vector2> = [];
+    for (
+      let i: number = Math.max(0, pos.x - radius);
+      i <= Math.min(pos.x + 1, maxRows);
+      i += 1
+    ) {
+      for (
+        let j: number = Math.max(0, pos.y - 1);
+        j <= Math.min(pos.y + 1, maxColumns);
+        j += 1
+      ) {
+        if (i !== pos.x || j !== pos.y) {
+          if (
+            diamond === false ||
+            Math.abs(pos.x - i) + Math.abs(pos.y - j) <= radius
+          ) {
+            neighbors.push({ x: i, y: j });
+          }
+        }
+      }
+    }
+    return neighbors;
+  }
+
+  private createFieldTile(
+    layerFields: Phaser.Tilemaps.DynamicTilemapLayer,
+    tilePos: Vector2
+  ): void {
+    this.updateFieldTile(layerFields, tilePos);
+    this.getNeighborTiles(layerFields, tilePos)
+      .filter(
+        (neighborTile: Phaser.Tilemaps.Tile): boolean =>
+          neighborTile.index !== -1
+      )
+      .forEach((neighborTilePos: Vector2): void =>
+        this.updateFieldTile(layerFields, {
+          x: neighborTilePos.x,
+          y: neighborTilePos.y,
+        })
+      );
+  }
+
+  private updateFieldTile(
+    layerFields: Phaser.Tilemaps.DynamicTilemapLayer,
+    tilePos: Vector2
+  ): void {
+    const currentTile: Phaser.Tilemaps.Tile = layerFields.getTileAt(
+      tilePos.x,
+      tilePos.y,
+      true
+    );
+    currentTile.rotation = 0;
+
+    const neighborTilesPosOrder: Array<Vector2> = [
+      { x: 0, y: -1 },
+      { x: 1, y: 0 },
+      { x: 0, y: 1 },
+      { x: -1, y: 0 },
+    ];
+    const neighborTiles: Array<Phaser.Tilemaps.Tile> = neighborTilesPosOrder.map(
+      (neighborTilePos: Vector2): Phaser.Tilemaps.Tile =>
+        layerFields.getTileAt(
+          tilePos.x + neighborTilePos.x,
+          tilePos.y + neighborTilePos.y,
+          true
+        )
+    );
+    const areNeighborTilesFields: Array<boolean> = neighborTiles.map(
+      (neighborTile: Phaser.Tilemaps.Tile): boolean => neighborTile.index !== -1
+    );
+
+    let tileIdx: number;
+    if (
+      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 4
+    ) {
+      tileIdx = 197;
+    } else if (
+      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 3
+    ) {
+      tileIdx = 196;
+      currentTile.rotation =
+        (Math.PI * areNeighborTilesFields.indexOf(false)) / 2;
+    } else if (
+      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 2
+    ) {
+      if (areNeighborTilesFields[0] === areNeighborTilesFields[2]) {
+        tileIdx = 195;
+        if (areNeighborTilesFields.indexOf(true) === 0) {
+          currentTile.rotation = Math.PI / 2;
+        }
+      } else {
+        tileIdx = 194;
+        const currentTileRotation: number =
+          areNeighborTilesFields.indexOf(false) === 1
+            ? 3
+            : areNeighborTilesFields.indexOf(true);
+        currentTile.rotation = (Math.PI * currentTileRotation) / 2;
+      }
+    } else if (
+      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 1
+    ) {
+      tileIdx = 193;
+      currentTile.rotation =
+        (Math.PI * areNeighborTilesFields.indexOf(true)) / 2;
+    } else {
+      tileIdx = 192;
+    }
+    if (tileIdx) {
+      layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
+    }
+  }
+
+  private destroyPopup(): void {
+    if (this.actionPopup) {
+      this.input.removeDebug(this.actionPopup);
+      this.actionPopup.destroy();
+    }
+  }
+
+  private harvestCrop(tilePos: Vector2, crop: Crop): void {
+    const tile: Phaser.Tilemaps.Tile = this.layerCrops.getTileAt(
+      tilePos.x,
+      tilePos.y
+    );
+
+    const diffuseConeAngle: number = Math.PI / 4;
+    crop.lootConfig.forEach((loot: Loot, i: number, arr: Array<Loot>): void => {
+      const angle: number =
+        -Math.PI / 2 +
+        diffuseConeAngle / 2 -
+        diffuseConeAngle * (i / (arr.length - 1));
+      const lootAnim: LootAnim = new LootAnim(
+        this,
+        tile.getCenterX(this.cameras.main),
+        tile.getCenterY(this.cameras.main),
+        angle,
+        loot.item,
+        loot.quantity
+      );
+      lootAnim.setScale(2);
+      this.add.existing(lootAnim);
+
+      (this.game.scene.getScene(
+        "ControllerScene"
+      ) as ControllerScene).modifyInventoryItemQuantity(
+        loot.item,
+        loot.quantity
+      );
+    });
+    this.layerCrops.removeTileAt(tilePos.x, tilePos.y);
+    crop.destroy();
+  }
+
+  private actionClick(mouseWorldPos: Vector2): void {
+    const tilePos: Vector2 = this.map.worldToTileXY(
+      mouseWorldPos.x,
+      mouseWorldPos.y
+    );
+    const layerFieldsTile: Phaser.Tilemaps.Tile = this.layerFields.getTileAt(
+      tilePos.x,
+      tilePos.y,
+      true
+    );
+
+    const noField: boolean = !this.layerFields.hasTileAt(tilePos.x, tilePos.y);
+    if (noField) {
+      this.actionPopup = new ActionPopup(
+        this,
+        layerFieldsTile.getCenterX(this.cameras.main),
+        layerFieldsTile.getCenterY(this.cameras.main),
+        40,
+        (): void => this.createFieldTile(this.layerFields, tilePos),
+        "tools",
+        1
+      );
+      this.add.existing(this.actionPopup);
+    } else {
+      const emptyField: boolean = !this.crops
+        .getChildren()
+        .some(
+          (crop: Crop): boolean =>
+            tilePos.x === crop.mapPosition.x && tilePos.y === crop.mapPosition.y
+        );
+
+      const selectedInventoryItemData: InventoryItem = (this.game.scene.getScene(
+        "ControllerScene"
+      ) as ControllerScene).getSelectedInventoryItemData();
+      if (emptyField && selectedInventoryItemData) {
+        const cropConstructor:
+          | typeof Avocado
+          | typeof Grapes
+          | typeof Lemon
+          | typeof Melon
+          | typeof Orange
+          | typeof Potato
+          | typeof Rose
+          | typeof Strawberry
+          | typeof Tomato
+          | typeof Wheat = getCropFromSeed(selectedInventoryItemData.item);
+
+        if (cropConstructor) {
+          const callback = (): void => {
+            const crop: Crop = new cropConstructor(
+              this,
+              tilePos.x,
+              tilePos.y,
+              this.layerCrops
+            );
+            this.crops.add(crop);
+            (this.game.scene.getScene(
+              "ControllerScene"
+            ) as ControllerScene).modifySelectedInventoryItemQuantity(-1);
+          };
+
+          const itemData: ItemData = getItemData(
+            selectedInventoryItemData.item
+          );
+          this.actionPopup = new ActionPopup(
+            this,
+            layerFieldsTile.getCenterX(this.cameras.main),
+            layerFieldsTile.getCenterY(this.cameras.main),
+            40,
+            callback,
+            itemData.texture,
+            itemData.frame
+          );
+          this.add.existing(this.actionPopup);
+        }
+      } else {
+        const crop: Crop = (this.crops.getChildren() as Array<Crop>).find(
+          (currentCrop: Crop): boolean =>
+            currentCrop.mapPosition.x === tilePos.x &&
+            currentCrop.mapPosition.y === tilePos.y
+        );
+        if (crop && crop.isReadyToHarvest) {
+          this.actionPopup = new ActionPopup(
+            this,
+            layerFieldsTile.getCenterX(this.cameras.main),
+            layerFieldsTile.getCenterY(this.cameras.main),
+            40,
+            (): void => this.harvestCrop(tilePos, crop),
+            "tools",
+            0
+          );
+          this.add.existing(this.actionPopup);
+        }
+      }
+    }
   }
 }

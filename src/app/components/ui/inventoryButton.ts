@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 
-import { getItemData } from "../../interfaces/itemData.interface";
+import { getItemData, ItemData } from "../../interfaces/itemData.interface";
 import { Utils } from "../../utils/utils";
 import { ControllerScene } from "../../scenes/controllerScene";
 import { Vector2 } from "../../types/vector2.type";
@@ -12,20 +12,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
   private isMouseOver: boolean;
   private _itemInventoryIndex: number;
 
-  get itemInventoryIndex(): number {
-    return this._itemInventoryIndex;
-  }
-
-  get isSelected(): boolean {
-    return this._isSelected;
-  }
-
-  set isSelected(_isSelected: boolean) {
-    this._isSelected = _isSelected;
-    this.updateColor();
-  }
-
-  constructor(
+  public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
@@ -34,7 +21,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     marginIcon: number,
     inventoryItem: InventoryItem,
     itemInventoryIndex: number,
-    externalCallback: Function
+    externalCallback: (_: InventoryButton) => void
   ) {
     super(scene, x, y);
 
@@ -43,13 +30,16 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     this.backgroundImage = this.scene.add.image(0, 0, "ui_button");
     this.add(this.backgroundImage);
 
-    let contentContainer = this.scene.add.container(0, 0);
+    const contentContainer: Phaser.GameObjects.Container = this.scene.add.container(
+      0,
+      0
+    );
 
     if (inventoryItem) {
-      let itemTypeData = getItemData(inventoryItem.item);
+      const itemTypeData: ItemData = getItemData(inventoryItem.item);
 
-      let backgroundImageBounds = this.backgroundImage.getBounds();
-      let itemIcon = this.scene.add.sprite(
+      const backgroundImageBounds: Phaser.Geom.Rectangle = this.backgroundImage.getBounds();
+      const itemIcon: Phaser.GameObjects.Sprite = this.scene.add.sprite(
         0,
         0,
         itemTypeData.texture,
@@ -61,7 +51,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       );
       contentContainer.add(itemIcon);
 
-      let itemCountText = this.scene.add.text(
+      const itemCountText: Phaser.GameObjects.Text = this.scene.add.text(
         backgroundImageBounds.width / 2,
         backgroundImageBounds.height / 2,
         inventoryItem.quantity.toString(),
@@ -81,7 +71,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       this.add(contentContainer);
     }
 
-    const { width, height } = this.getBounds();
+    const { width, height }: Phaser.Geom.Rectangle = this.getBounds();
     this.setSize(width, height).setDisplaySize(displayWidth, displayHeight);
 
     this._isSelected = false;
@@ -90,43 +80,46 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     this.scene.input.setDraggable(this);
 
     if (externalCallback) {
-      this.on("pointerdown", () => {
+      this.on("pointerdown", (): void => {
         externalCallback(this);
       });
     }
 
-    this.on("pointerover", () => {
+    this.on("pointerover", (): void => {
       this.isMouseOver = true;
       this.updateColor();
     });
 
-    this.on("pointerout", () => {
+    this.on("pointerout", (): void => {
       this.isMouseOver = false;
       this.updateColor();
     });
 
     this.on(
       "dragstart",
-      (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+      (pointer: Phaser.Input.Pointer, dragX: number, dragY: number): void => {
         this.parentContainer.bringToTop(this);
       }
     );
 
     this.on(
       "drag",
-      (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+      (pointer: Phaser.Input.Pointer, dragX: number, dragY: number): void => {
         if (contentContainer) {
-          let x = Utils.clamp(
+          const xPointer: number = Utils.clamp(
             dragX,
             this.displayWidth / 2,
             this.scene.cameras.main.displayWidth - this.displayWidth / 2
           );
-          let y = Utils.clamp(
+          const yPointer: number = Utils.clamp(
             dragY,
             this.displayHeight / 2,
             this.scene.cameras.main.displayHeight - this.displayHeight / 2
           );
-          let containerSpacePos = this.pointToContainer({ x, y }) as Vector2;
+          const containerSpacePos: Vector2 = this.pointToContainer({
+            xPointer,
+            yPointer,
+          }) as Vector2;
           contentContainer.x = containerSpacePos.x;
           contentContainer.y = containerSpacePos.y;
         }
@@ -135,7 +128,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
 
     this.on(
       "dragend",
-      (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+      (pointer: Phaser.Input.Pointer, dragX: number, dragY: number): void => {
         if (contentContainer) {
           contentContainer.setPosition(0, 0);
         }
@@ -144,7 +137,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
 
     this.on(
       "drop",
-      (pointer: Phaser.Input.Pointer, target: InventoryButton) => {
+      (pointer: Phaser.Input.Pointer, target: InventoryButton): void => {
         (this.scene.game.scene.getScene(
           "ControllerScene"
         ) as ControllerScene).swapInventoryItems(
@@ -155,7 +148,20 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     );
   }
 
-  updateColor() {
+  public get itemInventoryIndex(): number {
+    return this._itemInventoryIndex;
+  }
+
+  public get isSelected(): boolean {
+    return this._isSelected;
+  }
+
+  public set isSelected(_isSelected: boolean) {
+    this._isSelected = _isSelected;
+    this.updateColor();
+  }
+
+  private updateColor(): void {
     if (this._isSelected) {
       if (this.isMouseOver) {
         this.backgroundImage.setTint(0x33dd33);
