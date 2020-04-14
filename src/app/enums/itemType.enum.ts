@@ -32,7 +32,19 @@ export enum ItemType {
   WheatSeed = "WHEAT_SEED",
 }
 
-export function getCropFromSeed(seed: ItemType) {
+export const getCropFromSeed = (
+  seed: ItemType
+):
+  | typeof Avocado
+  | typeof Grapes
+  | typeof Lemon
+  | typeof Melon
+  | typeof Orange
+  | typeof Potato
+  | typeof Rose
+  | typeof Strawberry
+  | typeof Tomato
+  | typeof Wheat => {
   switch (seed) {
     case ItemType.AvocadoSeed:
       return Avocado;
@@ -55,4 +67,5 @@ export function getCropFromSeed(seed: ItemType) {
     case ItemType.WheatSeed:
       return Wheat;
   }
-}
+  return undefined;
+};

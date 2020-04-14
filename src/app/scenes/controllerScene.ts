@@ -17,15 +17,16 @@ import { ItemType } from "../enums/itemType.enum";
 import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Inventory } from "../types/inventory.type";
 import { UiScene } from "./uiScene";
+import { MarketOffer } from "../interfaces/marketOffer.interface";
 
 export class ControllerScene extends Phaser.Scene {
-  constructor() {
+  public constructor() {
     super({
       key: "ControllerScene",
     });
   }
 
-  preload() {
+  public preload(): void {
     this.load.image("tileset", tileset.default);
     this.load.spritesheet("crops", crops_tileset.default, {
       frameWidth: 16,
@@ -48,140 +49,90 @@ export class ControllerScene extends Phaser.Scene {
     this.load.image("arrow", arrow.default);
   }
 
-  create() {
+  public create(): void {
     this.scene.launch("WorldScene");
     this.scene.launch("UiScene");
 
     this.data.set("selectedItemInventoryIndex", undefined);
     this.events.on(
       "changedata-selectedItemInventoryIndex",
-      (parent: any, selectedItemInventoryIndex: number) => {
-        if (selectedItemInventoryIndex)
+      (parent: any, selectedItemInventoryIndex: number): void => {
+        if (selectedItemInventoryIndex) {
+          const itemType: ItemType = (this.data.get("inventory") as Inventory)[
+            selectedItemInventoryIndex
+          ].item;
           console.log(
-            "Item selected : " +
-              (this.data.get("inventory") as Inventory)[
-                selectedItemInventoryIndex
-              ].item +
-              " (slot: " +
-              selectedItemInventoryIndex +
-              ")"
+            `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
           );
-        else console.log("Item deselected");
+        } else {
+          console.log("Item deselected");
+        }
       }
     );
 
-    let startingInventory: Inventory = new Array(70).fill({}).map(
-      (obj, i): InventoryItem => {
+    const startingInventory: Inventory = new Array(70).fill({}).map(
+      (obj: any, i: number): InventoryItem => {
         if (i < 15) {
-          const enumKeys = Object.keys(ItemType) as Array<string>;
-          const enumValues = Object.values(ItemType) as Array<ItemType>;
+          const enumValues: Array<ItemType> = Object.values(ItemType);
           return {
             item: enumValues[Math.floor(Math.random() * 10) + 10],
             quantity: 1 + Math.floor(Math.random() * 9),
           };
         }
+        return undefined;
       }
     );
     this.data.set("inventory", startingInventory);
 
-    let startingMoneyAmount = 10;
+    const startingMoneyAmount: number = 10;
     this.data.set("money", startingMoneyAmount);
 
     this.startMarketConfigGenerator();
   }
 
-  generateMarketConfig() {
-    let cropsOrder = [
-      ItemType.Wheat,
-      ItemType.Tomato,
-      ItemType.Lemon,
-      ItemType.Orange,
-      ItemType.Potato,
-      ItemType.Avocado,
-      ItemType.Strawberry,
-      ItemType.Melon,
-      ItemType.Grapes,
-      ItemType.Rose,
-    ];
-    let cropsSeedOrder = [
-      ItemType.WheatSeed,
-      ItemType.TomatoSeed,
-      ItemType.LemonSeed,
-      ItemType.OrangeSeed,
-      ItemType.PotatoSeed,
-      ItemType.AvocadoSeed,
-      ItemType.StrawberrySeed,
-      ItemType.MelonSeed,
-      ItemType.GrapesSeed,
-      ItemType.RoseSeed,
-    ];
-    let listSellingOffers = cropsOrder.map((crop: ItemType, idx: number) => ({
-      item: crop,
-      price: (idx + 1) * 2,
-    }));
-    let listBuyingOffers = cropsSeedOrder.map(
-      (crop: ItemType, idx: number) => ({
-        item: crop,
-        price: idx + 1,
-      })
-    );
-    let marketConfig: MarketConfig = {
-      sellingOffers: Utils.getRandomSetInArray(listSellingOffers, 5),
-      buyingOffers: Utils.getRandomSetInArray(listBuyingOffers, 5),
-    };
-    return marketConfig;
-  }
+  // tslint:disable-next-line: no-empty
+  public update(time: number, delta: number): void {}
 
-  startMarketConfigGenerator() {
-    let delayRefreshMarket = 10;
-    this.time.addEvent({
-      delay: delayRefreshMarket * 1000,
-      startAt: delayRefreshMarket * 1000 - 1,
-      callback: () => {
-        (this.game.scene.getScene("UiScene") as UiScene).changeMarketConfig(
-          this.generateMarketConfig()
-        );
-      },
-      callbackScope: this,
-      loop: true,
-    });
-  }
-
-  getSelectedInventoryItemData() {
+  public getSelectedInventoryItemData(): InventoryItem {
     return (this.data.get("inventory") as Inventory)[
       this.data.get("selectedItemInventoryIndex")
     ];
   }
 
-  getInventoryItemQuantity(itemType: ItemType) {
-    let quantity = (this.data.get("inventory") as Inventory)
+  public getInventoryItemQuantity(itemType: ItemType): number {
+    const quantity: number = (this.data.get("inventory") as Inventory)
       .filter(
-        (inventoryItem) => inventoryItem && inventoryItem.item == itemType
+        (inventoryItem: InventoryItem): boolean =>
+          inventoryItem && inventoryItem.item === itemType
       )
-      .map((inventoryItem) => inventoryItem.quantity)
-      .reduce((totalQuantity, curQuantity) => totalQuantity + curQuantity, 0);
+      .map((inventoryItem: InventoryItem): number => inventoryItem.quantity)
+      .reduce(
+        (totalQuantity: number, curQuantity: number): number =>
+          totalQuantity + curQuantity,
+        0
+      );
     return quantity;
   }
 
-  inventoryContains(itemType: ItemType, quantity?: number) {
+  public inventoryContains(itemType: ItemType, quantity?: number): boolean {
     if (quantity) {
-      let itemQuantity = this.getInventoryItemQuantity(itemType);
+      const itemQuantity: number = this.getInventoryItemQuantity(itemType);
       return itemQuantity >= quantity;
     } else {
       return (this.data.get("inventory") as Inventory)
-        .filter((inventoryItem) => inventoryItem)
-        .map((inventoryItem) => inventoryItem.item)
+        .filter((inventoryItem: InventoryItem): boolean => !!inventoryItem)
+        .map((inventoryItem: InventoryItem): ItemType => inventoryItem.item)
         .includes(itemType);
     }
   }
 
-  swapInventoryItems(itemIdx1: number, itemIdx2: number) {
-    if (itemIdx1 != itemIdx2) {
-      let inventory = this.data.get("inventory") as Inventory;
+  public swapInventoryItems(itemIdx1: number, itemIdx2: number): void {
+    if (itemIdx1 !== itemIdx2) {
+      const inventory: Inventory = this.data.get("inventory");
       if (
         inventory[itemIdx1] &&
         inventory[itemIdx2] &&
-        inventory[itemIdx1].item == inventory[itemIdx2].item
+        inventory[itemIdx1].item === inventory[itemIdx2].item
       ) {
         inventory[itemIdx2].quantity += inventory[itemIdx1].quantity;
         inventory[itemIdx1] = undefined;
@@ -195,37 +146,31 @@ export class ControllerScene extends Phaser.Scene {
     }
   }
 
-  modifySelectedInventoryItemQuantity(quantityChange: number) {
+  public modifySelectedInventoryItemQuantity(quantityChange: number): void {
     this.modifyInventoryItemQuantityByIndex(
       this.data.get("selectedItemInventoryIndex"),
       quantityChange
     );
   }
 
-  modifyInventoryItemQuantityByIndex(
-    itemInventoryIndex: number,
+  public modifyInventoryItemQuantity(
+    itemType: ItemType,
     quantityChange: number
-  ) {
-    let inventory = (this.data.get("inventory") as Inventory).slice();
-    inventory[itemInventoryIndex].quantity += quantityChange;
-    if (inventory[itemInventoryIndex].quantity <= 0) {
-      inventory[itemInventoryIndex] = undefined;
-    }
-    this.data.set("inventory", inventory);
-  }
-
-  modifyInventoryItemQuantity(itemType: ItemType, quantityChange: number) {
-    let inventory = (this.data.get("inventory") as Inventory).slice();
+  ): void {
+    const inventory: Inventory = (this.data.get(
+      "inventory"
+    ) as Inventory).slice();
     if (quantityChange > 0) {
       if (this.inventoryContains(itemType)) {
         inventory.find(
-          (inventoryItem) => inventoryItem.item == itemType
+          (inventoryItem: InventoryItem): boolean =>
+            inventoryItem.item === itemType
         ).quantity += quantityChange;
       } else {
-        let firstEmptyInventorySlotIdx = inventory.findIndex(
-          (inventoryItem) => !inventoryItem
+        const firstEmptyInventorySlotIdx: number = inventory.findIndex(
+          (inventoryItem: InventoryItem): boolean => !inventoryItem
         );
-        if (firstEmptyInventorySlotIdx != -1) {
+        if (firstEmptyInventorySlotIdx !== -1) {
           inventory[firstEmptyInventorySlotIdx] = {
             item: itemType,
             quantity: quantityChange,
@@ -233,12 +178,13 @@ export class ControllerScene extends Phaser.Scene {
         }
       }
     } else {
-      let remainingAmount = -quantityChange;
+      let remainingAmount: number = -quantityChange;
       inventory
         .filter(
-          (inventoryItem) => inventoryItem && inventoryItem.item == itemType
+          (inventoryItem: InventoryItem): boolean =>
+            inventoryItem && inventoryItem.item === itemType
         )
-        .forEach((inventoryItem) => {
+        .forEach((inventoryItem: InventoryItem): void => {
           inventoryItem.quantity -= remainingAmount;
           if (inventoryItem.quantity <= 0) {
             remainingAmount = -inventoryItem.quantity;
@@ -252,9 +198,80 @@ export class ControllerScene extends Phaser.Scene {
     this.data.set("inventory", inventory);
   }
 
-  changeMoneyAmount(change: number) {
+  public changeMoneyAmount(change: number): void {
     this.data.set("money", this.data.get("money") + change);
   }
 
-  update(time: number, delta: number) {}
+  private modifyInventoryItemQuantityByIndex(
+    itemInventoryIndex: number,
+    quantityChange: number
+  ): void {
+    const inventory: Inventory = (this.data.get(
+      "inventory"
+    ) as Inventory).slice();
+    inventory[itemInventoryIndex].quantity += quantityChange;
+    if (inventory[itemInventoryIndex].quantity <= 0) {
+      inventory[itemInventoryIndex] = undefined;
+    }
+    this.data.set("inventory", inventory);
+  }
+
+  private generateMarketConfig(): MarketConfig {
+    const cropsOrder: Array<ItemType> = [
+      ItemType.Wheat,
+      ItemType.Tomato,
+      ItemType.Lemon,
+      ItemType.Orange,
+      ItemType.Potato,
+      ItemType.Avocado,
+      ItemType.Strawberry,
+      ItemType.Melon,
+      ItemType.Grapes,
+      ItemType.Rose,
+    ];
+    const cropsSeedOrder: Array<ItemType> = [
+      ItemType.WheatSeed,
+      ItemType.TomatoSeed,
+      ItemType.LemonSeed,
+      ItemType.OrangeSeed,
+      ItemType.PotatoSeed,
+      ItemType.AvocadoSeed,
+      ItemType.StrawberrySeed,
+      ItemType.MelonSeed,
+      ItemType.GrapesSeed,
+      ItemType.RoseSeed,
+    ];
+    const listSellingOffers: Array<MarketOffer> = cropsOrder.map(
+      (crop: ItemType, idx: number): MarketOffer => ({
+        item: crop,
+        price: (idx + 1) * 2,
+      })
+    );
+    const listBuyingOffers: Array<MarketOffer> = cropsSeedOrder.map(
+      (crop: ItemType, idx: number): MarketOffer => ({
+        item: crop,
+        price: idx + 1,
+      })
+    );
+    const marketConfig: MarketConfig = {
+      sellingOffers: Utils.getRandomSetInArray(listSellingOffers, 5),
+      buyingOffers: Utils.getRandomSetInArray(listBuyingOffers, 5),
+    };
+    return marketConfig;
+  }
+
+  private startMarketConfigGenerator(): void {
+    const delayRefreshMarket: number = 10;
+    this.time.addEvent({
+      delay: delayRefreshMarket * 1000,
+      startAt: delayRefreshMarket * 1000 - 1,
+      callback: (): void => {
+        (this.game.scene.getScene("UiScene") as UiScene).changeMarketConfig(
+          this.generateMarketConfig()
+        );
+      },
+      callbackScope: this,
+      loop: true,
+    });
+  }
 }

@@ -1,24 +1,23 @@
 import * as Phaser from "phaser";
 
 import { ItemType } from "../../enums/itemType.enum";
-import { getItemData } from "../../interfaces/itemData.interface";
+import { getItemData, ItemData } from "../../interfaces/itemData.interface";
+import { Vector2 } from "../../types/vector2.type";
 
 export class LootAnim extends Phaser.GameObjects.Container {
-  constructor(
+  public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
-    displayWidth: number,
-    displayHeight: number,
     angle: number,
     itemType: ItemType,
     quantity: number
   ) {
     super(scene, x, y);
 
-    let itemTypeData = getItemData(itemType);
+    const itemTypeData: ItemData = getItemData(itemType);
 
-    let itemIcon = this.scene.add.sprite(
+    const itemIcon: Phaser.GameObjects.Sprite = this.scene.add.sprite(
       0,
       0,
       itemTypeData.texture,
@@ -26,8 +25,8 @@ export class LootAnim extends Phaser.GameObjects.Container {
     );
     this.add(itemIcon);
 
-    let itemIconBounds = itemIcon.getBounds();
-    let itemCountText = this.scene.add.text(
+    const itemIconBounds: Phaser.Geom.Rectangle = itemIcon.getBounds();
+    const itemCountText: Phaser.GameObjects.Text = this.scene.add.text(
       0,
       itemIconBounds.height / 2,
       quantity.toString(),
@@ -42,27 +41,27 @@ export class LootAnim extends Phaser.GameObjects.Container {
     itemCountText.setOrigin(0.5, 0.5);
     this.add(itemCountText);
 
-    let dir = new Phaser.Math.Vector2().setToPolar(angle);
+    const dir: Vector2 = new Phaser.Math.Vector2().setToPolar(angle);
 
-    let distance = 40;
+    const distance: number = 40;
     this.scene.tweens.add({
       targets: this,
       ease: "Sine.easeOut",
       duration: 1000,
       delay: 0,
       x: {
-        getStart: () => x,
-        getEnd: () => x + dir.x * distance,
+        getStart: (): number => x,
+        getEnd: (): number => x + dir.x * distance,
       },
       y: {
-        getStart: () => y,
-        getEnd: () => y + dir.y * distance,
+        getStart: (): number => y,
+        getEnd: (): number => y + dir.y * distance,
       },
       alpha: {
-        getStart: () => 1,
-        getEnd: () => 0,
+        getStart: (): number => 1,
+        getEnd: (): number => 0,
       },
-      onComplete: () => {
+      onComplete: (): void => {
         this.destroy();
       },
     });

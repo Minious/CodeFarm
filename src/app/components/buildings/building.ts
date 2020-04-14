@@ -5,7 +5,7 @@ import { BoundingBox } from "../../interfaces/boundingBox.interface";
 import { WorldScene } from "../../scenes/worldScene";
 
 export class Building extends Phaser.Physics.Arcade.Sprite {
-  constructor(
+  public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
@@ -13,25 +13,25 @@ export class Building extends Phaser.Physics.Arcade.Sprite {
     size: Vector2,
     foreground: BoundingBox,
     colliderPosition: BoundingBox,
-    externalCallback: Function
+    externalCallback: () => void
   ) {
-    super(scene, 0, 0, null, null);
+    super(scene, 0, 0, undefined, undefined);
 
     this.scene.physics.add.existing(this, true);
 
-    let mapPosition = new Phaser.Math.Vector2(x, y);
+    const mapPosition: Vector2 = new Phaser.Math.Vector2(x, y);
 
     this.setDisplaySize(size.x * 32, size.y * 32);
 
     this.updateTiles(mapPosition, size, foreground, baseTileIdx);
 
-    let originTile = (this
+    const originTile: Phaser.Tilemaps.Tile = (this
       .scene as WorldScene).layerObjectsBackground.getTileAt(
       mapPosition.x,
       mapPosition.y,
       true
     );
-    let worldPosition = new Phaser.Math.Vector2(
+    const worldPosition: Vector2 = new Phaser.Math.Vector2(
       originTile.getLeft(this.scene.cameras.main),
       originTile.getTop(this.scene.cameras.main)
     );
@@ -42,7 +42,7 @@ export class Building extends Phaser.Physics.Arcade.Sprite {
     this.setInteractive();
     this.input.alwaysEnabled = true;
     this.scene.input.enableDebug(this);
-    this.on("pointerup", () => {
+    this.on("pointerup", (): void => {
       externalCallback();
     });
 
@@ -52,17 +52,18 @@ export class Building extends Phaser.Physics.Arcade.Sprite {
     this.body.setOffset(colliderPosition.x, colliderPosition.y);
   }
 
-  update(time: number, delta: number) {}
+  // tslint:disable-next-line: no-empty
+  public update(time: number, delta: number): void {}
 
-  updateTiles(
+  private updateTiles(
     mapPosition: Vector2,
     size: Vector2,
     foreground: BoundingBox,
     baseTileIdx: number
-  ) {
-    for (let i = 0; i < size.x; i += 1) {
-      for (let j = 0; j < size.y; j += 1) {
-        let layer =
+  ): void {
+    for (let i: number = 0; i < size.x; i += 1) {
+      for (let j: number = 0; j < size.y; j += 1) {
+        const layer: Phaser.Tilemaps.DynamicTilemapLayer =
           i >= foreground.x &&
           i <= foreground.x + foreground.width &&
           j >= foreground.y &&

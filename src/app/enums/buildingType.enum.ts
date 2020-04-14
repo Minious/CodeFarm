@@ -4,9 +4,11 @@ export enum BuildingType {
   Market = "MARKET",
 }
 
-export function getBuildingConstructor(buildingType: BuildingType) {
+export const getBuildingConstructor = (
+  buildingType: BuildingType
+): typeof Market => {
   switch (buildingType) {
     case BuildingType.Market:
       return Market;
   }
-}
+};
