@@ -1,6 +1,6 @@
-import { ItemType } from "../enums/itemType.enum"
+import { ItemType } from "../enums/itemType.enum";
 
 export interface Loot {
-    item: ItemType,
-    quantity: number
+  item: ItemType;
+  quantity: number;
 }
