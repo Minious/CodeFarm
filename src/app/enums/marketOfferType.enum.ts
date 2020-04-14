@@ -1,4 +1,4 @@
 export enum MarketOfferType {
-    Buying = "BUYING",
-    Selling = "SELLING",
+  Buying = "BUYING",
+  Selling = "SELLING",
 }

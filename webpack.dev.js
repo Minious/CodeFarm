@@ -4,12 +4,12 @@ const merge = require("webpack-merge");
 const common = require("./webpack.common");
 
 module.exports = merge(common, {
-    mode: "development",
-    output: {
-        filename: "main.js",
-        path: path.resolve(__dirname, "dist")
-    },
-    devServer: {
-        writeToDisk: true
-    }
+  mode: "development",
+  output: {
+    filename: "main.js",
+    path: path.resolve(__dirname, "dist"),
+  },
+  devServer: {
+    writeToDisk: true,
+  },
 });
