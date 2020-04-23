@@ -1,0 +1,50 @@
+{
+  "name": "codefarm",
+  "version": "0.1.0",
+  "description": "CodeFarm is the prototype of a farming game which is on its way of becoming the GREATEST farming game ever !\r The player personifies a farmer which needs to expand his farm by growing crops and selling goods. He will have to protect his farm against an mysterious alien invasion.",
+  "private": true,
+  "scripts": {
+    "start": "webpack-dev-server --config webpack.dev.js --open",
+    "build": "webpack --config webpack.prod.js",
+    "prettier": "prettier --write \"src/**/*.ts\""
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged; ./node_modules/.bin/tslint ./src/**/*.ts"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.ts": "prettier --write",
+    "webpack.*.js": "prettier --write",
+    "*.json": "prettier --write",
+    "*.md": "prettier --write"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Minious/CodeFarm.git"
+  },
+  "author": "Eliot Godard",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Minious/CodeFarm/issues"
+  },
+  "homepage": "https://github.com/Minious/CodeFarm#readme",
+  "dependencies": {
+    "phaser": "github:Minious/phaser#5fd94d76a778daa5312c27675ab25716044a0c37"
+  },
+  "devDependencies": {
+    "file-loader": "^6.0.0",
+    "html-webpack-plugin": "^4.0.4",
+    "husky": "^4.2.5",
+    "lint-staged": "^10.1.3",
+    "prettier": "^2.0.4",
+    "ts-loader": "^6.2.2",
+    "tslint": "^6.1.1",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.8.3",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3",
+    "webpack-merge": "^4.2.2"
+  }
+}
