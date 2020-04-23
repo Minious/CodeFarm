@@ -36,7 +36,8 @@
     "no-unnecessary-class": [true, "allow-static-only"],
     "prefer-conditional-expression": [true, "check-else-if"],
     "class-name": true,
-    "no-parameter-properties": true
+    "no-parameter-properties": true,
+    "jsdoc-format": [true, "check-multiline-start"]
   },
   "rulesDirectory": []
 }
