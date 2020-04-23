@@ -1,1 +1,3 @@
-phaser
+dist
+node_modules
+.vscode
