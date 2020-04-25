@@ -4,7 +4,21 @@ import { ItemType } from "../../enums/itemType.enum";
 import { getItemData, ItemData } from "../../interfaces/itemData.interface";
 import { Vector2 } from "../../types/vector2.type";
 
+/**
+ * A Loot Animation displayed in the world view telling the player that he
+ * looted an Item. The animation is a fading straight line translation.
+ */
 export class LootAnim extends Phaser.GameObjects.Container {
+  /**
+   * Creates the LootAnim object.
+   * @param {Phaser.Scene} scene - The Phaser Scene this LootAnim belongs to
+   * (should be WorldScene)
+   * @param {number} x - The x position of the Popup in the world
+   * @param {number} y - The y position of the Popup in the world
+   * @param {number} angle - The direction of the animation
+   * @param {ItemType} itemType - The ItemType of the Item looted
+   * @param {number} quantity - The quantity of ItemType looted
+   */
   public constructor(
     scene: Phaser.Scene,
     x: number,
@@ -15,6 +29,7 @@ export class LootAnim extends Phaser.GameObjects.Container {
   ) {
     super(scene, x, y);
 
+    // Creates the Item sprite
     const itemTypeData: ItemData = getItemData(itemType);
 
     const itemIcon: Phaser.GameObjects.Sprite = this.scene.add.sprite(
@@ -25,6 +40,7 @@ export class LootAnim extends Phaser.GameObjects.Container {
     );
     this.add(itemIcon);
 
+    // Creates the Loot quantity Text
     const itemIconBounds: Phaser.Geom.Rectangle = itemIcon.getBounds();
     const itemCountText: Phaser.GameObjects.Text = this.scene.add.text(
       0,
@@ -41,6 +57,7 @@ export class LootAnim extends Phaser.GameObjects.Container {
     itemCountText.setOrigin(0.5, 0.5);
     this.add(itemCountText);
 
+    // Starts the animation
     const dir: Vector2 = new Phaser.Math.Vector2().setToPolar(angle);
 
     const distance: number = 40;
