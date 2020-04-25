@@ -2,6 +2,9 @@ import { Crop } from "./crop";
 import { ItemType } from "../../enums/itemType.enum";
 import { LootConfig } from "../../types/lootConfig.type";
 
+/**
+ * Defines the Orange Crop.
+ */
 export class Orange extends Crop {
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     const lootConfig: LootConfig = [
