@@ -9,6 +9,9 @@ import { Strawberry } from "../components/crops/strawberry";
 import { Tomato } from "../components/crops/tomato";
 import { Wheat } from "../components/crops/wheat";
 
+/**
+ * The the list of all the item in the game.
+ */
 export enum ItemType {
   Avocado = "AVOCADO",
   Grapes = "GRAPES",
@@ -32,7 +35,13 @@ export enum ItemType {
   WheatSeed = "WHEAT_SEED",
 }
 
-export const getCropFromSeed = (
+/**
+ * Returns the Crop constructor associated to the crop seed ItemType.
+ * @param seed - The seed to return the Crop constructor associated with
+ * @returns {Crop} - The Crop constructor associated with the seed
+ * (Note : Move to Crop class ?)
+ */
+export const getCropConstructorFromSeed = (
   seed: ItemType
 ):
   | typeof Avocado
