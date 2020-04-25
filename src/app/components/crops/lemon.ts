@@ -3,12 +3,7 @@ import { ItemType } from "../../enums/itemType.enum";
 import { LootConfig } from "../../types/lootConfig.type";
 
 export class Lemon extends Crop {
-  public constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    layerCrops: Phaser.Tilemaps.DynamicTilemapLayer
-  ) {
+  public constructor(scene: Phaser.Scene, x: number, y: number) {
     const lootConfig: LootConfig = [
       {
         item: ItemType.Lemon,
@@ -19,6 +14,6 @@ export class Lemon extends Crop {
         quantity: 1,
       },
     ];
-    super(scene, x, y, layerCrops, 15, 42, lootConfig);
+    super(scene, x, y, 15, 42, lootConfig);
   }
 }

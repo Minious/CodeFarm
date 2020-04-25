@@ -125,14 +125,14 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       arrow.on("pointerdown", (): void => {
         if (type === MarketOfferType.Buying) {
           if (controllerScene.data.get("money") >= offer.price) {
-            controllerScene.modifyInventoryItemQuantity(offer.item, 1);
-            controllerScene.changeMoneyAmount(-offer.price);
+            controllerScene.modifyItemTypeQuantityInInventory(offer.item, 1);
+            controllerScene.modifyMoneyAmount(-offer.price);
           }
         }
         if (type === MarketOfferType.Selling) {
           if (controllerScene.inventoryContains(offer.item)) {
-            controllerScene.modifyInventoryItemQuantity(offer.item, -1);
-            controllerScene.changeMoneyAmount(offer.price);
+            controllerScene.modifyItemTypeQuantityInInventory(offer.item, -1);
+            controllerScene.modifyMoneyAmount(offer.price);
           }
         }
       });
