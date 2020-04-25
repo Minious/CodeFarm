@@ -2,10 +2,11 @@ import * as Phaser from "phaser";
 
 import { LootConfig } from "../../types/lootConfig.type";
 import { Vector2 } from "../../types/vector2.type";
+import { WorldScene } from "../../scenes/worldScene";
 
 export class Crop extends Phaser.GameObjects.GameObject {
-  private _mapPosition: Vector2;
-  private layerCrops: Phaser.Tilemaps.DynamicTilemapLayer;
+  private _tilePos: Vector2;
+  private _tile: Phaser.Tilemaps.Tile;
   private growthState: number;
   private growth: number;
   private nbSteps: number;
@@ -17,15 +18,13 @@ export class Crop extends Phaser.GameObjects.GameObject {
     scene: Phaser.Scene,
     x: number,
     y: number,
-    layerCrops: Phaser.Tilemaps.DynamicTilemapLayer,
     growthDuration: number,
     baseTileIdx: number,
     lootConfig: LootConfig
   ) {
     super(scene, undefined);
 
-    this._mapPosition = { x, y };
-    this.layerCrops = layerCrops;
+    this._tilePos = { x, y };
     this.growthState = 0;
     this.growth = 0;
     this.nbSteps = 5;
@@ -44,8 +43,12 @@ export class Crop extends Phaser.GameObjects.GameObject {
     return this._lootConfig;
   }
 
-  public get mapPosition(): Vector2 {
-    return this._mapPosition;
+  public get tilePos(): Vector2 {
+    return this._tilePos;
+  }
+
+  public get tile(): Phaser.Tilemaps.Tile {
+    return this._tile;
   }
 
   public update(time: number, delta: number): void {
@@ -60,10 +63,10 @@ export class Crop extends Phaser.GameObjects.GameObject {
   }
 
   private updateTile(): void {
-    this.layerCrops.putTileAt(
+    (this.scene as WorldScene).layerCrops.putTileAt(
       this.baseTileIdx + this.growthState,
-      this.mapPosition.x,
-      this.mapPosition.y
+      this.tilePos.x,
+      this.tilePos.y
     );
   }
 }

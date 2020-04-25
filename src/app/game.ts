@@ -6,9 +6,8 @@ import { UiScene } from "./scenes/uiScene";
 
 export const run = (): void => {
   /**
-   * The global config of the game.
-   * Defines the size of the canvas, the div parent HTML element,
-   * the physics engine, the pixel art mode which doesn't
+   * The global config of the game. Defines the size of the canvas, the div
+   * parent HTML element, the physics engine, the pixel art mode which doesn't
    * interpolate pixels when resizing images and the Scenes list.
    */
   const config: Phaser.Types.Core.GameConfig = {

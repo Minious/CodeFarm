@@ -1,3 +1,5 @@
+import { Vector2 } from "../types/vector2.type";
+
 export class Utils {
   public static clamp(n: number, min: number, max: number): number {
     return Math.min(Math.max(n, min), max);
@@ -23,5 +25,21 @@ export class Utils {
       anEnum
     ) as unknown) as Array<T[keyof T]>;
     return enumValues[Math.floor(Math.random() * enumValues.length)];
+  }
+
+  public static distance(v1: Vector2, v2: Vector2): number {
+    return Math.sqrt(Math.pow(v2.x - v1.x, 2) + Math.pow(v2.y - v1.y, 2));
+  }
+
+  public static add(v1: Vector2, v2: Vector2): Vector2 {
+    return { x: v1.x + v2.x, y: v1.y + v2.y };
+  }
+
+  public static subtract(v1: Vector2, v2: Vector2): Vector2 {
+    return { x: v1.x - v2.x, y: v1.y - v2.y };
+  }
+
+  public static scale(v: Vector2, s: number): Vector2 {
+    return { x: v.x * s, y: v.y * s };
   }
 }
