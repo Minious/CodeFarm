@@ -8,11 +8,11 @@ import { Vector2 } from "../types/vector2.type";
 import { UiScene } from "./uiScene";
 import {
   BuildingType,
-  getBuildingConstructor,
+  getBuildingConstructorFromBuildingType,
 } from "../enums/buildingType.enum";
 import { Crop } from "../components/crops/crop";
 import { ControllerScene } from "./controllerScene";
-import { getCropFromSeed } from "../enums/itemType.enum";
+import { getCropConstructorFromSeed } from "../enums/itemType.enum";
 import { getItemData, ItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
 import { Market } from "../components/buildings/market";
@@ -434,7 +434,7 @@ export class WorldScene extends Phaser.Scene {
    * @param {Vector2} pos - Tilemap position of the building
    */
   private createBuilding(buildingType: BuildingType, pos: Vector2): void {
-    const buildingConstructor: typeof Market = getBuildingConstructor(
+    const buildingConstructor: typeof Market = getBuildingConstructorFromBuildingType(
       buildingType
     );
     const building: Building = new buildingConstructor(this, pos.x, pos.y);
@@ -715,7 +715,9 @@ export class WorldScene extends Phaser.Scene {
           | typeof Rose
           | typeof Strawberry
           | typeof Tomato
-          | typeof Wheat = getCropFromSeed(selectedInventoryItemData.item);
+          | typeof Wheat = getCropConstructorFromSeed(
+          selectedInventoryItemData.item
+        );
 
         if (cropConstructor) {
           const callback = (): void => {
