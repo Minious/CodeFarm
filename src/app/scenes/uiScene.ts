@@ -46,7 +46,7 @@ export class UiScene extends Phaser.Scene {
     this.marketInterface.setVisible(false);
 
     // Create the InventoryInterface
-    this.inventoryInterface = new InventoryInterface(this, 0, 0);
+    this.inventoryInterface = new InventoryInterface(this);
     this.add.existing(this.inventoryInterface);
     /**
      * When the ControllerScene's 'inventory' data is modified, triggers the
