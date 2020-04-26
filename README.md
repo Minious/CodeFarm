@@ -1,7 +1,7 @@
 # CodeFarm
 
 CodeFarm is the prototype of a farming game which is on its way of becoming the GREATEST farming game ever !
-The player personifies a farmer which needs to expand his farm by growing crops and selling goods. He will have to protect his farm against an mysterious alien invasion.
+The player personifies a farmer which needs to expand his farm by growing crops and selling goods. He will have to protect his farm against a mysterious alien invasion.
 
 ## Getting Started
 
