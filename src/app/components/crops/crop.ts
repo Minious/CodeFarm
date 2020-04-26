@@ -123,5 +123,9 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
       this.tilePos.x,
       this.tilePos.y
     );
+    this._tile = (this.scene as WorldScene).layerCrops.getTileAt(
+      this.tilePos.x,
+      this.tilePos.y
+    );
   }
 }
