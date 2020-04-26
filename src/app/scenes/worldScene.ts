@@ -177,6 +177,8 @@ export class WorldScene extends Phaser.Scene {
             )
       );
     this.layerGround.putTilesAt(level, 0, 0);
+    // Enable the ground for interaction with the Tiles (Popups)
+    this.layerGround.setInteractive();
 
     // Initializes the layerFields
     this.layerFields = this.map.createBlankDynamicLayer("Fields", tileset);
@@ -261,18 +263,21 @@ export class WorldScene extends Phaser.Scene {
      * (Note : Should be moved to its own function)
      */
     // Triggered when the pointer is pressed (Mouse button pressed or finger tap)
-    this.input.on("pointerdown", (_pointer: Phaser.Input.Pointer): void => {
-      // Retrieves the pointer's screen position
-      const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
-        this.input.activePointer.x,
-        this.input.activePointer.y
-      );
+    this.layerGround.on(
+      "pointerdown",
+      (_pointer: Phaser.Input.Pointer): void => {
+        // Retrieves the pointer's screen position
+        const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
+          this.input.activePointer.x,
+          this.input.activePointer.y
+        );
 
-      // Sets the joystick base position in case the pointer is dragged
-      this.joystickPos = pointerScreenPos;
-    });
+        // Sets the joystick base position in case the pointer is dragged
+        this.joystickPos = pointerScreenPos;
+      }
+    );
     // Triggered when the pointer is released (Mouse button or finger released)
-    this.input.on("pointerup", (_pointer: Phaser.Input.Pointer): void => {
+    this.layerGround.on("pointerup", (_pointer: Phaser.Input.Pointer): void => {
       // Stops the player's physic body (In case it was moving)
       this.player.body.stop();
 
@@ -300,7 +305,7 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // Triggered when the pointer is moving
-    this.input.on("pointermove", (): void => {
+    this.layerGround.on("pointermove", (): void => {
       // If the pointer is down means the player is moving
       if (this.input.activePointer.isDown) {
         /**
