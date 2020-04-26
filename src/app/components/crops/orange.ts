@@ -2,13 +2,11 @@ import { Crop } from "./crop";
 import { ItemType } from "../../enums/itemType.enum";
 import { LootConfig } from "../../types/lootConfig.type";
 
+/**
+ * Defines the Orange Crop.
+ */
 export class Orange extends Crop {
-  public constructor(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    layerCrops: Phaser.Tilemaps.DynamicTilemapLayer
-  ) {
+  public constructor(scene: Phaser.Scene, x: number, y: number) {
     const lootConfig: LootConfig = [
       {
         item: ItemType.Orange,
@@ -19,6 +17,6 @@ export class Orange extends Crop {
         quantity: 1,
       },
     ];
-    super(scene, x, y, layerCrops, 18, 119, lootConfig);
+    super(scene, x, y, 18, 119, lootConfig);
   }
 }

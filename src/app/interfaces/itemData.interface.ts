@@ -1,10 +1,18 @@
 import { ItemType } from "../enums/itemType.enum";
 
+/**
+ * Contains all the data about an ItemType.
+ */
 export interface ItemData {
   texture: string;
   frame: number;
 }
 
+/**
+ * Returns the ItemData for each value in the ItemType enum.
+ * @param itemType - The ItemType to return the ItemData associted with
+ * @returns {ItemData} - The ItemData asosciated with the ItemData
+ */
 export const getItemData = (itemType: ItemType): ItemData => {
   switch (itemType) {
     case ItemType.Avocado:

@@ -8,11 +8,11 @@ import { Vector2 } from "../types/vector2.type";
 import { UiScene } from "./uiScene";
 import {
   BuildingType,
-  getBuildingConstructor,
+  getBuildingConstructorFromBuildingType,
 } from "../enums/buildingType.enum";
 import { Crop } from "../components/crops/crop";
 import { ControllerScene } from "./controllerScene";
-import { getCropFromSeed } from "../enums/itemType.enum";
+import { getCropConstructorFromSeed } from "../enums/itemType.enum";
 import { getItemData, ItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
 import { Market } from "../components/buildings/market";
@@ -30,20 +30,60 @@ import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Loot } from "../interfaces/loot.interface";
 
 export class WorldScene extends Phaser.Scene {
+  /**
+   * Trick variable to disable the actionClick if a popup has been clicked.
+   * Since the popup is destroyed when click, the click is passing through to
+   * the tilemap, this variable is the current fix to stop the propagation of
+   * the click.
+   * (NOTE : Find better solution)
+   */
+  private _popupClicked: boolean;
+  // Player's moving speed
+  private speed: number = 240;
+  // Phaser Group holding the Crop objects
+  private crops: Phaser.GameObjects.Group;
+  /**
+   * Phaser Group holding the objects (Building, etc), enables the collision
+   * between the group and the player and calls the update method of its
+   * children.
+   */
+  private objects: Phaser.GameObjects.Group;
+  // The game's Tilemap
+  private map: Phaser.Tilemaps.Tilemap;
+  // Tilemap layer holding the ground tiles
+  private layerGround: Phaser.Tilemaps.DynamicTilemapLayer;
+  // Tilemap layer holding the field tiles (above layerGround)
+  private layerFields: Phaser.Tilemaps.DynamicTilemapLayer;
+  // Tilemap layer holding the crop tiles (above layerFields)
+  private _layerCrops: Phaser.Tilemaps.DynamicTilemapLayer;
+  /**
+   * Tilemap layers holding the objects (buildings, etc) tiles (above
+   * _layerCrops). The use of a background and foreground allow to use depth with
+   * the player, _layerObjectsBackground stands behind the player and
+   * _layerObjectsBackground above.
+   */
   private _layerObjectsBackground: Phaser.Tilemaps.DynamicTilemapLayer;
   private _layerObjectsForeground: Phaser.Tilemaps.DynamicTilemapLayer;
-  private _popupClicked: boolean;
-  private speed: number = 240;
-  private crops: Phaser.GameObjects.Group;
-  private objects: Phaser.GameObjects.Group;
-  private map: Phaser.Tilemaps.Tilemap;
-  private layerGround: Phaser.Tilemaps.DynamicTilemapLayer;
-  private layerFields: Phaser.Tilemaps.DynamicTilemapLayer;
-  private layerCrops: Phaser.Tilemaps.DynamicTilemapLayer;
+  // The player Sprite
   private player: Phaser.Physics.Arcade.Sprite;
-  private lengthJoystick: number = 25;
+  /**
+   * Maximum length between the base and the head of the joystick
+   * (NOTE : Joystick should have its own class because it is used by
+   * WorldScene and UiScene)
+   */
+  private maxLengthJoystick: number = 25;
+  // The joystick base's position
   private joystickPos: Vector2;
+  /**
+   * Is the player moving. Used when the pointerup event fires to know if the
+   * player dragged (the player stop moving) or clicked (the actionClick method
+   * is called)
+   */
   private moving: boolean;
+  /**
+   * If there's an ActionPopup instantiated (when player clicks on the ground),
+   * holds it.
+   */
   private actionPopup: ActionPopup;
 
   public constructor() {
@@ -52,14 +92,22 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
+  // Getter for _layerObjectsBackground
   public get layerObjectsBackground(): Phaser.Tilemaps.DynamicTilemapLayer {
     return this._layerObjectsBackground;
   }
 
+  // Getter for _layerObjectsForeground
   public get layerObjectsForeground(): Phaser.Tilemaps.DynamicTilemapLayer {
     return this._layerObjectsForeground;
   }
 
+  // Getter for _layerCrops
+  public get layerCrops(): Phaser.Tilemaps.DynamicTilemapLayer {
+    return this._layerCrops;
+  }
+
+  // Setter for _popupClicked
   public set popupClicked(popupClicked: boolean) {
     this._popupClicked = popupClicked;
   }
@@ -67,22 +115,42 @@ export class WorldScene extends Phaser.Scene {
   // tslint:disable-next-line: no-empty
   public preload(): void {}
 
+  /**
+   * Initializes the Tilemap layers (objects, fields, crops and ground), the
+   * player and the player inputs.
+   */
   public create(): void {
-    // game.canvas.oncontextmenu = function (e) { e.preventDefault(); }
+    // Disables right click
+    this.game.canvas.oncontextmenu = (e: MouseEvent): void => {
+      e.preventDefault();
+    };
 
+    // Creates the Phaser Groups
     this.crops = this.add.group();
     this.objects = this.add.group();
 
-    // this.cameras.main.setBackgroundColor('#DDDDDD')
+    /**
+     * Places the camera centered to the origin (default is left upper corner is
+     * at origin)
+     */
     this.cameras.main.centerOn(0, 0);
+    /**
+     * Is supposed to round camera position coordinates to integer
+     * (Note : Check if it works)
+     */
     this.cameras.main.roundPixels = true;
 
+    /**
+     * Creates the worlds Tilemap of 100x100 tiles with the size of 16 pixels
+     * (the size of the tile in the png)
+     */
     this.map = this.make.tilemap({
       tileWidth: 16,
       tileHeight: 16,
       width: 100,
       height: 100,
     });
+    // Adds the tilesets (texture) to the Tilemap
     const tileset: Phaser.Tilemaps.Tileset = this.map.addTilesetImage(
       "tileset"
     );
@@ -90,9 +158,11 @@ export class WorldScene extends Phaser.Scene {
       "crops"
     );
 
+    // Initializes the layerGround
     this.layerGround = this.map.createBlankDynamicLayer("Ground", tileset);
     this.layerGround.setScale(2);
     this.layerGround.setPosition(-1000, -1000);
+    // Fills the layerGround with random tiles with different probabilities
     const deco: Array<number> = [501, 469, 470, 438];
     const level: Array<Array<number>> = Array(100)
       .fill(undefined)
@@ -108,14 +178,17 @@ export class WorldScene extends Phaser.Scene {
       );
     this.layerGround.putTilesAt(level, 0, 0);
 
+    // Initializes the layerFields
     this.layerFields = this.map.createBlankDynamicLayer("Fields", tileset);
     this.layerFields.setScale(2);
     this.layerFields.setPosition(-1000, -1000);
 
-    this.layerCrops = this.map.createBlankDynamicLayer("Crops", cropsTileset);
-    this.layerCrops.setScale(2);
-    this.layerCrops.setPosition(-1000, -1000);
+    // Initializes the layerCrops
+    this._layerCrops = this.map.createBlankDynamicLayer("Crops", cropsTileset);
+    this._layerCrops.setScale(2);
+    this._layerCrops.setPosition(-1000, -1000);
 
+    // Initializes the _layerObjectsBackground
     this._layerObjectsBackground = this.map.createBlankDynamicLayer(
       "Objects",
       tileset
@@ -123,6 +196,11 @@ export class WorldScene extends Phaser.Scene {
     this._layerObjectsBackground.setScale(2);
     this._layerObjectsBackground.setPosition(-1000, -1000);
 
+    /**
+     * Initializes the _layerObjectsForeground and places it above the player by
+     * setting its depth value.
+     * (Note : Research on how depth work in Phaser)
+     */
     this._layerObjectsForeground = this.map.createBlankDynamicLayer(
       "ObjectsForeground",
       tileset
@@ -131,13 +209,20 @@ export class WorldScene extends Phaser.Scene {
     this._layerObjectsForeground.setPosition(-1000, -1000);
     this._layerObjectsForeground.setDepth(100);
 
+    // Creates the player and set its collider's dimensions and position
     this.player = this.physics.add.sprite(0, 0, "player");
     this.player.setSize(12, 12);
     this.player.setOffset(
       this.player.width / 2 - this.player.body.width / 2,
       this.player.height - this.player.body.height
     );
+    this.player.setScale(2);
+    this.player.setOrigin(0.5, 1);
 
+    /**
+     * Defines the player's animations cycle by setting tiles' positions in the
+     * tileset
+     */
     this.anims.create({
       key: "turn",
       frames: [{ key: "player", frame: 9 }],
@@ -168,95 +253,141 @@ export class WorldScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    this.player.setScale(2);
-    this.player.setOrigin(0.5, 1);
-
+    // Initializes _popupClicked
     this._popupClicked = false;
 
+    /**
+     * Defines the pointer events callbacks
+     * (Note : Should be moved to its own function)
+     */
+    // Triggered when the pointer is pressed (Mouse button pressed or finger tap)
     this.input.on("pointerdown", (_pointer: Phaser.Input.Pointer): void => {
-      const mousePos: Vector2 = new Phaser.Math.Vector2(
+      // Retrieves the pointer's screen position
+      const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
         this.input.activePointer.x,
         this.input.activePointer.y
       );
 
-      this.joystickPos = mousePos;
+      // Sets the joystick base position in case the pointer is dragged
+      this.joystickPos = pointerScreenPos;
     });
+    // Triggered when the pointer is released (Mouse button or finger released)
     this.input.on("pointerup", (_pointer: Phaser.Input.Pointer): void => {
+      // Stops the player's physic body (In case it was moving)
       this.player.body.stop();
+
       this.joystickPos = undefined;
+      // If the player was moving (meaning pointer dragged)
       if (this.moving) {
         this.moving = false;
         (this.game.scene.getScene("UiScene") as UiScene).hideJoystick();
       } else {
-        const mouseWorldPos: Vector2 = new Phaser.Math.Vector2(
+        const pointerWorldPos: Vector2 = new Phaser.Math.Vector2(
           this.input.activePointer.worldX,
           this.input.activePointer.worldY
         );
+        /**
+         * If a popup was clicked and destroyed, the click has leaked to the
+         * groundLayer, disables the click.
+         */
         if (this._popupClicked) {
           this._popupClicked = false;
         } else {
           this.destroyPopup();
-          this.actionClick(mouseWorldPos);
+          this.actionClick(pointerWorldPos);
         }
       }
     });
-    this.input.on("pointermove", (): void => {
-      if (this.joystickPos) {
-        (this.game.scene.getScene("UiScene") as UiScene).showJoystick();
 
-        const mousePos: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
+    // Triggered when the pointer is moving
+    this.input.on("pointermove", (): void => {
+      // If the pointer is down means the player is moving
+      if (this.input.activePointer.isDown) {
+        /**
+         * If it is the first event triggering the current player's movement,
+         * initializes the movement
+         */
+        if (!this.moving) {
+          this.moving = true;
+          (this.game.scene.getScene("UiScene") as UiScene).showJoystick();
+        }
+
+        const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
           this.input.activePointer.x,
           this.input.activePointer.y
         );
-        const joystickPosPhaserVector2: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
-          this.joystickPos.x,
-          this.joystickPos.y
+
+        // Distance between joystick's base and head
+        let currentLengthJoystick: number = Utils.distance(
+          pointerScreenPos,
+          this.joystickPos
         );
-        const distanceJoystick: number = mousePos.distance(
-          joystickPosPhaserVector2
-        );
-        if (distanceJoystick > this.lengthJoystick) {
-          const newJoystickPos: Vector2 = mousePos.clone().add(
-            joystickPosPhaserVector2
-              .clone()
-              .subtract(mousePos)
-              .scale(this.lengthJoystick)
-              .scale(1 / distanceJoystick)
+        /**
+         * If the head (pointer) is too far from the base of the joystick, then
+         * moves the base towards the head until * the distance reaches the
+         * maxLengthJoystick
+         */
+        if (currentLengthJoystick > this.maxLengthJoystick) {
+          const newJoystickPos: Vector2 = Utils.add(
+            pointerScreenPos,
+            Utils.scale(
+              Utils.subtract(this.joystickPos, pointerScreenPos),
+              this.maxLengthJoystick / currentLengthJoystick
+            )
           );
+
           this.joystickPos = newJoystickPos;
+          currentLengthJoystick = Utils.distance(
+            pointerScreenPos,
+            this.joystickPos
+          );
         }
-        const joystickMove: Phaser.Math.Vector2 = mousePos
-          .clone()
-          .subtract(joystickPosPhaserVector2);
-        const playerTarget: Vector2 = new Phaser.Math.Vector2(
-          this.player.x,
-          this.player.y
-        ).add(joystickMove);
+
+        // Calculates the direction vector of the joystick
+        const joystickMove: Vector2 = Utils.subtract(
+          pointerScreenPos,
+          this.joystickPos
+        );
+        const playerTarget: Vector2 = Utils.add(
+          new Phaser.Math.Vector2(this.player.x, this.player.y),
+          joystickMove
+        );
         const speedFactor: number = Utils.clamp(
-          distanceJoystick / this.lengthJoystick,
+          currentLengthJoystick / this.maxLengthJoystick,
           0,
           1
         );
 
-        this.moving = true;
         this.movePlayerTo(playerTarget, speedFactor);
 
+        // Updates the position of the joystick on UiScene
         (this.game.scene.getScene("UiScene") as UiScene).setPositionJoystick(
           this.joystickPos,
-          mousePos
+          pointerScreenPos
         );
       }
     });
 
+    // Creates a Market and put it in the game
     const posMarket: Vector2 = { x: 30, y: 30 };
     this.createBuilding(BuildingType.Market, posMarket);
 
+    // Enables collision between objects and the player
     this.physics.add.collider(this.player, this.objects);
 
+    // Displays the physic bodies for debug purposes
     this.physics.world.createDebugGraphic();
   }
 
+  /**
+   * This method is called once per game step while the scene is running.
+   * Handles the realtime updates.
+   * @param {number} time - The current time
+   * @param {number} delta - The delta time in ms since the last frame. This is
+   * a smoothed and capped value based on the FPS rate.
+   */
   public update(time: number, delta: number): void {
+    // Sets the player animation based on its velocity
     if (this.player.body.velocity.length() > 0) {
       const moveDirection: Vector2 = new Phaser.Math.Vector2(
         this.player.body.velocity
@@ -279,23 +410,31 @@ export class WorldScene extends Phaser.Scene {
       this.player.anims.play("turn", true);
     }
 
+    /**
+     * Centers the camera on the player
+     * (Note : Could use Phaser follow method instead ?)
+     */
     this.cameras.main.centerOn(
       Math.round(this.player.x),
       Math.round(this.player.y - 15)
     );
 
+    // Calls the update method on all crops and objects
     this.crops
       .getChildren()
       .forEach((crop: Crop): void => crop.update(time, delta));
     this.objects
       .getChildren()
       .forEach((object: any): void => object.update(time, delta));
-
-    // this.game.scene.pause('mainScene');
   }
 
+  /**
+   * Creates a building of the BuildingType specified at the Tilemap pos.
+   * @param {BuildingType} buildingType - BuildingType of the building
+   * @param {Vector2} pos - Tilemap position of the building
+   */
   private createBuilding(buildingType: BuildingType, pos: Vector2): void {
-    const buildingConstructor: typeof Market = getBuildingConstructor(
+    const buildingConstructor: typeof Market = getBuildingConstructorFromBuildingType(
       buildingType
     );
     const building: Building = new buildingConstructor(this, pos.x, pos.y);
@@ -303,18 +442,31 @@ export class WorldScene extends Phaser.Scene {
     this.add.existing(building);
   }
 
-  private movePlayerTo(target: Vector2, speedFactor: number): void {
+  /**
+   * Uses the Phaser physic engine to move the player to the specified target
+   * world position.
+   * @param {Vector2} target - Player movement target position
+   * @param {number} speedFactor - Factor of the player maximum speed to use
+   * (between 0 and 1 - default 1)
+   */
+  private movePlayerTo(target: Vector2, speedFactor: number = 1): void {
     this.physics.moveToObject(this.player, target, this.speed * speedFactor);
   }
 
+  /**
+   * Returns an array containing the neighbor Tiles of the Tile located at
+   * tilePos in the Tilemap layer provided.
+   * @param {Phaser.Tilemaps.DynamicTilemapLayer} layer - Tilemap layer to grab the Tiles from
+   * @param {Vector2} tilePos - The coordinates of the Tile to grab neighbors from
+   * @returns {Array<Phaser.Tilemaps.Tile>} - An array of the neighbor Tiles
+   */
   private getNeighborTiles(
     layer: Phaser.Tilemaps.DynamicTilemapLayer,
     tilePos: Vector2
   ): Array<Phaser.Tilemaps.Tile> {
     const neighborTiles: Array<Phaser.Tilemaps.Tile> = this.getNeighbors(
       tilePos,
-      layer.layer.width - 1,
-      layer.layer.height - 1
+      { x: layer.layer.width - 1, y: layer.layer.height - 1 }
     ).map(
       (neighborPos: Vector2): Phaser.Tilemaps.Tile =>
         layer.getTileAt(neighborPos.x, neighborPos.y, true)
@@ -322,27 +474,41 @@ export class WorldScene extends Phaser.Scene {
     return neighborTiles;
   }
 
+  /**
+   * In the context of a 2D array, returns an array containing the coordinates
+   * of neighbors of the cell at the coordinates provided by the pos parameter.
+   * The dimensions of the 2D array has to be provided to exclude cells outside
+   * of the bounds of the array. The neighborhood type can be specified, either
+   * 4-neighborhood (Von Neumann - default value) or 8-neighborhood (Moore). A
+   * radius can also be specified to return more than direct neighbors.
+   * @param {Vector2} pos - The coordinates of the cell to returns neighbors of
+   * @param {Vector2} arraySize - The size of the array
+   * @param {boolean} useVonNeumann - Use 4-neighborhood (Von Neumann) if true,
+   * 8-neighborhood (Moore) otherwize
+   * @param {number} radius - Integer representing the maximum distance between
+   * the cell at coordinates pos and its neighbors
+   * @returns {Array<Vector2>} - Array containing the coordinates of neighbors
+   */
   private getNeighbors(
     pos: Vector2,
-    maxColumns: number,
-    maxRows: number,
-    diamond: boolean = true,
+    arraySize: Vector2,
+    useVonNeumann: boolean = true,
     radius: number = 1
   ): Array<Vector2> {
     const neighbors: Array<Vector2> = [];
     for (
       let i: number = Math.max(0, pos.x - radius);
-      i <= Math.min(pos.x + 1, maxRows);
+      i <= Math.min(pos.x + 1, arraySize.x);
       i += 1
     ) {
       for (
         let j: number = Math.max(0, pos.y - 1);
-        j <= Math.min(pos.y + 1, maxColumns);
+        j <= Math.min(pos.y + 1, arraySize.y);
         j += 1
       ) {
         if (i !== pos.x || j !== pos.y) {
           if (
-            diamond === false ||
+            !useVonNeumann ||
             Math.abs(pos.x - i) + Math.abs(pos.y - j) <= radius
           ) {
             neighbors.push({ x: i, y: j });
@@ -353,34 +519,40 @@ export class WorldScene extends Phaser.Scene {
     return neighbors;
   }
 
-  private createFieldTile(
-    layerFields: Phaser.Tilemaps.DynamicTilemapLayer,
-    tilePos: Vector2
-  ): void {
-    this.updateFieldTile(layerFields, tilePos);
-    this.getNeighborTiles(layerFields, tilePos)
+  /**
+   * Sets the Tile at tilePos as a field. Updates the neighbors fields if they
+   * exist.
+   * @param tilePos - The Tile coordinate
+   */
+  private createFieldTile(tilePos: Vector2): void {
+    this.updateFieldTile(tilePos);
+    this.getNeighborTiles(this.layerFields, tilePos)
+      // Filter empty Tiles
       .filter(
         (neighborTile: Phaser.Tilemaps.Tile): boolean =>
           neighborTile.index !== -1
       )
       .forEach((neighborTilePos: Vector2): void =>
-        this.updateFieldTile(layerFields, {
+        this.updateFieldTile({
           x: neighborTilePos.x,
           y: neighborTilePos.y,
         })
       );
   }
 
-  private updateFieldTile(
-    layerFields: Phaser.Tilemaps.DynamicTilemapLayer,
-    tilePos: Vector2
-  ): void {
-    const currentTile: Phaser.Tilemaps.Tile = layerFields.getTileAt(
+  /**
+   * Checks if the neighbors of the Tile at the position tilePos in the
+   * layerFields are fields or empty and set the field tile sprite accordingly
+   * to match the pattern for the Tile at tilePos.
+   * @param tilePos - The position of the Tile to look neighbors of
+   * (Note : This function is a bit messy)
+   */
+  private updateFieldTile(tilePos: Vector2): void {
+    const currentTile: Phaser.Tilemaps.Tile = this.layerFields.getTileAt(
       tilePos.x,
       tilePos.y,
       true
     );
-    currentTile.rotation = 0;
 
     const neighborTilesPosOrder: Array<Vector2> = [
       { x: 0, y: -1 },
@@ -390,7 +562,7 @@ export class WorldScene extends Phaser.Scene {
     ];
     const neighborTiles: Array<Phaser.Tilemaps.Tile> = neighborTilesPosOrder.map(
       (neighborTilePos: Vector2): Phaser.Tilemaps.Tile =>
-        layerFields.getTileAt(
+        this.layerFields.getTileAt(
           tilePos.x + neighborTilePos.x,
           tilePos.y + neighborTilePos.y,
           true
@@ -399,48 +571,52 @@ export class WorldScene extends Phaser.Scene {
     const areNeighborTilesFields: Array<boolean> = neighborTiles.map(
       (neighborTile: Phaser.Tilemaps.Tile): boolean => neighborTile.index !== -1
     );
+    const neighborTilesFieldsCount: number = areNeighborTilesFields.filter(
+      (b: boolean): boolean => b
+    ).length;
 
     let tileIdx: number;
-    if (
-      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 4
-    ) {
-      tileIdx = 197;
-    } else if (
-      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 3
-    ) {
-      tileIdx = 196;
-      currentTile.rotation =
-        (Math.PI * areNeighborTilesFields.indexOf(false)) / 2;
-    } else if (
-      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 2
-    ) {
-      if (areNeighborTilesFields[0] === areNeighborTilesFields[2]) {
-        tileIdx = 195;
-        if (areNeighborTilesFields.indexOf(true) === 0) {
-          currentTile.rotation = Math.PI / 2;
+    switch (neighborTilesFieldsCount) {
+      case 4:
+        tileIdx = 197;
+        break;
+      case 3:
+        tileIdx = 196;
+        currentTile.rotation =
+          (Math.PI * areNeighborTilesFields.indexOf(false)) / 2;
+        break;
+      case 2:
+        if (areNeighborTilesFields[0] === areNeighborTilesFields[2]) {
+          // Bar field sprite
+          tileIdx = 195;
+          currentTile.rotation =
+            areNeighborTilesFields.indexOf(true) === 0 ? Math.PI / 2 : 0;
+          break;
+        } else {
+          // Corner field sprite
+          tileIdx = 194;
+          const currentTileRotation: number =
+            areNeighborTilesFields.indexOf(false) === 1
+              ? 3
+              : areNeighborTilesFields.indexOf(true);
+          currentTile.rotation = (Math.PI * currentTileRotation) / 2;
         }
-      } else {
-        tileIdx = 194;
-        const currentTileRotation: number =
-          areNeighborTilesFields.indexOf(false) === 1
-            ? 3
-            : areNeighborTilesFields.indexOf(true);
-        currentTile.rotation = (Math.PI * currentTileRotation) / 2;
-      }
-    } else if (
-      areNeighborTilesFields.filter((e: boolean): boolean => e).length === 1
-    ) {
-      tileIdx = 193;
-      currentTile.rotation =
-        (Math.PI * areNeighborTilesFields.indexOf(true)) / 2;
-    } else {
-      tileIdx = 192;
+        break;
+      case 1:
+        tileIdx = 193;
+        currentTile.rotation =
+          (Math.PI * areNeighborTilesFields.indexOf(true)) / 2;
+        break;
+      default:
+        tileIdx = 192;
+        break;
     }
-    if (tileIdx) {
-      layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
-    }
+    this.layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
   }
 
+  /**
+   * Destroys the current Popup object.
+   */
   private destroyPopup(): void {
     if (this.actionPopup) {
       this.input.removeDebug(this.actionPopup);
@@ -448,12 +624,13 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private harvestCrop(tilePos: Vector2, crop: Crop): void {
-    const tile: Phaser.Tilemaps.Tile = this.layerCrops.getTileAt(
-      tilePos.x,
-      tilePos.y
-    );
-
+  /**
+   * Harvests a Crop Tile. Adds the loots from the Crop's LootConfig and creates
+   * the LootAnims. Remove the tile and destroy the Crop object.
+   * @param {Crop} crop - The Crop to harvest
+   * (Note : Should be moved to the Crop class)
+   */
+  private harvestCrop(crop: Crop): void {
     const diffuseConeAngle: number = Math.PI / 4;
     crop.lootConfig.forEach((loot: Loot, i: number, arr: Array<Loot>): void => {
       const angle: number =
@@ -462,8 +639,8 @@ export class WorldScene extends Phaser.Scene {
         diffuseConeAngle * (i / (arr.length - 1));
       const lootAnim: LootAnim = new LootAnim(
         this,
-        tile.getCenterX(this.cameras.main),
-        tile.getCenterY(this.cameras.main),
+        crop.tile.getCenterX(this.cameras.main),
+        crop.tile.getCenterY(this.cameras.main),
         angle,
         loot.item,
         loot.quantity
@@ -473,19 +650,30 @@ export class WorldScene extends Phaser.Scene {
 
       (this.game.scene.getScene(
         "ControllerScene"
-      ) as ControllerScene).modifyInventoryItemQuantity(
+      ) as ControllerScene).modifyItemTypeQuantityInInventory(
         loot.item,
         loot.quantity
       );
     });
-    this.layerCrops.removeTileAt(tilePos.x, tilePos.y);
+    this._layerCrops.removeTileAt(crop.tilePos.x, crop.tilePos.y);
     crop.destroy();
   }
 
-  private actionClick(mouseWorldPos: Vector2): void {
+  /**
+   * Method called when the player clicks the ground and triggers an action.
+   * Creates a Popup to inform him of the possible action and confirm it. If
+   * there's no field yet, the Popup creates a field. If there's already a
+   * field, it creates a crop if a Crop seed is selected in the inventory bar.
+   * If there's already a Crop and the Corp is ready to harvest, it harvests the
+   * Crop;
+   * @param {Vector2} pointerWorldPos - The world position of the pointer
+   * (click)
+   * (Note : Split into other methods for each Popup type)
+   */
+  private actionClick(pointerWorldPos: Vector2): void {
     const tilePos: Vector2 = this.map.worldToTileXY(
-      mouseWorldPos.x,
-      mouseWorldPos.y
+      pointerWorldPos.x,
+      pointerWorldPos.y
     );
     const layerFieldsTile: Phaser.Tilemaps.Tile = this.layerFields.getTileAt(
       tilePos.x,
@@ -500,7 +688,7 @@ export class WorldScene extends Phaser.Scene {
         layerFieldsTile.getCenterX(this.cameras.main),
         layerFieldsTile.getCenterY(this.cameras.main),
         40,
-        (): void => this.createFieldTile(this.layerFields, tilePos),
+        (): void => this.createFieldTile(tilePos),
         "tools",
         1
       );
@@ -510,7 +698,7 @@ export class WorldScene extends Phaser.Scene {
         .getChildren()
         .some(
           (crop: Crop): boolean =>
-            tilePos.x === crop.mapPosition.x && tilePos.y === crop.mapPosition.y
+            tilePos.x === crop.tilePos.x && tilePos.y === crop.tilePos.y
         );
 
       const selectedInventoryItemData: InventoryItem = (this.game.scene.getScene(
@@ -527,16 +715,13 @@ export class WorldScene extends Phaser.Scene {
           | typeof Rose
           | typeof Strawberry
           | typeof Tomato
-          | typeof Wheat = getCropFromSeed(selectedInventoryItemData.item);
+          | typeof Wheat = getCropConstructorFromSeed(
+          selectedInventoryItemData.item
+        );
 
         if (cropConstructor) {
           const callback = (): void => {
-            const crop: Crop = new cropConstructor(
-              this,
-              tilePos.x,
-              tilePos.y,
-              this.layerCrops
-            );
+            const crop: Crop = new cropConstructor(this, tilePos.x, tilePos.y);
             this.crops.add(crop);
             (this.game.scene.getScene(
               "ControllerScene"
@@ -560,8 +745,8 @@ export class WorldScene extends Phaser.Scene {
       } else {
         const crop: Crop = (this.crops.getChildren() as Array<Crop>).find(
           (currentCrop: Crop): boolean =>
-            currentCrop.mapPosition.x === tilePos.x &&
-            currentCrop.mapPosition.y === tilePos.y
+            currentCrop.tilePos.x === tilePos.x &&
+            currentCrop.tilePos.y === tilePos.y
         );
         if (crop && crop.isReadyToHarvest) {
           this.actionPopup = new ActionPopup(
@@ -569,7 +754,7 @@ export class WorldScene extends Phaser.Scene {
             layerFieldsTile.getCenterX(this.cameras.main),
             layerFieldsTile.getCenterY(this.cameras.main),
             40,
-            (): void => this.harvestCrop(tilePos, crop),
+            (): void => this.harvestCrop(crop),
             "tools",
             0
           );
