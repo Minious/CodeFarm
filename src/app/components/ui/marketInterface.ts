@@ -7,10 +7,29 @@ import { MarketOffer } from "../../interfaces/marketOffer.interface";
 import { getItemData, ItemData } from "../../interfaces/itemData.interface";
 import { Vector2 } from "../../types/vector2.type";
 
+/**
+ * The Interface displayed in the UiScene showing the Market's offers. It
+ * contains two columns, one displaying the Selling MarketOfferType offers and
+ * the other the Buying MarketOfferType offers. A Selling offer trades money
+ * against the player's items and a Buying offer trades item against the payer's
+ * money. The MarketInterface contains a close button to which a callback can be
+ * provided.
+ */
 export class MarketInterface extends Phaser.GameObjects.Container {
+  // A Phaser Container holding all the offers
   private offers: Phaser.GameObjects.Container;
+  // The list of offers of the Market
   private marketConfig: MarketConfig;
 
+  /**
+   * Creates the MarketInterface object.
+   * @param {Phaser.Scene} scene - The Phaser Scene this Interface belongs to
+   * (should be UiScene)
+   * @param {number} x - The x position of the center of the MarketInterface
+   * @param {number} y - The y position of the center of the MarketInterface
+   * @param {() => void} externalCallback - The callback to call when the close
+   * icon is clicked.
+   */
   public constructor(
     scene: Phaser.Scene,
     x: number,
@@ -20,6 +39,7 @@ export class MarketInterface extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.name = "marketInterface";
 
+    // Creates the background Image
     const backgroundImage: Phaser.GameObjects.Image = this.scene.add.image(
       0,
       0,
@@ -32,6 +52,10 @@ export class MarketInterface extends Phaser.GameObjects.Container {
     );
     this.add(backgroundImage);
 
+    /**
+     * Creates the close icon Image and enable the call to the callback when
+     * clicked.
+     */
     const closeIconOffset: number = 28;
     const closeIconPos: Vector2 = {
       x:
@@ -57,6 +81,10 @@ export class MarketInterface extends Phaser.GameObjects.Container {
     this.offers = this.scene.add.container(0, 0);
     this.add(this.offers);
 
+    /**
+     * Reloads the MarketInterface's offers when the Inventory changes to modify
+     * the quantity of the item posessed in the offers.
+     */
     this.scene.game.scene
       .getScene("ControllerScene")
       .events.on(
@@ -67,19 +95,34 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       );
   }
 
+  /**
+   * Loads a new MarketConfig to be displayed by the MarketInterface.
+   * @param {MarketConfig} marketConfig - The MarketConfig to display
+   */
   public loadOffers(marketConfig: MarketConfig): void {
     this.marketConfig = marketConfig;
 
+    // Destroy all the existing offers and recreate them
     this.offers.removeAll(true);
     this.createMarketOffers(marketConfig);
   }
 
+  /**
+   * Reloads the offers without changing the MarketConfig (Example : Used when
+   * Inventory changes)
+   */
   private reloadOffers(): void {
+    // (Note : The condition should maybe be removed)
     if (this.marketConfig) {
       this.loadOffers(this.marketConfig);
     }
   }
 
+  /**
+   * Creates the offers Container and populate them with the data of the
+   * MarketConfig.
+   * @param marketConfig - The MarketConfig holding the offers data
+   */
   private createMarketOffers(marketConfig: MarketConfig): void {
     const marginColumn: number = 120;
     const marginOffer: number = 60;
@@ -88,24 +131,39 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       "ControllerScene"
     ) as ControllerScene;
 
+    /**
+     * Creates an offer Container and populate it with the MarketOffer and adds
+     * it to the MarketInterface.
+     * @param {MarketOfferType} type - The MarketOfferType of the offer
+     * @param {MarketOffer} offer - The MarketOffer containing the data of the offer
+     * @param {number} idx - The index of the offer for positionning purposes
+     */
     const createOffer = (
       type: MarketOfferType,
       offer: MarketOffer,
       idx: number
     ): void => {
+      /**
+       * The offerContainer contains the arrowContainer, the itemContainer and
+       * the moneyContainer.
+       */
       const offerContainer: Phaser.GameObjects.Container = this.scene.add.container(
         (type === MarketOfferType.Buying ? -1 : 1) * marginColumn,
         idx * marginOffer - 130
       );
 
+      // The Container holding the arrow Image and the arrow Text
       const arrowContainer: Phaser.GameObjects.Container = this.scene.add.container(
         0,
         0
       );
+
+      // Creates the arrow Image and adds it to the arrowContainer
       const arrow: Phaser.GameObjects.Image = this.scene.add
         .image(0, 0, "arrow")
         .setScale(2)
         .setInteractive();
+      // Change arrow's appearance depending on its MarketOfferType
       if (type === MarketOfferType.Buying) {
         arrow.setRotation(Math.PI);
         arrow.setOrigin(0.4, 0.5);
@@ -116,12 +174,17 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         arrow.setOrigin(0.6, 0.5);
         arrow.setTint(0xff6666);
       }
+      /**
+       * Flip the arrow when pointer enters or exits it to switch shadow's side
+       * to mimic the arrow button being pressed.
+       */
       arrow.on("pointerover", (): void => {
         arrow.setFlipY(!arrow.flipY);
       });
       arrow.on("pointerout", (): void => {
         arrow.setFlipY(!arrow.flipY);
       });
+      // Exchange the money with the item when arrow clicked
       arrow.on("pointerdown", (): void => {
         if (type === MarketOfferType.Buying) {
           if (controllerScene.data.get("money") >= offer.price) {
@@ -137,6 +200,8 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         }
       });
       arrowContainer.add(arrow);
+
+      // Creates the arrow Text and adds it to the arrowContainer
       const arrowTextPosX: number = type === MarketOfferType.Buying ? 5 : -15;
       const arrowTextContent: string =
         type === MarketOfferType.Buying ? "BUY" : "SELL";
@@ -148,8 +213,10 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         })
         .setOrigin(0.5, 0.5);
       arrowContainer.add(arrowText);
+
       offerContainer.add(arrowContainer);
 
+      // The Container holding the item Image and the item's quantity Text
       const itemContainer: Phaser.GameObjects.Container = this.scene.add.container(
         -70,
         0
@@ -172,6 +239,7 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       itemContainer.add(itemQuantityText);
       offerContainer.add(itemContainer);
 
+      // The Container holding the money Image and the money quantity Text
       const moneyContainer: Phaser.GameObjects.Container = this.scene.add.container(
         70,
         0
@@ -192,6 +260,8 @@ export class MarketInterface extends Phaser.GameObjects.Container {
 
       this.offers.add(offerContainer);
     };
+
+    // Creates the offers for each MarketOffer's offers
     marketConfig.buyingOffers.forEach((offer: MarketOffer, idx: number): void =>
       createOffer(MarketOfferType.Buying, offer, idx)
     );
