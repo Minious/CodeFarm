@@ -4,7 +4,8 @@
   "description": "CodeFarm is the prototype of a farming game which is on its way of becoming the GREATEST farming game ever !\r The player personifies a farmer which needs to expand his farm by growing crops and selling goods. He will have to protect his farm against an mysterious alien invasion.",
   "private": true,
   "scripts": {
-    "start": "webpack-dev-server --config webpack.dev.js --open",
+    "dev": "webpack-dev-server --config webpack.dev.js --open",
+    "start": "node server.js",
     "build": "webpack --config webpack.prod.js",
     "prettier": "prettier --write \"src/**/*.ts\""
   },
@@ -30,6 +31,7 @@
   },
   "homepage": "https://github.com/Minious/CodeFarm#readme",
   "dependencies": {
+    "express": "^4.17.1",
     "phaser": "github:Minious/phaser#5fd94d76a778daa5312c27675ab25716044a0c37"
   },
   "devDependencies": {

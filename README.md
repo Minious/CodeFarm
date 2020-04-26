@@ -10,7 +10,7 @@ This project uses [Phaser 3](https://phaser.io/phaser3) as its game engine.
 The game can be launched in dev mode with hot reloading by using :
 
 ```
-npm run start
+npm run dev
 ```
 
 Or create a build in the dist folder with :
@@ -19,13 +19,10 @@ Or create a build in the dist folder with :
 npm run build
 ```
 
-You can then launch the game by simply running a http server at the root of the build.
-
-Example with Python 3 :
+You can then launch the game by simply running an Express Http server :
 
 ```
-cd CodeFarm
-python -m http.server --cgi 8000
+npm run start
 ```
 
 The lastest release is also available on GitHub pages at https://minious.github.io/CodeFarm/
