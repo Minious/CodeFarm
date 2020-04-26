@@ -5,7 +5,21 @@ The player personifies a farmer which needs to expand his farm by growing crops 
 
 ## Getting Started
 
-This project uses [Phaser 3](https://phaser.io/phaser3) as its game engine. You can launch the game by simply running a http server at the root of the project.
+This project uses [Phaser 3](https://phaser.io/phaser3) as its game engine.
+
+The game can be launched in dev mode with hot reloading by using :
+
+```
+npm run start
+```
+
+Or create a build in the dist folder with :
+
+```
+npm run build
+```
+
+You can then launch the game by simply running a http server at the root of the build.
 
 Example with Python 3 :
 
