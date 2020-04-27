@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import * as log from "loglevel";
 
 import * as tileset from "../../assets/tileset.png";
 import * as crops_tileset from "../../assets/crops_tileset.png";
@@ -89,20 +90,18 @@ export class ControllerScene extends Phaser.Scene {
       "changedata-selectedItemInventoryIndex",
       (parent: any, selectedItemInventoryIndex: number): void => {
         if (selectedItemInventoryIndex) {
-          if (this.debugEnabled) {
-            /**
-             * Grabs the new selected item in the inventory and display it in the
-             * console.
-             */
-            const itemType: ItemType = (this.data.get(
-              "inventory"
-            ) as Inventory)[selectedItemInventoryIndex].item;
-            console.log(
-              `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
-            );
-          } else {
-            console.log("Item deselected");
-          }
+          /**
+           * Grabs the new selected item in the inventory and display it in the
+           * logs.
+           */
+          const itemType: ItemType = (this.data.get("inventory") as Inventory)[
+            selectedItemInventoryIndex
+          ].item;
+          log.debug(
+            `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
+          );
+        } else {
+          log.debug("Item deselected");
         }
       }
     );
