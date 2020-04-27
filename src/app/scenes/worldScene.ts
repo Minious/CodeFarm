@@ -6,16 +6,12 @@ import { LootAnim } from "../components/worldWidgets/lootAnim";
 
 import { Vector2 } from "../types/vector2.type";
 import { UiScene } from "./uiScene";
-import {
-  BuildingType,
-  getBuildingConstructorFromBuildingType,
-} from "../enums/buildingType.enum";
+import { BuildingType, buildingFactory } from "../enums/buildingType.enum";
 import { Crop } from "../components/crops/crop";
 import { ControllerScene } from "./controllerScene";
 import { cropFactory } from "../enums/itemType.enum";
 import { getItemData, ItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
-import { Market } from "../components/buildings/market";
 import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Loot } from "../interfaces/loot.interface";
 
@@ -429,10 +425,12 @@ export class WorldScene extends Phaser.Scene {
    * @param {Vector2} pos - Tilemap position of the building
    */
   private createBuilding(buildingType: BuildingType, pos: Vector2): void {
-    const buildingConstructor: typeof Market = getBuildingConstructorFromBuildingType(
+    const building: Building = buildingFactory(
+      this,
+      pos.x,
+      pos.y,
       buildingType
     );
-    const building: Building = new buildingConstructor(this, pos.x, pos.y);
     this.objects.add(building);
     this.add.existing(building);
   }
