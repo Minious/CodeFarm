@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 
 import { WorldScene } from "../../scenes/worldScene";
+import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * A Popup icon displayed in the world view asking the player for a double click
@@ -87,11 +88,21 @@ export class ActionPopup extends Phaser.GameObjects.Container {
      * Popup
      */
     this.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
-    this.scene.input.enableDebug(this);
+    if (
+      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      this.scene.input.enableDebug(this);
+    }
 
     this.on("pointerdown", (): void => {
       externalCallback();
-      this.scene.input.removeDebug(this);
+      if (
+        (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+          .debugEnabled
+      ) {
+        this.scene.input.removeDebug(this);
+      }
       (this.scene as WorldScene).popupClicked = true;
       this.destroy();
     });

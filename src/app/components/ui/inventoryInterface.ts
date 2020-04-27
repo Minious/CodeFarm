@@ -3,6 +3,7 @@ import * as Phaser from "phaser";
 import { InventoryButton } from "./inventoryButton";
 import { Inventory } from "../../types/inventory.type";
 import { InventoryItem } from "../../interfaces/inventoryItem.interface";
+import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * The Interface displayed in the UiScene showing the player's Inventory
@@ -220,9 +221,15 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       this.inventoryGridOpen = !this.inventoryGridOpen;
       this.inventoryGridButtons.setVisible(this.inventoryGridOpen);
     });
-    this.scene.input.enableDebug(inventoryOpenButton);
+
     this.add(inventoryOpenButton);
-    this.add(inventoryOpenButton.input.hitAreaDebug);
+    if (
+      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      this.scene.input.enableDebug(inventoryOpenButton);
+      this.add(inventoryOpenButton.input.hitAreaDebug);
+    }
   }
 
   /**

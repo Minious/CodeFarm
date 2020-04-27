@@ -26,10 +26,17 @@ import { MarketOffer } from "../interfaces/marketOffer.interface";
  * once finished, launch the other Scenes : WorldScene and UiScene.
  */
 export class ControllerScene extends Phaser.Scene {
+  private _debugEnabled: boolean = process.env.NODE_ENV === "development";
+
   public constructor() {
     super({
       key: "ControllerScene",
     });
+  }
+
+  // Getter for _debugEnabled
+  public get debugEnabled(): boolean {
+    return this._debugEnabled;
   }
 
   /**
