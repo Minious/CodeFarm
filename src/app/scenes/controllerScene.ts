@@ -89,18 +89,23 @@ export class ControllerScene extends Phaser.Scene {
       "changedata-selectedItemInventoryIndex",
       (parent: any, selectedItemInventoryIndex: number): void => {
         if (selectedItemInventoryIndex) {
-          /**
-           * Grabs the new selected item in the inventory and display it in the
-           * console.
-           */
-          const itemType: ItemType = (this.data.get("inventory") as Inventory)[
-            selectedItemInventoryIndex
-          ].item;
-          console.log(
-            `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
-          );
-        } else {
-          console.log("Item deselected");
+          if (
+            (this.game.scene.getScene("ControllerScene") as ControllerScene)
+              .debugEnabled
+          ) {
+            /**
+             * Grabs the new selected item in the inventory and display it in the
+             * console.
+             */
+            const itemType: ItemType = (this.data.get(
+              "inventory"
+            ) as Inventory)[selectedItemInventoryIndex].item;
+            console.log(
+              `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
+            );
+          } else {
+            console.log("Item deselected");
+          }
         }
       }
     );

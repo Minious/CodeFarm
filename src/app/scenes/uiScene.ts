@@ -96,7 +96,12 @@ export class UiScene extends Phaser.Scene {
     (this.game.scene.getScene("ControllerScene") as ControllerScene).events.on(
       "changedata-money",
       (parent: any, money: number): void => {
-        console.log("New money amount : " + money);
+        if (
+          (this.game.scene.getScene("ControllerScene") as ControllerScene)
+            .debugEnabled
+        ) {
+          console.log("New money amount : " + money);
+        }
         this.updateMoney(money);
       }
     );

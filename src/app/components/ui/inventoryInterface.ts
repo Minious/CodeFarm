@@ -42,7 +42,12 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
    * (Note : Should add an inventoryRefresh method that isn't destructive)
    */
   public buildInventory(inventory: Inventory): void {
-    console.log("Building Inventory");
+    if (
+      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      console.log("Building Inventory");
+    }
     this.clearInventory();
     this.buildInventoryBar(inventory);
     this.buildInventoryGrid(inventory);
@@ -114,7 +119,12 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     this.scene.input.off("wheel");
     this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer): void => {
       let idxChange: number = Math.sign(pointer.deltaY);
-      console.log("Mouse wheel " + idxChange);
+      if (
+        (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+          .debugEnabled
+      ) {
+        console.log("Mouse wheel " + idxChange);
+      }
       // Starts at index 0 if no selectedItemInventoryIndex in ControllerScene
       if (
         this.scene.game.scene
