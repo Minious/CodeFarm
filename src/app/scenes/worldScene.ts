@@ -12,20 +12,10 @@ import {
 } from "../enums/buildingType.enum";
 import { Crop } from "../components/crops/crop";
 import { ControllerScene } from "./controllerScene";
-import { getCropConstructorFromSeed } from "../enums/itemType.enum";
+import { cropFactory } from "../enums/itemType.enum";
 import { getItemData, ItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
 import { Market } from "../components/buildings/market";
-import { Avocado } from "../components/crops/avocado";
-import { Grapes } from "../components/crops/grapes";
-import { Lemon } from "../components/crops/lemon";
-import { Melon } from "../components/crops/melon";
-import { Orange } from "../components/crops/orange";
-import { Potato } from "../components/crops/potato";
-import { Rose } from "../components/crops/rose";
-import { Strawberry } from "../components/crops/strawberry";
-import { Tomato } from "../components/crops/tomato";
-import { Wheat } from "../components/crops/wheat";
 import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Loot } from "../interfaces/loot.interface";
 
@@ -710,23 +700,18 @@ export class WorldScene extends Phaser.Scene {
         "ControllerScene"
       ) as ControllerScene).getSelectedInventoryItemData();
       if (emptyField && selectedInventoryItemData) {
-        const cropConstructor:
-          | typeof Avocado
-          | typeof Grapes
-          | typeof Lemon
-          | typeof Melon
-          | typeof Orange
-          | typeof Potato
-          | typeof Rose
-          | typeof Strawberry
-          | typeof Tomato
-          | typeof Wheat = getCropConstructorFromSeed(
+        const selectedObjectIsSeed: boolean = getItemData(
           selectedInventoryItemData.item
-        );
+        ).isSeed;
 
-        if (cropConstructor) {
+        if (selectedObjectIsSeed) {
           const callback = (): void => {
-            const crop: Crop = new cropConstructor(this, tilePos.x, tilePos.y);
+            const crop: Crop = cropFactory(
+              this,
+              tilePos.x,
+              tilePos.y,
+              selectedInventoryItemData.item
+            );
             this.crops.add(crop);
             (this.game.scene.getScene(
               "ControllerScene"
