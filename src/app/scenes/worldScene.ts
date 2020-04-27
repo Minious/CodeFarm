@@ -366,8 +366,13 @@ export class WorldScene extends Phaser.Scene {
     // Enables collision between objects and the player
     this.physics.add.collider(this.player, this.objects);
 
-    // Displays the physic bodies for debug purposes
-    this.physics.world.createDebugGraphic();
+    if (
+      (this.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      // Displays the physic bodies for debug purposes
+      this.physics.world.createDebugGraphic();
+    }
   }
 
   /**

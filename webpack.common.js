@@ -1,4 +1,5 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { EnvironmentPlugin } = require("webpack");
 
 module.exports = {
   entry: "./src/index.ts",
@@ -28,5 +29,6 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: "./src/template.html",
     }),
+    new EnvironmentPlugin(["NODE_ENV"]),
   ],
 };

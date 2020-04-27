@@ -26,10 +26,17 @@ import { MarketOffer } from "../interfaces/marketOffer.interface";
  * once finished, launch the other Scenes : WorldScene and UiScene.
  */
 export class ControllerScene extends Phaser.Scene {
+  private _debugEnabled: boolean = process.env.NODE_ENV === "development";
+
   public constructor() {
     super({
       key: "ControllerScene",
     });
+  }
+
+  // Getter for _debugEnabled
+  public get debugEnabled(): boolean {
+    return this._debugEnabled;
   }
 
   /**
@@ -82,18 +89,23 @@ export class ControllerScene extends Phaser.Scene {
       "changedata-selectedItemInventoryIndex",
       (parent: any, selectedItemInventoryIndex: number): void => {
         if (selectedItemInventoryIndex) {
-          /**
-           * Grabs the new selected item in the inventory and display it in the
-           * console.
-           */
-          const itemType: ItemType = (this.data.get("inventory") as Inventory)[
-            selectedItemInventoryIndex
-          ].item;
-          console.log(
-            `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
-          );
-        } else {
-          console.log("Item deselected");
+          if (
+            (this.game.scene.getScene("ControllerScene") as ControllerScene)
+              .debugEnabled
+          ) {
+            /**
+             * Grabs the new selected item in the inventory and display it in the
+             * console.
+             */
+            const itemType: ItemType = (this.data.get(
+              "inventory"
+            ) as Inventory)[selectedItemInventoryIndex].item;
+            console.log(
+              `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
+            );
+          } else {
+            console.log("Item deselected");
+          }
         }
       }
     );
@@ -400,21 +412,41 @@ export class ControllerScene extends Phaser.Scene {
    */
   private initializeInventory(): void {
     // Creates the inventory as an array of InventoryItem
-    const startingInventory: Inventory = new Array(70).fill({}).map(
-      (obj: any, i: number): InventoryItem => {
-        // Fills the first 15 slots with seed
-        if (i < 15) {
-          const enumValues: Array<ItemType> = Object.values(ItemType);
-          return {
-            item: enumValues[Math.floor(Math.random() * 10) + 10],
-            quantity: 1 + Math.floor(Math.random() * 9),
-          };
-        }
-        // undefined means no object in the slot
-        return undefined;
-      }
-    );
+    let startingInventory: Inventory;
 
+    if (
+      (this.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      startingInventory = new Array(70).fill({}).map(
+        (obj: any, i: number): InventoryItem => {
+          // Fills the first 10 slots with each type of seed
+          if (i < 10) {
+            const enumValues: Array<ItemType> = Object.values(ItemType);
+            return {
+              item: enumValues[10 + i],
+              quantity: 10,
+            };
+          }
+          // undefined means no object in the slot
+          return undefined;
+        }
+      );
+    } else {
+      startingInventory = new Array(70).fill({}).map(
+        (obj: any, i: number): InventoryItem => {
+          // Gives 5 WheatSeed to the player
+          if (i === 0) {
+            return {
+              item: ItemType.WheatSeed,
+              quantity: 5,
+            };
+          }
+          // undefined means no object in the slot
+          return undefined;
+        }
+      );
+    }
     /**
      * Sets the 'inventory' key as the startingInventory in the data module of
      * the Scene.

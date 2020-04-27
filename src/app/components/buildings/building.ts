@@ -3,6 +3,7 @@ import * as Phaser from "phaser";
 import { Vector2 } from "../../types/vector2.type";
 import { BoundingBox } from "../../interfaces/boundingBox.interface";
 import { WorldScene } from "../../scenes/worldScene";
+import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * Abstract class representing any Building in the game world. The Building is
@@ -86,7 +87,12 @@ export abstract class Building extends Phaser.Physics.Arcade.Sprite {
      */
     this.setInteractive();
     this.input.alwaysEnabled = true;
-    this.scene.input.enableDebug(this);
+    if (
+      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      this.scene.input.enableDebug(this);
+    }
     this.on("pointerdown", (): void => {
       externalCallback();
     });

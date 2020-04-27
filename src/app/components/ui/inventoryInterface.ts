@@ -3,6 +3,7 @@ import * as Phaser from "phaser";
 import { InventoryButton } from "./inventoryButton";
 import { Inventory } from "../../types/inventory.type";
 import { InventoryItem } from "../../interfaces/inventoryItem.interface";
+import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * The Interface displayed in the UiScene showing the player's Inventory
@@ -41,7 +42,12 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
    * (Note : Should add an inventoryRefresh method that isn't destructive)
    */
   public buildInventory(inventory: Inventory): void {
-    console.log("Building Inventory");
+    if (
+      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      console.log("Building Inventory");
+    }
     this.clearInventory();
     this.buildInventoryBar(inventory);
     this.buildInventoryGrid(inventory);
@@ -113,7 +119,12 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     this.scene.input.off("wheel");
     this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer): void => {
       let idxChange: number = Math.sign(pointer.deltaY);
-      console.log("Mouse wheel " + idxChange);
+      if (
+        (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+          .debugEnabled
+      ) {
+        console.log("Mouse wheel " + idxChange);
+      }
       // Starts at index 0 if no selectedItemInventoryIndex in ControllerScene
       if (
         this.scene.game.scene
@@ -220,9 +231,15 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       this.inventoryGridOpen = !this.inventoryGridOpen;
       this.inventoryGridButtons.setVisible(this.inventoryGridOpen);
     });
-    this.scene.input.enableDebug(inventoryOpenButton);
+
     this.add(inventoryOpenButton);
-    this.add(inventoryOpenButton.input.hitAreaDebug);
+    if (
+      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
+        .debugEnabled
+    ) {
+      this.scene.input.enableDebug(inventoryOpenButton);
+      this.add(inventoryOpenButton.input.hitAreaDebug);
+    }
   }
 
   /**
