@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import * as log from "loglevel";
 
 import { MarketInterface } from "../components/ui/marketInterface";
 import { InventoryInterface } from "../components/ui/inventoryInterface";
@@ -96,12 +97,7 @@ export class UiScene extends Phaser.Scene {
     (this.game.scene.getScene("ControllerScene") as ControllerScene).events.on(
       "changedata-money",
       (parent: any, money: number): void => {
-        if (
-          (this.game.scene.getScene("ControllerScene") as ControllerScene)
-            .debugEnabled
-        ) {
-          console.log("New money amount : " + money);
-        }
+        log.debug("New money amount : " + money);
         this.updateMoney(money);
       }
     );
