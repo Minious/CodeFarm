@@ -266,21 +266,21 @@ export class ControllerScene extends Phaser.Scene {
     }
     const inventory: Inventory = this.data.get("inventory") as Inventory;
     let remainingAmount: number = quantityChange;
-    inventory
-      .filter(
-        (inventoryItem: InventoryItem): boolean =>
-          inventoryItem && inventoryItem.item === itemType
-      )
-      .forEach((inventoryItem: InventoryItem): void => {
-        inventoryItem.quantity -= remainingAmount;
-        if (inventoryItem.quantity <= 0) {
-          remainingAmount = -inventoryItem.quantity;
-          inventoryItem = undefined;
-        } else {
-          remainingAmount = 0;
+    const newInventory: Inventory = inventory.map(
+      (inventoryItem: InventoryItem, index: number): InventoryItem => {
+        if (inventoryItem && inventoryItem.item === itemType) {
+          if (inventoryItem.quantity <= remainingAmount) {
+            remainingAmount -= inventoryItem.quantity;
+            inventoryItem = undefined;
+          } else {
+            inventoryItem.quantity -= remainingAmount;
+            remainingAmount = 0;
+          }
         }
-      });
-    this.data.set("inventory", inventory);
+        return inventoryItem;
+      }
+    );
+    this.data.set("inventory", newInventory);
   }
 
   /**
