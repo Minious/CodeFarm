@@ -89,10 +89,7 @@ export class ControllerScene extends Phaser.Scene {
       "changedata-selectedItemInventoryIndex",
       (parent: any, selectedItemInventoryIndex: number): void => {
         if (selectedItemInventoryIndex) {
-          if (
-            (this.game.scene.getScene("ControllerScene") as ControllerScene)
-              .debugEnabled
-          ) {
+          if (this.debugEnabled) {
             /**
              * Grabs the new selected item in the inventory and display it in the
              * console.
@@ -414,10 +411,7 @@ export class ControllerScene extends Phaser.Scene {
     // Creates the inventory as an array of InventoryItem
     let startingInventory: Inventory;
 
-    if (
-      (this.game.scene.getScene("ControllerScene") as ControllerScene)
-        .debugEnabled
-    ) {
+    if (this.debugEnabled) {
       startingInventory = new Array(70).fill({}).map(
         (obj: any, i: number): InventoryItem => {
           // Fills the first 10 slots with each type of seed
@@ -458,7 +452,7 @@ export class ControllerScene extends Phaser.Scene {
    * TODO
    */
   private initializeMoney(): void {
-    const startingMoneyAmount: number = 10;
+    const startingMoneyAmount: number = this.debugEnabled ? 1000 : 0;
     this.data.set("money", startingMoneyAmount);
   }
 }
