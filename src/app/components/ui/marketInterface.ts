@@ -1,11 +1,11 @@
 import * as Phaser from "phaser";
 
 import { MarketConfig } from "../../interfaces/marketConfig.interface";
-import { ControllerScene } from "../../scenes/controllerScene";
 import { MarketOfferType } from "../../enums/marketOfferType.enum";
 import { MarketOffer } from "../../interfaces/marketOffer.interface";
 import { getItemData, ItemData } from "../../interfaces/itemData.interface";
 import { Vector2 } from "../../types/vector2.type";
+import { UiScene } from "../../scenes/uiScene";
 
 /**
  * The Interface displayed in the UiScene showing the Market's offers. It
@@ -16,6 +16,9 @@ import { Vector2 } from "../../types/vector2.type";
  * provided.
  */
 export class MarketInterface extends Phaser.GameObjects.Container {
+  // Specifies the type of this game object's scene as UiScene
+  public scene: UiScene;
+
   // A Phaser Container holding all the offers
   private offers: Phaser.GameObjects.Container;
   // The list of offers of the Market
@@ -23,20 +26,19 @@ export class MarketInterface extends Phaser.GameObjects.Container {
 
   /**
    * Creates the MarketInterface object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this Interface belongs to
-   * (should be UiScene)
+   * @param {UiScene} uiScene - The UiScene this Interface belongs to
    * @param {number} x - The x position of the center of the MarketInterface
    * @param {number} y - The y position of the center of the MarketInterface
    * @param {() => void} externalCallback - The callback to call when the close
    * icon is clicked.
    */
   public constructor(
-    scene: Phaser.Scene,
+    uiScene: UiScene,
     x: number,
     y: number,
     externalCallback: () => void
   ) {
-    super(scene, x, y);
+    super(uiScene, x, y);
     this.name = "marketInterface";
 
     // Creates the background Image
@@ -76,10 +78,7 @@ export class MarketInterface extends Phaser.GameObjects.Container {
 
     closeIcon.on("pointerup", externalCallback);
 
-    if (
-      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
-        .debugEnabled
-    ) {
+    if (this.scene.scenesManager.controllerScene.debugEnabled) {
       this.scene.input.enableDebug(closeIcon);
       closeIcon.input.hitAreaDebug.name = "marketCloseIconDebug";
     }
@@ -132,10 +131,6 @@ export class MarketInterface extends Phaser.GameObjects.Container {
   private createMarketOffers(marketConfig: MarketConfig): void {
     const marginColumn: number = 120;
     const marginOffer: number = 60;
-
-    const controllerScene: ControllerScene = this.scene.game.scene.getScene(
-      "ControllerScene"
-    ) as ControllerScene;
 
     /**
      * Creates an offer Container and populate it with the MarketOffer and adds
@@ -193,15 +188,32 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       // Exchange the money with the item when arrow clicked
       arrow.on("pointerdown", (): void => {
         if (type === MarketOfferType.Buying) {
-          if (controllerScene.data.get("money") >= offer.price) {
-            controllerScene.modifyItemTypeQuantityInInventory(offer.item, 1);
-            controllerScene.modifyMoneyAmount(-offer.price);
+          if (
+            this.scene.scenesManager.controllerScene.data.get("money") >=
+            offer.price
+          ) {
+            this.scene.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
+              offer.item,
+              1
+            );
+            this.scene.scenesManager.controllerScene.modifyMoneyAmount(
+              -offer.price
+            );
           }
         }
         if (type === MarketOfferType.Selling) {
-          if (controllerScene.inventoryContains(offer.item)) {
-            controllerScene.modifyItemTypeQuantityInInventory(offer.item, -1);
-            controllerScene.modifyMoneyAmount(offer.price);
+          if (
+            this.scene.scenesManager.controllerScene.inventoryContains(
+              offer.item
+            )
+          ) {
+            this.scene.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
+              offer.item,
+              -1
+            );
+            this.scene.scenesManager.controllerScene.modifyMoneyAmount(
+              offer.price
+            );
           }
         }
       });
@@ -232,7 +244,7 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         .sprite(0, 0, itemTypeData.texture, itemTypeData.frame)
         .setScale(3);
       itemContainer.add(itemIcon);
-      const inventoryItemQuantity: number = controllerScene.getInventoryItemQuantity(
+      const inventoryItemQuantity: number = this.scene.scenesManager.controllerScene.getInventoryItemQuantity(
         offer.item
       );
       const itemQuantityText: Phaser.GameObjects.Text = this.scene.add

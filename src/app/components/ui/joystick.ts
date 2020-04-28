@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 
 import { Vector2 } from "../../types/vector2.type";
 import { Utils } from "../../utils/utils";
+import { UiScene } from "../../scenes/uiScene";
 
 /**
  * The Joystick class emulate a virtual joystick. The joystick is composed by a
@@ -15,6 +16,9 @@ import { Utils } from "../../utils/utils";
  * simplifies the formulas.
  */
 export class Joystick extends Phaser.GameObjects.Container {
+  // This object belongs to the UiScene
+  public scene: UiScene;
+
   // Maximum length between the base and the head of the joystick
   private maxLengthJoystick: number;
   // The joystick head's position
@@ -28,13 +32,13 @@ export class Joystick extends Phaser.GameObjects.Container {
 
   /**
    * Creates the Joystick object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this Joystick belongs to
+   * @param {UiScene} uiScene - The UiScene this Joystick belongs to
    * (should be UiScene)
    * @param {number} maxLengthJoystick - The maximum distance between the head
    * and the base of the joystick
    */
-  public constructor(scene: Phaser.Scene, maxLengthJoystick: number) {
-    super(scene, 0, 0);
+  public constructor(uiScene: UiScene, maxLengthJoystick: number) {
+    super(uiScene, 0, 0);
 
     this.maxLengthJoystick = maxLengthJoystick;
 

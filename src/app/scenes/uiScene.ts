@@ -5,24 +5,28 @@ import { MarketInterface } from "../components/ui/marketInterface";
 import { InventoryInterface } from "../components/ui/inventoryInterface";
 import { Inventory } from "../types/inventory.type";
 import { MarketConfig } from "../interfaces/marketConfig.interface";
-import { ControllerScene } from "./controllerScene";
 import { Joystick } from "../components/ui/joystick";
+import { CodeFarmScene } from "./codeFarmScene";
+import { ScenesManager } from "./scenesManager";
 
 /**
  * This Scene is displayed above the WorldScene and is in control of the UI like
  * displaying the joystick, the money amount, the InventoryInterface and the
  * MarketInterface.
  */
-export class UiScene extends Phaser.Scene {
+export class UiScene extends CodeFarmScene {
   private marketInterface: MarketInterface;
   private inventoryInterface: InventoryInterface;
   private _joystick: Joystick;
   private moneyAmountText: Phaser.GameObjects.Text;
 
-  public constructor() {
-    super({
-      key: "UiScene",
-    });
+  public constructor(scenesManager: ScenesManager) {
+    super(
+      {
+        key: "UiScene",
+      },
+      scenesManager
+    );
   }
 
   public get joystick(): Joystick {
@@ -63,7 +67,7 @@ export class UiScene extends Phaser.Scene {
      * When the ControllerScene's 'inventory' data is modified, triggers the
      * refreshing of the InventoryInterface
      */
-    (this.game.scene.getScene("ControllerScene") as ControllerScene).events.on(
+    this.scenesManager.controllerScene.events.on(
       "changedata-inventory",
       (parent: any, inventory: Inventory): void => {
         this.updateInventory(inventory);
@@ -94,7 +98,7 @@ export class UiScene extends Phaser.Scene {
      * When the ControllerScene's 'money' data is modified, triggers the
      * refreshing of the money amount text.
      */
-    (this.game.scene.getScene("ControllerScene") as ControllerScene).events.on(
+    this.scenesManager.controllerScene.events.on(
       "changedata-money",
       (parent: any, money: number): void => {
         log.debug("New money amount : " + money);
@@ -107,9 +111,7 @@ export class UiScene extends Phaser.Scene {
      * initialize its data which is going to trigger the update of the
      * interfaces.
      */
-    (this.game.scene.getScene(
-      "ControllerScene"
-    ) as ControllerScene).uiSceneReady();
+    this.scenesManager.controllerScene.uiSceneReady();
   }
 
   // tslint:disable-next-line: no-empty

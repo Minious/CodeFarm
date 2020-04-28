@@ -4,11 +4,11 @@ import { Utils } from "../utils/utils";
 import { ActionPopup } from "../components/worldWidgets/actionPopup";
 import { LootAnim } from "../components/worldWidgets/lootAnim";
 
+import { CodeFarmScene } from "./codeFarmScene";
 import { Vector2 } from "../types/vector2.type";
-import { UiScene } from "./uiScene";
+import { ScenesManager } from "./scenesManager";
 import { BuildingType, buildingFactory } from "../enums/buildingType.enum";
 import { Crop } from "../components/crops/crop";
-import { ControllerScene } from "./controllerScene";
 import { cropFactory } from "../enums/itemType.enum";
 import { getItemData, ItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
@@ -16,7 +16,7 @@ import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Loot } from "../interfaces/loot.interface";
 // import { Joystick } from "../components/ui/joystick";
 
-export class WorldScene extends Phaser.Scene {
+export class WorldScene extends CodeFarmScene {
   /**
    * Trick variable to disable the actionClick if a popup has been clicked.
    * Since the popup is destroyed when click, the click is passing through to
@@ -65,10 +65,13 @@ export class WorldScene extends Phaser.Scene {
    */
   private actionPopup: ActionPopup;
 
-  public constructor() {
-    super({
-      key: "WorldScene",
-    });
+  public constructor(scenesManager: ScenesManager) {
+    super(
+      {
+        key: "WorldScene",
+      },
+      scenesManager
+    );
   }
 
   // Getter for _layerObjectsBackground
@@ -252,9 +255,7 @@ export class WorldScene extends Phaser.Scene {
         );
 
         // Resets the joystick in case the pointer is dragged (the player starts moving)
-        (this.game.scene.getScene("UiScene") as UiScene).joystick.resetTo(
-          pointerScreenPos
-        );
+        this.scenesManager.uiScene.joystick.resetTo(pointerScreenPos);
       }
     );
     // Triggered when the pointer is released (Mouse button or finger released)
@@ -265,7 +266,7 @@ export class WorldScene extends Phaser.Scene {
       // If the player was moving (meaning pointer dragged)
       if (this.moving) {
         this.moving = false;
-        (this.game.scene.getScene("UiScene") as UiScene).joystick.hide();
+        this.scenesManager.uiScene.joystick.hide();
       } else {
         const pointerWorldPos: Vector2 = new Phaser.Math.Vector2(
           this.input.activePointer.worldX,
@@ -294,7 +295,7 @@ export class WorldScene extends Phaser.Scene {
          */
         if (!this.moving) {
           this.moving = true;
-          (this.game.scene.getScene("UiScene") as UiScene).joystick.show();
+          this.scenesManager.uiScene.joystick.show();
         }
 
         const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
@@ -302,17 +303,13 @@ export class WorldScene extends Phaser.Scene {
           this.input.activePointer.y
         );
 
-        (this.game.scene.getScene(
-          "UiScene"
-        ) as UiScene).joystick.updatePosition(pointerScreenPos);
+        this.scenesManager.uiScene.joystick.updatePosition(pointerScreenPos);
 
         const playerTarget: Vector2 = Utils.add(
           new Phaser.Math.Vector2(this.player.x, this.player.y),
-          (this.game.scene.getScene("UiScene") as UiScene).joystick.getMove()
+          this.scenesManager.uiScene.joystick.getMove()
         );
-        const speedFactor: number = (this.game.scene.getScene(
-          "UiScene"
-        ) as UiScene).joystick.getRatio();
+        const speedFactor: number = this.scenesManager.uiScene.joystick.getRatio();
 
         this.movePlayerTo(playerTarget, speedFactor);
       }
@@ -325,10 +322,7 @@ export class WorldScene extends Phaser.Scene {
     // Enables collision between objects and the player
     this.physics.add.collider(this.player, this.objects);
 
-    if (
-      (this.game.scene.getScene("ControllerScene") as ControllerScene)
-        .debugEnabled
-    ) {
+    if (this.scenesManager.controllerScene.debugEnabled) {
       // Displays the physic bodies for debug purposes
       this.physics.world.createDebugGraphic();
     }
@@ -605,9 +599,7 @@ export class WorldScene extends Phaser.Scene {
       lootAnim.setScale(2);
       this.add.existing(lootAnim);
 
-      (this.game.scene.getScene(
-        "ControllerScene"
-      ) as ControllerScene).modifyItemTypeQuantityInInventory(
+      this.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
         loot.item,
         loot.quantity
       );
@@ -658,9 +650,7 @@ export class WorldScene extends Phaser.Scene {
             tilePos.x === crop.tilePos.x && tilePos.y === crop.tilePos.y
         );
 
-      const selectedInventoryItemData: InventoryItem = (this.game.scene.getScene(
-        "ControllerScene"
-      ) as ControllerScene).getSelectedInventoryItemData();
+      const selectedInventoryItemData: InventoryItem = this.scenesManager.controllerScene.getSelectedInventoryItemData();
       if (emptyField && selectedInventoryItemData) {
         const selectedObjectIsSeed: boolean = getItemData(
           selectedInventoryItemData.item
@@ -675,9 +665,9 @@ export class WorldScene extends Phaser.Scene {
               selectedInventoryItemData.item
             );
             this.crops.add(crop);
-            (this.game.scene.getScene(
-              "ControllerScene"
-            ) as ControllerScene).modifySelectedInventoryItemQuantity(-1);
+            this.scenesManager.controllerScene.modifySelectedInventoryItemQuantity(
+              -1
+            );
           };
 
           const itemData: ItemData = getItemData(

@@ -1,12 +1,13 @@
 import { Crop } from "./crop";
 import { ItemType } from "../../enums/itemType.enum";
 import { LootConfig } from "../../types/lootConfig.type";
+import { WorldScene } from "../../scenes/worldScene";
 
 /**
  * Defines the Melon Crop.
  */
 export class Melon extends Crop {
-  public constructor(scene: Phaser.Scene, x: number, y: number) {
+  public constructor(worldScene: WorldScene, x: number, y: number) {
     const lootConfig: LootConfig = [
       {
         item: ItemType.Melon,
@@ -17,6 +18,6 @@ export class Melon extends Crop {
         quantity: 1,
       },
     ];
-    super(scene, x, y, 40, 28, lootConfig);
+    super(worldScene, x, y, 40, 28, lootConfig);
   }
 }

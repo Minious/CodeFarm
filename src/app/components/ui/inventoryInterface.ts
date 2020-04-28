@@ -4,7 +4,7 @@ import * as log from "loglevel";
 import { InventoryButton } from "./inventoryButton";
 import { Inventory } from "../../types/inventory.type";
 import { InventoryItem } from "../../interfaces/inventoryItem.interface";
-import { ControllerScene } from "../../scenes/controllerScene";
+import { UiScene } from "../../scenes/uiScene";
 
 /**
  * The Interface displayed in the UiScene showing the player's Inventory
@@ -14,6 +14,9 @@ import { ControllerScene } from "../../scenes/controllerScene";
  * InventoryGrid that displays the full content of the player's Inventory.
  */
 export class InventoryInterface extends Phaser.GameObjects.Container {
+  // Specifies the type of this game object's scene as UiScene
+  public scene: UiScene;
+
   // A Phaser Group holding all the inventory bar InventoryButtons
   private inventoryBarButtons: Phaser.GameObjects.Group;
   // A Phaser Group holding all the inventory grid InventoryButtons
@@ -23,11 +26,10 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
 
   /**
    * Creates the InventoryInterface object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this Interface belongs to
-   * (should be UiScene)
+   * @param {UiScene} uiScene - The UiScene this Interface belongs to
    */
-  public constructor(scene: Phaser.Scene) {
-    super(scene, 0, 0);
+  public constructor(uiScene: UiScene) {
+    super(uiScene, 0, 0);
     this.name = "inventoryInterface";
 
     this.inventoryBarButtons = this.scene.add.group();
@@ -225,10 +227,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     });
 
     this.add(inventoryOpenButton);
-    if (
-      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
-        .debugEnabled
-    ) {
+    if (this.scene.scenesManager.controllerScene.debugEnabled) {
       this.scene.input.enableDebug(inventoryOpenButton);
       this.add(inventoryOpenButton.input.hitAreaDebug);
     }

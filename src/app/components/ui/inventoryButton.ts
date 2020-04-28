@@ -2,9 +2,9 @@ import * as Phaser from "phaser";
 
 import { getItemData, ItemData } from "../../interfaces/itemData.interface";
 import { Utils } from "../../utils/utils";
-import { ControllerScene } from "../../scenes/controllerScene";
 import { Vector2 } from "../../types/vector2.type";
 import { InventoryItem } from "../../interfaces/inventoryItem.interface";
+import { UiScene } from "../../scenes/uiScene";
 
 /**
  * A Button displaying the content of an Inventory slot. Contained Item Icon can
@@ -12,6 +12,9 @@ import { InventoryItem } from "../../interfaces/inventoryItem.interface";
  * given a click callback. A Button can also be selected.
  */
 export class InventoryButton extends Phaser.GameObjects.Container {
+  // Specifies the type of this game object's scene as UiScene
+  public scene: UiScene;
+
   // The background Image of the InventoryButton
   private backgroundImage: Phaser.GameObjects.Image;
   // Is the InventoryButton selected
@@ -29,8 +32,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
 
   /**
    * Creates the InventoryButton object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this InventoryButton belongs
-   * to (should be UiScene)
+   * @param {UiScene} uiScene - The UiScene this InventoryButton belongs to
    * @param {number} x - The x position of the top left Tile of the Market in
    * the WorldScene's Tilemap
    * @param {number} y - The y position of the top left Tile of the Market in
@@ -48,7 +50,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
    * when InventoryButton clicked
    */
   public constructor(
-    scene: Phaser.Scene,
+    uiScene: UiScene,
     x: number,
     y: number,
     displayWidth: number,
@@ -58,7 +60,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     itemInventoryIndex: number,
     externalCallback: (_: InventoryButton) => void
   ) {
-    super(scene, x, y);
+    super(uiScene, x, y);
 
     this._itemInventoryIndex = itemInventoryIndex;
 
@@ -196,9 +198,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
          * InventoryButton on which the content of this InventoryButton was
          * dropped.
          */
-        (this.scene.game.scene.getScene(
-          "ControllerScene"
-        ) as ControllerScene).swapInventoryItems(
+        this.scene.scenesManager.controllerScene.swapInventoryItems(
           this._itemInventoryIndex,
           target.itemInventoryIndex
         );

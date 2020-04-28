@@ -3,7 +3,6 @@ import * as Phaser from "phaser";
 import { Vector2 } from "../../types/vector2.type";
 import { BoundingBox } from "../../interfaces/boundingBox.interface";
 import { WorldScene } from "../../scenes/worldScene";
-import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * Abstract class representing any Building in the game world. The Building is
@@ -21,10 +20,12 @@ import { ControllerScene } from "../../scenes/controllerScene";
  * is clicked by the player.
  */
 export abstract class Building extends Phaser.Physics.Arcade.Sprite {
+  // Specifies the type of this game object's scene as WorldScene
+  public scene: WorldScene;
+
   /**
    * Creates the Building object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this Popup belongs to
-   * (should be WorldScene)
+   * @param {WorldScene} worldScene - The WorldScene this Building belongs to
    * @param {number} x - The x position of the top left Tile of the Building in
    * the WorldScene's Tilemap
    * @param {number} y - The y position of the top left Tile of the Building in
@@ -43,7 +44,7 @@ export abstract class Building extends Phaser.Physics.Arcade.Sprite {
    * Building is clicked by the player
    */
   public constructor(
-    scene: Phaser.Scene,
+    worldScene: WorldScene,
     x: number,
     y: number,
     baseTileIdx: number,
@@ -52,7 +53,7 @@ export abstract class Building extends Phaser.Physics.Arcade.Sprite {
     colliderPosition: BoundingBox,
     externalCallback: () => void
   ) {
-    super(scene, 0, 0, undefined, undefined);
+    super(worldScene, 0, 0, undefined, undefined);
 
     /**
      * Adds the Building to the WorldScene's physics engine and set it to static
@@ -66,8 +67,7 @@ export abstract class Building extends Phaser.Physics.Arcade.Sprite {
     this.updateTiles(mapPosition, size, foreground, baseTileIdx);
 
     // Positions and sizes the Building click BoundingBox.
-    const originTile: Phaser.Tilemaps.Tile = (this
-      .scene as WorldScene).layerObjectsBackground.getTileAt(
+    const originTile: Phaser.Tilemaps.Tile = this.scene.layerObjectsBackground.getTileAt(
       mapPosition.x,
       mapPosition.y,
       true
@@ -87,10 +87,7 @@ export abstract class Building extends Phaser.Physics.Arcade.Sprite {
      */
     this.setInteractive();
     this.input.alwaysEnabled = true;
-    if (
-      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
-        .debugEnabled
-    ) {
+    if (this.scene.scenesManager.controllerScene.debugEnabled) {
       this.scene.input.enableDebug(this);
     }
     this.on("pointerdown", (): void => {
@@ -133,8 +130,8 @@ export abstract class Building extends Phaser.Physics.Arcade.Sprite {
           i <= foreground.x + foreground.width &&
           j >= foreground.y &&
           j <= foreground.y + foreground.height
-            ? (this.scene as WorldScene).layerObjectsForeground
-            : (this.scene as WorldScene).layerObjectsBackground;
+            ? this.scene.layerObjectsForeground
+            : this.scene.layerObjectsBackground;
         layer.putTileAt(
           baseTileIdx + i + j * 32,
           mapPosition.x + i,
