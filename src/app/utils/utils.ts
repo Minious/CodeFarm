@@ -55,7 +55,7 @@ export class Utils {
    * @param {Vector2} v2 - position of the point 2
    * @returns {number} - The distance between the two points
    */
-  public static distance(v1: Vector2, v2: Vector2): number {
+  public static distance(v1: Vector2, v2: Vector2 = { x: 0, y: 0 }): number {
     return Math.sqrt(Math.pow(v2.x - v1.x, 2) + Math.pow(v2.y - v1.y, 2));
   }
 
