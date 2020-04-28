@@ -5,8 +5,8 @@ import { MarketInterface } from "../components/ui/marketInterface";
 import { InventoryInterface } from "../components/ui/inventoryInterface";
 import { Inventory } from "../types/inventory.type";
 import { MarketConfig } from "../interfaces/marketConfig.interface";
-import { Vector2 } from "../types/vector2.type";
 import { ControllerScene } from "./controllerScene";
+import { Joystick } from "../components/ui/joystick";
 
 /**
  * This Scene is displayed above the WorldScene and is in control of the UI like
@@ -16,14 +16,17 @@ import { ControllerScene } from "./controllerScene";
 export class UiScene extends Phaser.Scene {
   private marketInterface: MarketInterface;
   private inventoryInterface: InventoryInterface;
-  private joystickBase: Phaser.GameObjects.Image;
-  private joystickHead: Phaser.GameObjects.Image;
+  private _joystick: Joystick;
   private moneyAmountText: Phaser.GameObjects.Text;
 
   public constructor() {
     super({
       key: "UiScene",
     });
+  }
+
+  public get joystick(): Joystick {
+    return this._joystick;
   }
 
   // tslint:disable-next-line: no-empty
@@ -33,6 +36,13 @@ export class UiScene extends Phaser.Scene {
    * Creates and initializes interfaces
    */
   public create(): void {
+    /**
+     * Creates the joystick. The joystick is hidden when created, it is only
+     * displayed when the player is moving.
+     */
+    this._joystick = new Joystick(this, 20);
+    this.add.existing(this._joystick);
+
     // Creates the MarketInterface and hides it
     this.marketInterface = new MarketInterface(
       this,
@@ -59,16 +69,6 @@ export class UiScene extends Phaser.Scene {
         this.updateInventory(inventory);
       }
     );
-
-    /**
-     * Creates joystick's head and base images and hides them. They are only
-     * displayed when the player is moving.
-     */
-    this.joystickBase = this.add.image(0, 0, "joystickBase");
-    this.joystickBase.name = "joystickBase";
-    this.joystickHead = this.add.image(0, 0, "joystickHead");
-    this.joystickHead.name = "joystickHead";
-    this.hideJoystick();
 
     /**
      * Creates the money amount icon and text
@@ -121,32 +121,6 @@ export class UiScene extends Phaser.Scene {
    */
   public changeMarketConfig(marketConfig: MarketConfig): void {
     this.marketInterface.loadOffers(marketConfig);
-  }
-
-  /**
-   * Hides the joystick
-   */
-  public hideJoystick(): void {
-    this.joystickBase.visible = false;
-    this.joystickHead.visible = false;
-  }
-
-  /**
-   * Shows the joystick
-   */
-  public showJoystick(): void {
-    this.joystickBase.visible = true;
-    this.joystickHead.visible = true;
-  }
-
-  /**
-   * Sets the position of both the head and the base of the joystick.
-   * @param {Vector2} posBase - The position of the joystick's base
-   * @param {Vector2} posHead - The position of the joystick's head
-   */
-  public setPositionJoystick(posBase: Vector2, posHead: Vector2): void {
-    this.joystickBase.setPosition(posBase.x, posBase.y);
-    this.joystickHead.setPosition(posHead.x, posHead.y);
   }
 
   /**

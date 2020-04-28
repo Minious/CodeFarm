@@ -14,6 +14,7 @@ import { getItemData, ItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
 import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Loot } from "../interfaces/loot.interface";
+// import { Joystick } from "../components/ui/joystick";
 
 export class WorldScene extends Phaser.Scene {
   /**
@@ -52,14 +53,6 @@ export class WorldScene extends Phaser.Scene {
   private _layerObjectsForeground: Phaser.Tilemaps.DynamicTilemapLayer;
   // The player Sprite
   private player: Phaser.Physics.Arcade.Sprite;
-  /**
-   * Maximum length between the base and the head of the joystick
-   * (NOTE : Joystick should have its own class because it is used by
-   * WorldScene and UiScene)
-   */
-  private maxLengthJoystick: number = 25;
-  // The joystick base's position
-  private joystickPos: Vector2;
   /**
    * Is the player moving. Used when the pointerup event fires to know if the
    * player dragged (the player stop moving) or clicked (the actionClick method
@@ -258,8 +251,10 @@ export class WorldScene extends Phaser.Scene {
           this.input.activePointer.y
         );
 
-        // Sets the joystick base position in case the pointer is dragged
-        this.joystickPos = pointerScreenPos;
+        // Resets the joystick in case the pointer is dragged (the player starts moving)
+        (this.game.scene.getScene("UiScene") as UiScene).joystick.resetTo(
+          pointerScreenPos
+        );
       }
     );
     // Triggered when the pointer is released (Mouse button or finger released)
@@ -267,11 +262,10 @@ export class WorldScene extends Phaser.Scene {
       // Stops the player's physic body (In case it was moving)
       this.player.body.stop();
 
-      this.joystickPos = undefined;
       // If the player was moving (meaning pointer dragged)
       if (this.moving) {
         this.moving = false;
-        (this.game.scene.getScene("UiScene") as UiScene).hideJoystick();
+        (this.game.scene.getScene("UiScene") as UiScene).joystick.hide();
       } else {
         const pointerWorldPos: Vector2 = new Phaser.Math.Vector2(
           this.input.activePointer.worldX,
@@ -300,7 +294,7 @@ export class WorldScene extends Phaser.Scene {
          */
         if (!this.moving) {
           this.moving = true;
-          (this.game.scene.getScene("UiScene") as UiScene).showJoystick();
+          (this.game.scene.getScene("UiScene") as UiScene).joystick.show();
         }
 
         const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
@@ -308,54 +302,19 @@ export class WorldScene extends Phaser.Scene {
           this.input.activePointer.y
         );
 
-        // Distance between joystick's base and head
-        let currentLengthJoystick: number = Utils.distance(
-          pointerScreenPos,
-          this.joystickPos
-        );
-        /**
-         * If the head (pointer) is too far from the base of the joystick, then
-         * moves the base towards the head until * the distance reaches the
-         * maxLengthJoystick
-         */
-        if (currentLengthJoystick > this.maxLengthJoystick) {
-          const newJoystickPos: Vector2 = Utils.add(
-            pointerScreenPos,
-            Utils.scale(
-              Utils.subtract(this.joystickPos, pointerScreenPos),
-              this.maxLengthJoystick / currentLengthJoystick
-            )
-          );
+        (this.game.scene.getScene(
+          "UiScene"
+        ) as UiScene).joystick.updatePosition(pointerScreenPos);
 
-          this.joystickPos = newJoystickPos;
-          currentLengthJoystick = Utils.distance(
-            pointerScreenPos,
-            this.joystickPos
-          );
-        }
-
-        // Calculates the direction vector of the joystick
-        const joystickMove: Vector2 = Utils.subtract(
-          pointerScreenPos,
-          this.joystickPos
-        );
         const playerTarget: Vector2 = Utils.add(
           new Phaser.Math.Vector2(this.player.x, this.player.y),
-          joystickMove
+          (this.game.scene.getScene("UiScene") as UiScene).joystick.getMove()
         );
-        const speedFactor: number = Utils.clamp(
-          currentLengthJoystick / this.maxLengthJoystick,
-          0,
-          1
-        );
+        const speedFactor: number = (this.game.scene.getScene(
+          "UiScene"
+        ) as UiScene).joystick.getRatio();
 
         this.movePlayerTo(playerTarget, speedFactor);
-
-        // Updates the position of the joystick on UiScene
-        (this.game.scene.getScene("UiScene") as UiScene).setPositionJoystick(
-          this.joystickPos,
-          pointerScreenPos
-        );
       }
     });
 
