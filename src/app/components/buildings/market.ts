@@ -1,9 +1,7 @@
-import * as Phaser from "phaser";
-
 import { Building } from "./building";
-import { UiScene } from "../../scenes/uiScene";
 import { Vector2 } from "../../types/vector2.type";
 import { BoundingBox } from "../../interfaces/boundingBox.interface";
+import { WorldScene } from "../../scenes/worldScene";
 
 /**
  * The Market is a Building allowing the player to buy and sell items. When
@@ -12,14 +10,13 @@ import { BoundingBox } from "../../interfaces/boundingBox.interface";
 export class Market extends Building {
   /**
    * Creates the Market object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this Popup belongs to
-   * (should be WorldScene)
+   * @param {WorldScene} worldScene - The WorldScene this Market belongs to
    * @param {number} x - The x position of the top left Tile of the Market in
    * the WorldScene's Tilemap
    * @param {number} y - The y position of the top left Tile of the Market in
    * the WorldScene's Tilemap
    */
-  public constructor(scene: Phaser.Scene, x: number, y: number) {
+  public constructor(worldScene: WorldScene, x: number, y: number) {
     const margin: number = 15;
     const heightMarket: number = 50;
     const size: Vector2 = { x: 3, y: 4 };
@@ -36,10 +33,10 @@ export class Market extends Building {
       height: 2,
     };
     const externalCallback = (): void => {
-      (this.scene.game.scene.getScene("UiScene") as UiScene).openMarket();
+      this.scene.scenesManager.uiScene.openMarket();
     };
     super(
-      scene,
+      worldScene,
       x,
       y,
       306,

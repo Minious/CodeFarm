@@ -13,6 +13,10 @@ import { WorldScene } from "../../scenes/worldScene";
 export abstract class Crop extends Phaser.GameObjects.GameObject {
   // The total number of growth states.
   private static NB_GROWTH_STEPS: number = 5;
+
+  // Specifies the type of this game object's scene as WorldScene
+  protected scene: WorldScene;
+
   // The Tile's position in the Tilemap
   private _tilePos: Vector2;
   // The Crop's Tile
@@ -37,8 +41,7 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
 
   /**
    * Creates the Crop object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this Crop belongs to (should
-   * be WorldScene)
+   * @param {WorldScene} worldScene - The WorldScene this Crop belongs to
    * @param {number} x - The x position of the Tile of the Crop in the
    * WorldScene's Tilemap
    * @param {number} y - The y position of the Tile of the Crop in the
@@ -49,14 +52,14 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
    * @param {LootConfig} lootConfig - The LootConfig that the Crop produces when harvested.
    */
   public constructor(
-    scene: Phaser.Scene,
+    worldScene: WorldScene,
     x: number,
     y: number,
     growthDuration: number,
     baseTileIdx: number,
     lootConfig: LootConfig
   ) {
-    super(scene, undefined);
+    super(worldScene, undefined);
 
     // Sets the member variables
     this._tilePos = { x, y };
@@ -118,12 +121,12 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
    * Updates the _layerCrops in the WorldScene's Tilemap with the Crop Tile.
    */
   private updateTile(): void {
-    (this.scene as WorldScene).layerCrops.putTileAt(
+    this.scene.layerCrops.putTileAt(
       this.baseTileIdx + this.growthState,
       this.tilePos.x,
       this.tilePos.y
     );
-    this._tile = (this.scene as WorldScene).layerCrops.getTileAt(
+    this._tile = this.scene.layerCrops.getTileAt(
       this.tilePos.x,
       this.tilePos.y
     );

@@ -1,17 +1,18 @@
 import * as Phaser from "phaser";
 
 import { WorldScene } from "../../scenes/worldScene";
-import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * A Popup icon displayed in the world view asking the player for a double click
  * confirmation to trigger an action (make field, plant crop, harvest crop).
  */
 export class ActionPopup extends Phaser.GameObjects.Container {
+  // Specifies the type of this game object's scene as WorldScene
+  public scene: WorldScene;
+
   /**
    * Creates the ActionPopup object.
-   * @param {Phaser.Scene} scene - The Phaser Scene this Popup belongs to
-   * (should be WorldScene)
+   * @param {WorldScene} worldScene - The WorldScene this Popup belongs to
    * @param {number} x - The x position of the Popup in the world
    * @param {number} y - The y position of the Popup in the world
    * @param {number} displayWidth - The width of the Popup
@@ -21,7 +22,7 @@ export class ActionPopup extends Phaser.GameObjects.Container {
    * @param {number} frame - The frame index of the icon in the texture
    */
   public constructor(
-    scene: Phaser.Scene,
+    worldScene: WorldScene,
     x: number,
     y: number,
     displayWidth: number,
@@ -29,7 +30,7 @@ export class ActionPopup extends Phaser.GameObjects.Container {
     texture: string,
     frame: number
   ) {
-    super(scene, x, y);
+    super(worldScene, x, y);
 
     // Creates the background Images of the Popup.
     const backgroundImage1: Phaser.GameObjects.Image = this.scene.add.image(
@@ -88,22 +89,16 @@ export class ActionPopup extends Phaser.GameObjects.Container {
      * Popup
      */
     this.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
-    if (
-      (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
-        .debugEnabled
-    ) {
+    if (this.scene.scenesManager.controllerScene.debugEnabled) {
       this.scene.input.enableDebug(this);
     }
 
     this.on("pointerdown", (): void => {
       externalCallback();
-      if (
-        (this.scene.game.scene.getScene("ControllerScene") as ControllerScene)
-          .debugEnabled
-      ) {
+      if (this.scene.scenesManager.controllerScene.debugEnabled) {
         this.scene.input.removeDebug(this);
       }
-      (this.scene as WorldScene).popupClicked = true;
+      this.scene.popupClicked = true;
       this.destroy();
     });
 

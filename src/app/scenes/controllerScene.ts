@@ -1,4 +1,3 @@
-import * as Phaser from "phaser";
 import * as log from "loglevel";
 
 import * as tileset from "../../assets/tileset.png";
@@ -17,8 +16,9 @@ import { MarketConfig } from "../interfaces/marketConfig.interface";
 import { ItemType } from "../enums/itemType.enum";
 import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Inventory } from "../types/inventory.type";
-import { UiScene } from "./uiScene";
 import { MarketOffer } from "../interfaces/marketOffer.interface";
+import { ScenesManager } from "./scenesManager";
+import { CodeFarmScene } from "./codeFarmScene";
 
 /**
  * This Scene manages the logic of the game behind the scene. It contains the
@@ -26,13 +26,16 @@ import { MarketOffer } from "../interfaces/marketOffer.interface";
  * manipulate them. The Scene is also in charge of loading all the assets and,
  * once finished, launch the other Scenes : WorldScene and UiScene.
  */
-export class ControllerScene extends Phaser.Scene {
+export class ControllerScene extends CodeFarmScene {
   private _debugEnabled: boolean = process.env.NODE_ENV === "development";
 
-  public constructor() {
-    super({
-      key: "ControllerScene",
-    });
+  public constructor(scenesManager: ScenesManager) {
+    super(
+      {
+        key: "ControllerScene",
+      },
+      scenesManager
+    );
   }
 
   // Getter for _debugEnabled
@@ -395,7 +398,7 @@ export class ControllerScene extends Phaser.Scene {
       delay: delayRefreshMarket * 1000,
       startAt: delayRefreshMarket * 1000 - 1,
       callback: (): void => {
-        (this.game.scene.getScene("UiScene") as UiScene).changeMarketConfig(
+        this.scenesManager.uiScene.changeMarketConfig(
           this.generateMarketConfig()
         );
       },

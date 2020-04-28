@@ -1,12 +1,13 @@
 import { Crop } from "./crop";
 import { ItemType } from "../../enums/itemType.enum";
 import { LootConfig } from "../../types/lootConfig.type";
+import { WorldScene } from "../../scenes/worldScene";
 
 /**
  * Defines the Potato Crop.
  */
 export class Potato extends Crop {
-  public constructor(scene: Phaser.Scene, x: number, y: number) {
+  public constructor(worldScene: WorldScene, x: number, y: number) {
     const lootConfig: LootConfig = [
       {
         item: ItemType.Potato,
@@ -17,6 +18,6 @@ export class Potato extends Crop {
         quantity: 1,
       },
     ];
-    super(scene, x, y, 20, 105, lootConfig);
+    super(worldScene, x, y, 20, 105, lootConfig);
   }
 }

@@ -9,6 +9,7 @@ import { Strawberry } from "../components/crops/strawberry";
 import { Tomato } from "../components/crops/tomato";
 import { Wheat } from "../components/crops/wheat";
 import { Crop } from "../components/crops/crop";
+import { WorldScene } from "../scenes/worldScene";
 
 /**
  * The the list of all the item in the game.
@@ -39,8 +40,7 @@ export enum ItemType {
 /**
  * Returns an instance of the Crop associated to the crop seed ItemType passed
  * as an argument.
- * @param {Phaser.Scene} scene - The Phaser Scene the returned Crop belongs to
- * (should be WorldScene)
+ * @param {WorldScene} worldScene - The WorldScene the returned Crop belongs to
  * @param {number} x - The x position of the Tile of the Crop in the
  * WorldScene's Tilemap
  * @param {number} y - The y position of the Tile of the Crop in the
@@ -50,32 +50,32 @@ export enum ItemType {
  * (Note : Move to Crop or CropFactory class ?)
  */
 export const cropFactory = (
-  scene: Phaser.Scene,
+  worldScene: WorldScene,
   x: number,
   y: number,
   seed: ItemType
 ): Crop => {
   switch (seed) {
     case ItemType.AvocadoSeed:
-      return new Avocado(scene, x, y);
+      return new Avocado(worldScene, x, y);
     case ItemType.GrapesSeed:
-      return new Grapes(scene, x, y);
+      return new Grapes(worldScene, x, y);
     case ItemType.LemonSeed:
-      return new Lemon(scene, x, y);
+      return new Lemon(worldScene, x, y);
     case ItemType.MelonSeed:
-      return new Melon(scene, x, y);
+      return new Melon(worldScene, x, y);
     case ItemType.OrangeSeed:
-      return new Orange(scene, x, y);
+      return new Orange(worldScene, x, y);
     case ItemType.PotatoSeed:
-      return new Potato(scene, x, y);
+      return new Potato(worldScene, x, y);
     case ItemType.RoseSeed:
-      return new Rose(scene, x, y);
+      return new Rose(worldScene, x, y);
     case ItemType.StrawberrySeed:
-      return new Strawberry(scene, x, y);
+      return new Strawberry(worldScene, x, y);
     case ItemType.TomatoSeed:
-      return new Tomato(scene, x, y);
+      return new Tomato(worldScene, x, y);
     case ItemType.WheatSeed:
-      return new Wheat(scene, x, y);
+      return new Wheat(worldScene, x, y);
   }
   return undefined;
 };
