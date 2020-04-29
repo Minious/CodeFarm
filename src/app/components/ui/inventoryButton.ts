@@ -195,12 +195,11 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       }
     );
 
-    this.scene.scenesManager.controllerScene.createInventorySlotUpdateCallback(
-      this._itemInventoryIndex,
-      (newInventoryItem: InventoryItem): void => {
+    this.scene.scenesManager.controllerScene
+      .getInventorySlotUpdate$(this._itemInventoryIndex)
+      .subscribe((newInventoryItem: InventoryItem): void => {
         this.updateContent(newInventoryItem);
-      }
-    );
+      });
   }
 
   // Getter for _itemInventoryIndex

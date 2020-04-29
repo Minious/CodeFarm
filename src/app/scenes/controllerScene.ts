@@ -19,7 +19,7 @@ import { Inventory } from "../types/inventory.type";
 import { MarketOfferData } from "../interfaces/marketOfferData.interface";
 import { ScenesManager } from "./scenesManager";
 import { CodeFarmScene } from "./codeFarmScene";
-import { BehaviorSubject, ReplaySubject, timer } from "rxjs";
+import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
 // tslint:disable-next-line: no-submodule-imports
 import { map } from "rxjs/operators";
 
@@ -33,14 +33,12 @@ export class ControllerScene extends CodeFarmScene {
   public static INVENTORY_SIZE: number = 70;
 
   private inventory: Inventory;
-  private inventorySlotUpdateStreams: Array<
-    BehaviorSubject<InventoryItem>
-  > = [];
+  private _inventorySlotUpdate$: Array<BehaviorSubject<InventoryItem>> = [];
 
   private _moneyAmount: number;
-  private moneyStream: BehaviorSubject<number>;
+  private _moneyAmount$: BehaviorSubject<number>;
 
-  private marketConfigStream: ReplaySubject<MarketConfig>;
+  private _marketConfig$: ReplaySubject<MarketConfig>;
 
   private _debugEnabled: boolean = process.env.NODE_ENV === "development";
 
@@ -61,6 +59,18 @@ export class ControllerScene extends CodeFarmScene {
   // Getter for _moneyAmount
   public get moneyAmount(): number {
     return this._moneyAmount;
+  }
+
+  public get moneyAmount$(): Observable<number> {
+    return this._moneyAmount$;
+  }
+
+  public get marketConfig$(): Observable<MarketConfig> {
+    return this._marketConfig$;
+  }
+
+  public getInventorySlotUpdate$(slotIdx: number): Observable<InventoryItem> {
+    return this._inventorySlotUpdate$[slotIdx];
   }
 
   /**
@@ -201,8 +211,8 @@ export class ControllerScene extends CodeFarmScene {
           this.inventory[itemIdx1],
         ];
       }
-      this.inventorySlotUpdateStreams[itemIdx1].next(this.inventory[itemIdx1]);
-      this.inventorySlotUpdateStreams[itemIdx2].next(this.inventory[itemIdx2]);
+      this._inventorySlotUpdate$[itemIdx1].next(this.inventory[itemIdx1]);
+      this._inventorySlotUpdate$[itemIdx2].next(this.inventory[itemIdx2]);
     }
   }
 
@@ -257,7 +267,7 @@ export class ControllerScene extends CodeFarmScene {
       );
       this.inventory[firstSameItemInventorySlotIdx].quantity += quantityChange;
 
-      this.inventorySlotUpdateStreams[firstSameItemInventorySlotIdx].next(
+      this._inventorySlotUpdate$[firstSameItemInventorySlotIdx].next(
         this.inventory[firstSameItemInventorySlotIdx]
       );
     } else {
@@ -270,7 +280,7 @@ export class ControllerScene extends CodeFarmScene {
           quantity: quantityChange,
         };
 
-        this.inventorySlotUpdateStreams[firstEmptyInventorySlotIdx].next(
+        this._inventorySlotUpdate$[firstEmptyInventorySlotIdx].next(
           this.inventory[firstEmptyInventorySlotIdx]
         );
       }
@@ -311,7 +321,7 @@ export class ControllerScene extends CodeFarmScene {
             remainingAmount = 0;
           }
 
-          this.inventorySlotUpdateStreams[itemInventoryIndex].next(
+          this._inventorySlotUpdate$[itemInventoryIndex].next(
             this.inventory[itemInventoryIndex]
           );
         }
@@ -337,7 +347,7 @@ export class ControllerScene extends CodeFarmScene {
       this.inventory[itemInventoryIndex] = undefined;
     }
 
-    this.inventorySlotUpdateStreams[itemInventoryIndex].next(
+    this._inventorySlotUpdate$[itemInventoryIndex].next(
       this.inventory[itemInventoryIndex]
     );
   }
@@ -348,26 +358,7 @@ export class ControllerScene extends CodeFarmScene {
    */
   public modifyMoneyAmount(change: number): void {
     this._moneyAmount = Math.max(0, this.moneyAmount + change);
-    this.moneyStream.next(this.moneyAmount);
-  }
-
-  public createInventorySlotUpdateCallback(
-    slotIdx: number,
-    callback: (inventoryItem: InventoryItem) => void
-  ): void {
-    this.inventorySlotUpdateStreams[slotIdx].subscribe(callback);
-  }
-
-  public createMoneyAmountUpdateCallback(
-    callback: (moneyAmount: number) => void
-  ): void {
-    this.moneyStream.subscribe(callback);
-  }
-
-  public createMarketConfigUpdateCallback(
-    callback: (marketConfig: MarketConfig) => void
-  ): void {
-    this.marketConfigStream.subscribe(callback);
+    this._moneyAmount$.next(this.moneyAmount);
   }
 
   /**
@@ -437,10 +428,10 @@ export class ControllerScene extends CodeFarmScene {
    */
   private startMarketConfigGenerator(): void {
     const delayRefreshMarket: number = 10;
-    this.marketConfigStream = new ReplaySubject<MarketConfig>(1);
+    this._marketConfig$ = new ReplaySubject<MarketConfig>(1);
     timer(0, delayRefreshMarket * 1000)
       .pipe(map((): MarketConfig => this.generateMarketConfig()))
-      .subscribe(this.marketConfigStream);
+      .subscribe(this._marketConfig$);
   }
 
   /**
@@ -482,7 +473,7 @@ export class ControllerScene extends CodeFarmScene {
      * TODO
      */
     for (let i: number = 0; i < ControllerScene.INVENTORY_SIZE; i += 1) {
-      this.inventorySlotUpdateStreams.push(
+      this._inventorySlotUpdate$.push(
         new BehaviorSubject<InventoryItem>(this.inventory[i])
       );
     }
@@ -494,6 +485,6 @@ export class ControllerScene extends CodeFarmScene {
   private initializeMoney(): void {
     const startingMoneyAmount: number = this.debugEnabled ? 1000 : 0;
     this._moneyAmount = startingMoneyAmount;
-    this.moneyStream = new BehaviorSubject<number>(this.moneyAmount);
+    this._moneyAmount$ = new BehaviorSubject<number>(this.moneyAmount);
   }
 }
