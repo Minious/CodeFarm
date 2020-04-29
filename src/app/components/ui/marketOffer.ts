@@ -36,7 +36,80 @@ export class MarketOffer extends Phaser.GameObjects.Container {
   ) {
     super(uiScene, x, y);
 
+    // The Container holding the item Image and the item's quantity Text
+    const itemContainer: Phaser.GameObjects.Container = this.createItemContainer(
+      offer
+    );
+    this.add(itemContainer);
+
+    // The Container holding the money Image and the money quantity Text
+    const moneyContainer: Phaser.GameObjects.Container = this.createMoneyContainer(
+      offer
+    );
+    this.add(moneyContainer);
+
     // The Container holding the arrow Image and the arrow Text
+    const arrowContainer: Phaser.GameObjects.Container = this.createArrowContainer(
+      type,
+      offer
+    );
+    this.add(arrowContainer);
+  }
+
+  private createItemContainer(
+    offer: MarketOfferData
+  ): Phaser.GameObjects.Container {
+    const itemContainer: Phaser.GameObjects.Container = this.scene.add.container(
+      -70,
+      0
+    );
+    const itemTypeData: ItemData = getItemData(offer.item);
+    const itemIcon: Phaser.GameObjects.Sprite = this.scene.add
+      .sprite(0, 0, itemTypeData.texture, itemTypeData.frame)
+      .setScale(3);
+    itemContainer.add(itemIcon);
+    const inventoryItemQuantity: number = this.scene.scenesManager.controllerScene.getInventoryItemQuantity(
+      offer.item
+    );
+    const itemQuantityText: Phaser.GameObjects.Text = this.scene.add
+      .text(-25, 0, inventoryItemQuantity.toString(), {
+        fontSize: "16px",
+        fontFamily: '"Roboto Condensed"',
+        resolution: 3,
+      })
+      .setOrigin(1, 0.5);
+    itemContainer.add(itemQuantityText);
+
+    return itemContainer;
+  }
+
+  private createMoneyContainer(
+    offer: MarketOfferData
+  ): Phaser.GameObjects.Container {
+    const moneyContainer: Phaser.GameObjects.Container = this.scene.add.container(
+      70,
+      0
+    );
+    const moneyImage: Phaser.GameObjects.Image = this.scene.add
+      .image(0, 0, "money")
+      .setScale(2);
+    moneyContainer.add(moneyImage);
+    const moneyAmountText: Phaser.GameObjects.Text = this.scene.add
+      .text(0, 0, offer.price.toString(), {
+        fontSize: "26px",
+        fontFamily: '"Roboto Condensed"',
+        resolution: 3,
+      })
+      .setOrigin(0.5, 0.5);
+    moneyContainer.add(moneyAmountText);
+
+    return moneyContainer;
+  }
+
+  private createArrowContainer(
+    type: MarketOfferType,
+    offer: MarketOfferData
+  ): Phaser.GameObjects.Container {
     const arrowContainer: Phaser.GameObjects.Container = this.scene.add.container(
       0,
       0
@@ -58,6 +131,30 @@ export class MarketOffer extends Phaser.GameObjects.Container {
       arrow.setOrigin(0.6, 0.5);
       arrow.setTint(0xff6666);
     }
+    this.enableArrowClickCallback(arrow, type, offer);
+    arrowContainer.add(arrow);
+
+    // Creates the arrow Text and adds it to the arrowContainer
+    const arrowTextPosX: number = type === MarketOfferType.Buying ? 5 : -15;
+    const arrowTextContent: string =
+      type === MarketOfferType.Buying ? "BUY" : "SELL";
+    const arrowText: Phaser.GameObjects.Text = this.scene.add
+      .text(arrowTextPosX, 0, arrowTextContent, {
+        fontSize: "16px",
+        fontFamily: '"Roboto Condensed"',
+        resolution: 3,
+      })
+      .setOrigin(0.5, 0.5);
+    arrowContainer.add(arrowText);
+
+    return arrowContainer;
+  }
+
+  private enableArrowClickCallback(
+    arrow: Phaser.GameObjects.Image,
+    type: MarketOfferType,
+    offer: MarketOfferData
+  ): void {
     /**
      * Flip the arrow when pointer enters or exits it to switch shadow's side
      * to mimic the arrow button being pressed.
@@ -103,63 +200,5 @@ export class MarketOffer extends Phaser.GameObjects.Container {
         }
       }
     });
-    arrowContainer.add(arrow);
-
-    // Creates the arrow Text and adds it to the arrowContainer
-    const arrowTextPosX: number = type === MarketOfferType.Buying ? 5 : -15;
-    const arrowTextContent: string =
-      type === MarketOfferType.Buying ? "BUY" : "SELL";
-    const arrowText: Phaser.GameObjects.Text = this.scene.add
-      .text(arrowTextPosX, 0, arrowTextContent, {
-        fontSize: "16px",
-        fontFamily: '"Roboto Condensed"',
-        resolution: 3,
-      })
-      .setOrigin(0.5, 0.5);
-    arrowContainer.add(arrowText);
-
-    this.add(arrowContainer);
-
-    // The Container holding the item Image and the item's quantity Text
-    const itemContainer: Phaser.GameObjects.Container = this.scene.add.container(
-      -70,
-      0
-    );
-    const itemTypeData: ItemData = getItemData(offer.item);
-    const itemIcon: Phaser.GameObjects.Sprite = this.scene.add
-      .sprite(0, 0, itemTypeData.texture, itemTypeData.frame)
-      .setScale(3);
-    itemContainer.add(itemIcon);
-    const inventoryItemQuantity: number = this.scene.scenesManager.controllerScene.getInventoryItemQuantity(
-      offer.item
-    );
-    const itemQuantityText: Phaser.GameObjects.Text = this.scene.add
-      .text(-25, 0, inventoryItemQuantity.toString(), {
-        fontSize: "16px",
-        fontFamily: '"Roboto Condensed"',
-        resolution: 3,
-      })
-      .setOrigin(1, 0.5);
-    itemContainer.add(itemQuantityText);
-    this.add(itemContainer);
-
-    // The Container holding the money Image and the money quantity Text
-    const moneyContainer: Phaser.GameObjects.Container = this.scene.add.container(
-      70,
-      0
-    );
-    const moneyImage: Phaser.GameObjects.Image = this.scene.add
-      .image(0, 0, "money")
-      .setScale(2);
-    moneyContainer.add(moneyImage);
-    const moneyAmountText: Phaser.GameObjects.Text = this.scene.add
-      .text(0, 0, offer.price.toString(), {
-        fontSize: "26px",
-        fontFamily: '"Roboto Condensed"',
-        resolution: 3,
-      })
-      .setOrigin(0.5, 0.5);
-    moneyContainer.add(moneyAmountText);
-    this.add(moneyContainer);
   }
 }
