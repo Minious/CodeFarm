@@ -87,11 +87,10 @@ export class UiScene extends CodeFarmScene {
      * When the ControllerScene's 'money' data is modified, triggers the
      * refreshing of the money amount text.
      */
-    this.scenesManager.controllerScene.events.on(
-      "changedata-money",
-      (parent: any, money: number): void => {
-        log.debug("New money amount : " + money);
-        this.updateMoney(money);
+    this.scenesManager.controllerScene.createMoneyAmountUpdateCallback(
+      (moneyAmount: number): void => {
+        log.debug("New money amount : " + moneyAmount);
+        this.updateMoney(moneyAmount);
       }
     );
 

@@ -34,7 +34,8 @@
     "express": "^4.17.1",
     "loglevel": "^1.6.8",
     "loglevel-plugin-prefix": "^0.8.4",
-    "phaser": "github:Minious/phaser#5fd94d76a778daa5312c27675ab25716044a0c37"
+    "phaser": "github:Minious/phaser#5fd94d76a778daa5312c27675ab25716044a0c37",
+    "rxjs": "^6.5.5"
   },
   "devDependencies": {
     "clean-webpack-plugin": "^3.0.0",

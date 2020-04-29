@@ -174,8 +174,7 @@ export class MarketOffer extends Phaser.GameObjects.Container {
     arrow.on("pointerdown", (): void => {
       if (type === MarketOfferType.Buying) {
         if (
-          this.scene.scenesManager.controllerScene.data.get("money") >=
-          offer.price
+          this.scene.scenesManager.controllerScene.moneyAmount >= offer.price
         ) {
           this.scene.scenesManager.controllerScene.modifyMoneyAmount(
             -offer.price

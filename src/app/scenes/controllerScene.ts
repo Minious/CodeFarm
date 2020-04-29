@@ -19,6 +19,7 @@ import { Inventory } from "../types/inventory.type";
 import { MarketOfferData } from "../interfaces/marketOfferData.interface";
 import { ScenesManager } from "./scenesManager";
 import { CodeFarmScene } from "./codeFarmScene";
+import { BehaviorSubject } from "rxjs";
 
 /**
  * This Scene manages the logic of the game behind the scene. It contains the
@@ -30,6 +31,12 @@ export class ControllerScene extends CodeFarmScene {
   public static INVENTORY_SIZE: number = 70;
 
   private inventory: Inventory;
+  private inventorySlotUpdateStreams: Array<
+    BehaviorSubject<InventoryItem>
+  > = [];
+
+  private _moneyAmount: number;
+  private moneyStream: BehaviorSubject<number>;
 
   private _debugEnabled: boolean = process.env.NODE_ENV === "development";
 
@@ -45,6 +52,11 @@ export class ControllerScene extends CodeFarmScene {
   // Getter for _debugEnabled
   public get debugEnabled(): boolean {
     return this._debugEnabled;
+  }
+
+  // Getter for _moneyAmount
+  public get moneyAmount(): number {
+    return this._moneyAmount;
   }
 
   /**
@@ -113,9 +125,9 @@ export class ControllerScene extends CodeFarmScene {
     );
 
     // Creates the 'inventory' key in the Scene's data module
-    this.initializeInventoryDataEvents();
+    this.initializeInventory();
     // Does the same with the money amount
-    this.data.set("money", undefined);
+    this.initializeMoney();
   }
 
   // tslint:disable-next-line: no-empty
@@ -184,8 +196,8 @@ export class ControllerScene extends CodeFarmScene {
           this.inventory[itemIdx1],
         ];
       }
-      this.data.set(`inventory-slot${itemIdx1}`, this.inventory[itemIdx1]);
-      this.data.set(`inventory-slot${itemIdx2}`, this.inventory[itemIdx2]);
+      this.inventorySlotUpdateStreams[itemIdx1].next(this.inventory[itemIdx1]);
+      this.inventorySlotUpdateStreams[itemIdx2].next(this.inventory[itemIdx2]);
     }
   }
 
@@ -239,8 +251,8 @@ export class ControllerScene extends CodeFarmScene {
           inventoryItem.item === itemType
       );
       this.inventory[firstSameItemInventorySlotIdx].quantity += quantityChange;
-      this.data.set(
-        `inventory-slot${firstSameItemInventorySlotIdx}`,
+
+      this.inventorySlotUpdateStreams[firstSameItemInventorySlotIdx].next(
         this.inventory[firstSameItemInventorySlotIdx]
       );
     } else {
@@ -252,8 +264,8 @@ export class ControllerScene extends CodeFarmScene {
           item: itemType,
           quantity: quantityChange,
         };
-        this.data.set(
-          `inventory-slot${firstEmptyInventorySlotIdx}`,
+
+        this.inventorySlotUpdateStreams[firstEmptyInventorySlotIdx].next(
           this.inventory[firstEmptyInventorySlotIdx]
         );
       }
@@ -293,7 +305,10 @@ export class ControllerScene extends CodeFarmScene {
             inventoryItem.quantity -= remainingAmount;
             remainingAmount = 0;
           }
-          this.data.set(`inventory-slot${itemInventoryIndex}`, inventoryItem);
+
+          this.inventorySlotUpdateStreams[itemInventoryIndex].next(
+            this.inventory[itemInventoryIndex]
+          );
         }
         return inventoryItem;
       }
@@ -316,8 +331,8 @@ export class ControllerScene extends CodeFarmScene {
     if (this.inventory[itemInventoryIndex].quantity <= 0) {
       this.inventory[itemInventoryIndex] = undefined;
     }
-    this.data.set(
-      `inventory-slot${itemInventoryIndex}`,
+
+    this.inventorySlotUpdateStreams[itemInventoryIndex].next(
       this.inventory[itemInventoryIndex]
     );
   }
@@ -327,7 +342,8 @@ export class ControllerScene extends CodeFarmScene {
    * @param {number} change - The amount to modify
    */
   public modifyMoneyAmount(change: number): void {
-    this.data.set("money", this.data.get("money") + change);
+    this._moneyAmount = Math.max(0, this.moneyAmount + change);
+    this.moneyStream.next(this.moneyAmount);
   }
 
   /**
@@ -338,15 +354,19 @@ export class ControllerScene extends CodeFarmScene {
    */
   public uiSceneReady(): void {
     this.startMarketConfigGenerator();
-    this.initializeInventory();
-    this.initializeMoney();
   }
 
   public createInventorySlotUpdateCallback(
     slotIdx: number,
-    callback: (parent: any, value: any) => void
+    callback: (inventoryItem: InventoryItem) => void
   ): void {
-    this.events.on(`changedata-inventory-slot${slotIdx}`, callback);
+    this.inventorySlotUpdateStreams[slotIdx].subscribe(callback);
+  }
+
+  public createMoneyAmountUpdateCallback(
+    callback: (moneyAmount: number) => void
+  ): void {
+    this.moneyStream.subscribe(callback);
   }
 
   /**
@@ -413,8 +433,6 @@ export class ControllerScene extends CodeFarmScene {
    * Creates an event triggered every so often (10 seconds) which generate a new
    * MarketConfig and update the UiScene's MarketConfig with the newly created
    * one.
-   *
-   * (NOTE : Should maybe be moved to UiScene)
    */
   private startMarketConfigGenerator(): void {
     const delayRefreshMarket: number = 10;
@@ -466,21 +484,13 @@ export class ControllerScene extends CodeFarmScene {
       );
     }
     /**
-     * Sets the 'inventory' key as the startingInventory in the data module of
-     * the Scene.
+     * TODO
      */
     for (let i: number = 0; i < ControllerScene.INVENTORY_SIZE; i += 1) {
-      this.data.set(`inventory-slot${i}`, this.inventory[i]);
+      this.inventorySlotUpdateStreams.push(
+        new BehaviorSubject<InventoryItem>(this.inventory[i])
+      );
     }
-  }
-
-  private initializeInventoryDataEvents(): void {
-    for (let i: number = 0; i < ControllerScene.INVENTORY_SIZE; i += 1) {
-      this.data.set(`inventory-slot${i}`, undefined);
-    }
-    Object.keys(ItemType).forEach((itemType: ItemType, i: number): void => {
-      this.data.set(`inventory-quantity-item-type${i}`, undefined);
-    });
   }
 
   /**
@@ -488,6 +498,7 @@ export class ControllerScene extends CodeFarmScene {
    */
   private initializeMoney(): void {
     const startingMoneyAmount: number = this.debugEnabled ? 1000 : 0;
-    this.data.set("money", startingMoneyAmount);
+    this._moneyAmount = startingMoneyAmount;
+    this.moneyStream = new BehaviorSubject<number>(this.moneyAmount);
   }
 }
