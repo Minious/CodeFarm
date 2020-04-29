@@ -19,7 +19,9 @@ import { Inventory } from "../types/inventory.type";
 import { MarketOfferData } from "../interfaces/marketOfferData.interface";
 import { ScenesManager } from "./scenesManager";
 import { CodeFarmScene } from "./codeFarmScene";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, ReplaySubject, timer } from "rxjs";
+// tslint:disable-next-line: no-submodule-imports
+import { map } from "rxjs/operators";
 
 /**
  * This Scene manages the logic of the game behind the scene. It contains the
@@ -37,6 +39,8 @@ export class ControllerScene extends CodeFarmScene {
 
   private _moneyAmount: number;
   private moneyStream: BehaviorSubject<number>;
+
+  private marketConfigStream: ReplaySubject<MarketConfig>;
 
   private _debugEnabled: boolean = process.env.NODE_ENV === "development";
 
@@ -128,6 +132,7 @@ export class ControllerScene extends CodeFarmScene {
     this.initializeInventory();
     // Does the same with the money amount
     this.initializeMoney();
+    this.startMarketConfigGenerator();
   }
 
   // tslint:disable-next-line: no-empty
@@ -346,16 +351,6 @@ export class ControllerScene extends CodeFarmScene {
     this.moneyStream.next(this.moneyAmount);
   }
 
-  /**
-   * The ControllerScene is initialized before the UiScene, therefore the data
-   * change events (inventory, money) won't be received by the UiScene if they
-   * are sent during ControllerScene's initialization. This method handles that
-   * and is called once the UiScene's create method ends.
-   */
-  public uiSceneReady(): void {
-    this.startMarketConfigGenerator();
-  }
-
   public createInventorySlotUpdateCallback(
     slotIdx: number,
     callback: (inventoryItem: InventoryItem) => void
@@ -367,6 +362,12 @@ export class ControllerScene extends CodeFarmScene {
     callback: (moneyAmount: number) => void
   ): void {
     this.moneyStream.subscribe(callback);
+  }
+
+  public createMarketConfigUpdateCallback(
+    callback: (marketConfig: MarketConfig) => void
+  ): void {
+    this.marketConfigStream.subscribe(callback);
   }
 
   /**
@@ -436,16 +437,10 @@ export class ControllerScene extends CodeFarmScene {
    */
   private startMarketConfigGenerator(): void {
     const delayRefreshMarket: number = 10;
-    this.time.addEvent({
-      delay: delayRefreshMarket * 1000,
-      startAt: delayRefreshMarket * 1000 - 1,
-      callback: (): void => {
-        this.scenesManager.uiScene.changeMarketConfig(
-          this.generateMarketConfig()
-        );
-      },
-      loop: true,
-    });
+    this.marketConfigStream = new ReplaySubject<MarketConfig>(1);
+    timer(0, delayRefreshMarket * 1000)
+      .pipe(map((): MarketConfig => this.generateMarketConfig()))
+      .subscribe(this.marketConfigStream);
   }
 
   /**

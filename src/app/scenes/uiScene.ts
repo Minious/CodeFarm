@@ -94,12 +94,12 @@ export class UiScene extends CodeFarmScene {
       }
     );
 
-    /**
-     * Notifies the ControllerScene that the UiScene is ready so it can
-     * initialize its data which is going to trigger the update of the
-     * interfaces.
-     */
-    this.scenesManager.controllerScene.uiSceneReady();
+    this.scenesManager.controllerScene.createMarketConfigUpdateCallback(
+      (marketConfig: MarketConfig): void => {
+        log.debug("New MarketConfig : ", marketConfig);
+        this.changeMarketConfig(marketConfig);
+      }
+    );
   }
 
   // tslint:disable-next-line: no-empty
