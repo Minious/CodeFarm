@@ -3,7 +3,6 @@ import * as log from "loglevel";
 
 import { MarketInterface } from "../components/ui/marketInterface";
 import { InventoryInterface } from "../components/ui/inventoryInterface";
-import { Inventory } from "../types/inventory.type";
 import { MarketConfig } from "../interfaces/marketConfig.interface";
 import { Joystick } from "../components/ui/joystick";
 import { CodeFarmScene } from "./codeFarmScene";
@@ -63,16 +62,6 @@ export class UiScene extends CodeFarmScene {
     // Create the InventoryInterface
     this.inventoryInterface = new InventoryInterface(this);
     this.add.existing(this.inventoryInterface);
-    /**
-     * When the ControllerScene's 'inventory' data is modified, triggers the
-     * refreshing of the InventoryInterface
-     */
-    this.scenesManager.controllerScene.events.on(
-      "changedata-inventory",
-      (parent: any, inventory: Inventory): void => {
-        this.updateInventory(inventory);
-      }
-    );
 
     /**
      * Creates the money amount icon and text
@@ -147,13 +136,5 @@ export class UiScene extends CodeFarmScene {
    */
   private updateMoney(moneyAmount: number): void {
     this.moneyAmountText.setText(moneyAmount.toString());
-  }
-
-  /**
-   * Updates the InventoryInterface with a new Inventory sent as a parameter.
-   * @param {Inventory} inventory - The new Inventory
-   */
-  private updateInventory(inventory: Inventory): void {
-    this.inventoryInterface.buildInventory(inventory);
   }
 }

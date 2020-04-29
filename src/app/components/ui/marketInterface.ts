@@ -21,8 +21,6 @@ export class MarketInterface extends Phaser.GameObjects.Container {
 
   // A Phaser Container holding all the offers
   private offers: Phaser.GameObjects.Container;
-  // The list of offers of the Market
-  private marketConfig: MarketConfig;
 
   /**
    * Creates the MarketInterface object.
@@ -87,17 +85,11 @@ export class MarketInterface extends Phaser.GameObjects.Container {
     this.add(this.offers);
 
     /**
-     * Reloads the MarketInterface's offers when the Inventory changes to modify
-     * the quantity of the item posessed in the offers.
+     * Doesn't reload the MarketInterface's offers when the Inventory changes to
+     * modify the quantity of the item posessed in the offers.
+     * This is broken on purpose, the MarketOffers won't refresh until the event
+     * changedata-inventoty-item-quantity-update is implemented in marketOffer.
      */
-    this.scene.game.scene
-      .getScene("ControllerScene")
-      .events.on(
-        "changedata-inventory",
-        (parent: any, newInventory: any, oldInventory: any): void => {
-          this.reloadOffers();
-        }
-      );
   }
 
   /**
@@ -105,22 +97,9 @@ export class MarketInterface extends Phaser.GameObjects.Container {
    * @param {MarketConfig} marketConfig - The MarketConfig to display
    */
   public loadOffers(marketConfig: MarketConfig): void {
-    this.marketConfig = marketConfig;
-
     // Destroy all the existing offers and recreate them
     this.offers.removeAll(true);
     this.createMarketOffers(marketConfig);
-  }
-
-  /**
-   * Reloads the offers without changing the MarketConfig (Example : Used when
-   * Inventory changes)
-   */
-  private reloadOffers(): void {
-    // (Note : The condition should maybe be removed)
-    if (this.marketConfig) {
-      this.loadOffers(this.marketConfig);
-    }
   }
 
   /**

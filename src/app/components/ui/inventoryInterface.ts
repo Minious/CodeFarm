@@ -2,8 +2,6 @@ import * as Phaser from "phaser";
 import * as log from "loglevel";
 
 import { InventoryButton } from "./inventoryButton";
-import { Inventory } from "../../types/inventory.type";
-import { InventoryItem } from "../../interfaces/inventoryItem.interface";
 import { UiScene } from "../../scenes/uiScene";
 
 /**
@@ -36,20 +34,17 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     this.inventoryGridButtons = this.scene.add.group();
 
     this.inventoryGridOpen = false;
+
+    this.buildInventory();
   }
 
   /**
-   * Clear the all the InventoryButtons from the InventoryInterface's groups
-   * (bar and grid) and recreate them.
-   * @param {Inventory} inventory - The Inventory content to display
-   * (Note : Should add an inventoryRefresh method that isn't destructive)
+   * Create the InventoryButtons of the inventory Bar and the inventory Grid and
+   * the Inventory open button.
    */
-  public buildInventory(inventory: Inventory): void {
-    log.debug("Building Inventory");
-
-    this.clearInventory();
-    this.buildInventoryBar(inventory);
-    this.buildInventoryGrid(inventory);
+  public buildInventory(): void {
+    this.buildInventoryBar();
+    this.buildInventoryGrid();
     this.inventoryGridButtons.setVisible(this.inventoryGridOpen);
 
     this.buildInventoryOpenButton();
@@ -58,9 +53,8 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
   /**
    * Creates the InventoryButtons of the inventory bar and enable the player
    * ability to select slots.
-   * @param {Inventory} inventory - The Inventory content to display
    */
-  private buildInventoryBar(inventory: Inventory): void {
+  private buildInventoryBar(): void {
     const marginButtons: number = 8;
     const nbColumns: number = 10;
     const nbRows: number = 1;
@@ -73,7 +67,6 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
      * to trigger the Inventory slot selection.
      */
     const inventoryBarButtons: Array<InventoryButton> = this.makeInventoryButtonsGrid(
-      inventory,
       nbColumns,
       nbRows,
       marginButtons,
@@ -175,9 +168,8 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
   /**
    * Creates the InventoryButtons of the inventory grid with no special
    * behavior.
-   * @param {Inventory} inventory - The Inventory content to display
    */
-  private buildInventoryGrid(inventory: Inventory): void {
+  private buildInventoryGrid(): void {
     const sizeButton: number = 50;
     const marginButtons: number = 8;
     const marginButtonsInventoryBar: number = 8;
@@ -193,7 +185,6 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
 
     // Creates the inventory grid InventoryButtons.
     const inventoryGridButtons: Array<InventoryButton> = this.makeInventoryButtonsGrid(
-      inventory,
       nbColumns,
       nbRows,
       (this.scene.cameras.main.displayWidth - widthGrid) / 2,
@@ -234,17 +225,9 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Destroy the inventoryBarButtons and inventoryGridButtons.
-   */
-  private clearInventory(): void {
-    this.removeAll(true);
-  }
-
-  /**
    * Creates a grid of InventoryButtons to display all or a part of the
    * Inventory content. Each InventoryButton can be provided a custom click
    * callback. Returns an array containing the InventoryButtons.
-   * @param {Inventory} inventory - The Inventory content to display
    * @param {number} nbColumns - The number of columns in the grid
    * @param {number} nbRows - The number of rows in the grid
    * @param {number} x - The x position of the top left corner of the top left
@@ -262,7 +245,6 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
    * creation of custom callbacks for each InventoryButton.
    */
   private makeInventoryButtonsGrid(
-    inventory: Inventory,
     nbColumns: number,
     nbRows: number,
     x: number,
@@ -279,7 +261,6 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     for (let j: number = 0; j < nbRows; j += 1) {
       for (let i: number = 0; i < nbColumns; i += 1) {
         const itemInventoryIndex: number = inventoryOffset + i + j * nbColumns;
-        const inventoryItem: InventoryItem = inventory[itemInventoryIndex];
 
         const callback: (
           clickedButton: InventoryButton
@@ -291,8 +272,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
           y + marginButtons * j + sizeButton * (j + 0.5),
           sizeButton,
           sizeButton,
-          15,
-          inventoryItem,
+          4,
           itemInventoryIndex,
           callback
         );

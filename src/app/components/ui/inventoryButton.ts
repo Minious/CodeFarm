@@ -17,6 +17,10 @@ export class InventoryButton extends Phaser.GameObjects.Container {
 
   // The background Image of the InventoryButton
   private backgroundImage: Phaser.GameObjects.Image;
+  // The Image of the item held by the InventoryButton
+  private itemImage: Phaser.GameObjects.Image;
+  // The Text displaying the quantity of the item held by the InventoryButton
+  private itemCountText: Phaser.GameObjects.Text;
   // Is the InventoryButton selected
   private _isSelected: boolean;
   // Is the pointer hovering the InventoryButton
@@ -24,11 +28,13 @@ export class InventoryButton extends Phaser.GameObjects.Container {
   /**
    * The index of the InventoryItem in the Inventory displayed in the
    * InventoryButton
-   * (Note : Add setter that updates the InventoryItem icon and text if they
-   * exist or create them if they don't. - Cannot do it if Inventory is passed
-   * to InventoryInterface for refresh)
    */
   private _itemInventoryIndex: number;
+  /**
+   * The margin between the border of the InventoryButton and the InventoryItem
+   * Image icon
+   */
+  private marginIcon: number;
 
   /**
    * Creates the InventoryButton object.
@@ -41,9 +47,6 @@ export class InventoryButton extends Phaser.GameObjects.Container {
    * @param {number} displayHeight - The height of the InventoryButton
    * @param {number} marginIcon - The margin between the border of the
    * InventoryButton and the InventoryItem Image icon
-   * @param {InventoryItem} inventoryItem - The InventoryItem to display in the
-   * InventoryButton
-   * (Note : Remove it - See above)
    * @param {number} itemInventoryIndex - Index of the InventoryItem in the
    * Inventory
    * @param {(_: InventoryButton) => void} externalCallback - Callback to call
@@ -56,13 +59,14 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     displayWidth: number,
     displayHeight: number,
     marginIcon: number,
-    inventoryItem: InventoryItem,
     itemInventoryIndex: number,
     externalCallback: (_: InventoryButton) => void
   ) {
     super(uiScene, x, y);
 
     this._itemInventoryIndex = itemInventoryIndex;
+
+    this.marginIcon = marginIcon;
 
     this.backgroundImage = this.scene.add.image(0, 0, "ui_button");
     this.add(this.backgroundImage);
@@ -76,44 +80,30 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       0
     );
 
-    // If the InventoryButton holds an InventoryItem meaning it is not empty
-    if (inventoryItem) {
-      const itemTypeData: ItemData = getItemData(inventoryItem.item);
+    // Creates the InventoryItem's Image icon
+    this.itemImage = this.scene.add.image(0, 0, undefined, undefined);
+    contentContainer.add(this.itemImage);
 
-      // Creates the InventoryItem's Image icon
-      const backgroundImageBounds: Phaser.Geom.Rectangle = this.backgroundImage.getBounds();
-      const itemIcon: Phaser.GameObjects.Sprite = this.scene.add.sprite(
-        0,
-        0,
-        itemTypeData.texture,
-        itemTypeData.frame
-      );
-      itemIcon.setDisplaySize(
-        backgroundImageBounds.width - marginIcon,
-        backgroundImageBounds.height - marginIcon
-      );
-      contentContainer.add(itemIcon);
+    // Creates the InventoryItem's quantity Text
+    const backgroundImageBounds: Phaser.Geom.Rectangle = this.backgroundImage.getBounds();
+    this.itemCountText = this.scene.add.text(
+      backgroundImageBounds.width / 2,
+      backgroundImageBounds.height / 2,
+      "",
+      {
+        fontSize: "12px",
+        fontFamily: '"Roboto Condensed"',
+        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        fixedWidth: 15,
+        fixedHeight: 15,
+        align: "center",
+        resolution: 3,
+      }
+    );
+    this.itemCountText.setOrigin(1, 1);
+    contentContainer.add(this.itemCountText);
 
-      // Creates the InventoryItem's quantity Text
-      const itemCountText: Phaser.GameObjects.Text = this.scene.add.text(
-        backgroundImageBounds.width / 2,
-        backgroundImageBounds.height / 2,
-        inventoryItem.quantity.toString(),
-        {
-          fontSize: "12px",
-          fontFamily: '"Roboto Condensed"',
-          backgroundColor: "rgba(0, 0, 0, 0.35)",
-          fixedWidth: 15,
-          fixedHeight: 15,
-          align: "center",
-          resolution: 3,
-        }
-      );
-      itemCountText.setOrigin(1, 1);
-      contentContainer.add(itemCountText);
-
-      this.add(contentContainer);
-    }
+    this.add(contentContainer);
 
     const { width, height }: Phaser.Geom.Rectangle = this.getBounds();
     this.setSize(width, height).setDisplaySize(displayWidth, displayHeight);
@@ -204,6 +194,13 @@ export class InventoryButton extends Phaser.GameObjects.Container {
         );
       }
     );
+
+    this.scene.scenesManager.controllerScene.createInventorySlotUpdateCallback(
+      this._itemInventoryIndex,
+      (parent: any, newInventoryItem: InventoryItem): void => {
+        this.updateContent(newInventoryItem);
+      }
+    );
   }
 
   // Getter for _itemInventoryIndex
@@ -220,6 +217,35 @@ export class InventoryButton extends Phaser.GameObjects.Container {
   public set isSelected(_isSelected: boolean) {
     this._isSelected = _isSelected;
     this.updateColor();
+  }
+
+  public updateContent(inventoryItem: InventoryItem): void {
+    if (inventoryItem) {
+      const itemTypeData: ItemData = getItemData(inventoryItem.item);
+      console.log(
+        `Inventory slot ${this._itemInventoryIndex} updated :`,
+        inventoryItem,
+        itemTypeData
+      );
+
+      this.itemImage.setTexture(itemTypeData.texture);
+      this.itemImage.setFrame(itemTypeData.frame);
+      this.itemImage.setDisplaySize(
+        this.backgroundImage.displayWidth - this.marginIcon * 2,
+        this.backgroundImage.displayHeight - this.marginIcon * 2
+      );
+      this.itemImage.setVisible(true);
+
+      this.itemCountText.setText(inventoryItem.quantity.toString());
+      this.itemCountText.setVisible(true);
+    } else {
+      this.itemImage.setTexture(undefined);
+      this.itemImage.setFrame(undefined);
+      this.itemImage.setVisible(false);
+
+      this.itemCountText.setText(undefined);
+      this.itemCountText.setVisible(false);
+    }
   }
 
   /**
