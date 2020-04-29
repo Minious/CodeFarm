@@ -2,10 +2,10 @@ import * as Phaser from "phaser";
 
 import { MarketConfig } from "../../interfaces/marketConfig.interface";
 import { MarketOfferType } from "../../enums/marketOfferType.enum";
-import { MarketOffer } from "../../interfaces/marketOffer.interface";
-import { getItemData, ItemData } from "../../interfaces/itemData.interface";
+import { MarketOfferData } from "../../interfaces/marketOfferData.interface";
 import { Vector2 } from "../../types/vector2.type";
 import { UiScene } from "../../scenes/uiScene";
+import { MarketOffer } from "./marketOffer";
 
 /**
  * The Interface displayed in the UiScene showing the Market's offers. It
@@ -124,168 +124,38 @@ export class MarketInterface extends Phaser.GameObjects.Container {
   }
 
   /**
-   * Creates the offers Container and populate them with the data of the
-   * MarketConfig.
+   * Creates MarketOffers from a MarketConfig and adds them to the
+   * MarketInterface
    * @param marketConfig - The MarketConfig holding the offers data
    */
   private createMarketOffers(marketConfig: MarketConfig): void {
     const marginColumn: number = 120;
     const marginOffer: number = 60;
 
-    /**
-     * Creates an offer Container and populate it with the MarketOffer and adds
-     * it to the MarketInterface.
-     * @param {MarketOfferType} type - The MarketOfferType of the offer
-     * @param {MarketOffer} offer - The MarketOffer containing the data of the offer
-     * @param {number} idx - The index of the offer for positionning purposes
-     */
-    const createOffer = (
-      type: MarketOfferType,
-      offer: MarketOffer,
-      idx: number
-    ): void => {
-      /**
-       * The offerContainer contains the arrowContainer, the itemContainer and
-       * the moneyContainer.
-       */
-      const offerContainer: Phaser.GameObjects.Container = this.scene.add.container(
-        (type === MarketOfferType.Buying ? -1 : 1) * marginColumn,
-        idx * marginOffer - 130
-      );
-
-      // The Container holding the arrow Image and the arrow Text
-      const arrowContainer: Phaser.GameObjects.Container = this.scene.add.container(
-        0,
-        0
-      );
-
-      // Creates the arrow Image and adds it to the arrowContainer
-      const arrow: Phaser.GameObjects.Image = this.scene.add
-        .image(0, 0, "arrow")
-        .setScale(2)
-        .setInteractive();
-      // Change arrow's appearance depending on its MarketOfferType
-      if (type === MarketOfferType.Buying) {
-        arrow.setRotation(Math.PI);
-        arrow.setOrigin(0.4, 0.5);
-        arrow.setTint(0x66ff66);
+    // Creates the offers for each MarketOfferData in the MarketConfig
+    marketConfig.buyingOffers.forEach(
+      (offer: MarketOfferData, idx: number): void => {
+        const marketOffer: MarketOffer = new MarketOffer(
+          this.scene,
+          -marginColumn,
+          idx * marginOffer - 130,
+          MarketOfferType.Buying,
+          offer
+        );
+        this.offers.add(marketOffer);
       }
-      if (type === MarketOfferType.Selling) {
-        arrow.setFlipY(true);
-        arrow.setOrigin(0.6, 0.5);
-        arrow.setTint(0xff6666);
-      }
-      /**
-       * Flip the arrow when pointer enters or exits it to switch shadow's side
-       * to mimic the arrow button being pressed.
-       */
-      arrow.on("pointerover", (): void => {
-        arrow.setFlipY(!arrow.flipY);
-      });
-      arrow.on("pointerout", (): void => {
-        arrow.setFlipY(!arrow.flipY);
-      });
-      // Exchange the money with the item when arrow clicked
-      arrow.on("pointerdown", (): void => {
-        if (type === MarketOfferType.Buying) {
-          if (
-            this.scene.scenesManager.controllerScene.data.get("money") >=
-            offer.price
-          ) {
-            this.scene.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
-              offer.item,
-              1
-            );
-            this.scene.scenesManager.controllerScene.modifyMoneyAmount(
-              -offer.price
-            );
-          }
-        }
-        if (type === MarketOfferType.Selling) {
-          if (
-            this.scene.scenesManager.controllerScene.inventoryContains(
-              offer.item
-            )
-          ) {
-            this.scene.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
-              offer.item,
-              -1
-            );
-            this.scene.scenesManager.controllerScene.modifyMoneyAmount(
-              offer.price
-            );
-          }
-        }
-      });
-      arrowContainer.add(arrow);
-
-      // Creates the arrow Text and adds it to the arrowContainer
-      const arrowTextPosX: number = type === MarketOfferType.Buying ? 5 : -15;
-      const arrowTextContent: string =
-        type === MarketOfferType.Buying ? "BUY" : "SELL";
-      const arrowText: Phaser.GameObjects.Text = this.scene.add
-        .text(arrowTextPosX, 0, arrowTextContent, {
-          fontSize: "16px",
-          fontFamily: '"Roboto Condensed"',
-          resolution: 3,
-        })
-        .setOrigin(0.5, 0.5);
-      arrowContainer.add(arrowText);
-
-      offerContainer.add(arrowContainer);
-
-      // The Container holding the item Image and the item's quantity Text
-      const itemContainer: Phaser.GameObjects.Container = this.scene.add.container(
-        -70,
-        0
-      );
-      const itemTypeData: ItemData = getItemData(offer.item);
-      const itemIcon: Phaser.GameObjects.Sprite = this.scene.add
-        .sprite(0, 0, itemTypeData.texture, itemTypeData.frame)
-        .setScale(3);
-      itemContainer.add(itemIcon);
-      const inventoryItemQuantity: number = this.scene.scenesManager.controllerScene.getInventoryItemQuantity(
-        offer.item
-      );
-      const itemQuantityText: Phaser.GameObjects.Text = this.scene.add
-        .text(-25, 0, inventoryItemQuantity.toString(), {
-          fontSize: "16px",
-          fontFamily: '"Roboto Condensed"',
-          resolution: 3,
-        })
-        .setOrigin(1, 0.5);
-      itemContainer.add(itemQuantityText);
-      offerContainer.add(itemContainer);
-
-      // The Container holding the money Image and the money quantity Text
-      const moneyContainer: Phaser.GameObjects.Container = this.scene.add.container(
-        70,
-        0
-      );
-      const moneyImage: Phaser.GameObjects.Image = this.scene.add
-        .image(0, 0, "money")
-        .setScale(2);
-      moneyContainer.add(moneyImage);
-      const moneyAmountText: Phaser.GameObjects.Text = this.scene.add
-        .text(0, 0, offer.price.toString(), {
-          fontSize: "26px",
-          fontFamily: '"Roboto Condensed"',
-          resolution: 3,
-        })
-        .setOrigin(0.5, 0.5);
-      moneyContainer.add(moneyAmountText);
-      offerContainer.add(moneyContainer);
-
-      this.offers.add(offerContainer);
-    };
-
-    // Creates the offers for each MarketOffer's offers
-    marketConfig.buyingOffers.forEach((offer: MarketOffer, idx: number): void =>
-      createOffer(MarketOfferType.Buying, offer, idx)
     );
     marketConfig.sellingOffers.forEach(
-      (offer: MarketOffer, idx: number): void =>
-        createOffer(MarketOfferType.Selling, offer, idx)
+      (offer: MarketOfferData, idx: number): void => {
+        const marketOffer: MarketOffer = new MarketOffer(
+          this.scene,
+          marginColumn,
+          idx * marginOffer - 130,
+          MarketOfferType.Selling,
+          offer
+        );
+        this.offers.add(marketOffer);
+      }
     );
   }
 }
