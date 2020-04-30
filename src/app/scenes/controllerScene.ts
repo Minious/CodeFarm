@@ -22,6 +22,7 @@ import { CodeFarmScene } from "./codeFarmScene";
 import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
 // tslint:disable-next-line: no-submodule-imports
 import { map, skip } from "rxjs/operators";
+import { MarketOfferType } from "../enums/marketOfferType.enum";
 
 /**
  * This Scene manages the logic of the game behind the scene. It contains the
@@ -31,6 +32,9 @@ import { map, skip } from "rxjs/operators";
  */
 export class ControllerScene extends CodeFarmScene {
   public static INVENTORY_SIZE: number = 70;
+  public static BUYING_OFFERS_COUNT: number = 5;
+  public static SELLING_OFFERS_COUNT: number = 5;
+
   public _inventoryItemTypeQuantityUpdate$: {
     [key in ItemType]?: BehaviorSubject<number>;
   } = {};
@@ -42,6 +46,9 @@ export class ControllerScene extends CodeFarmScene {
   private _moneyAmount$: BehaviorSubject<number>;
 
   private _marketConfig$: ReplaySubject<MarketConfig>;
+  private _marketOfferUpdate$: {
+    [key in MarketOfferType]?: Array<ReplaySubject<MarketOfferData>>;
+  } = {};
 
   private _debugEnabled: boolean = process.env.NODE_ENV === "development";
 
@@ -74,6 +81,13 @@ export class ControllerScene extends CodeFarmScene {
 
   public getInventorySlotUpdate$(slotIdx: number): Observable<InventoryItem> {
     return this._inventorySlotUpdate$[slotIdx];
+  }
+
+  public getMarketOfferUpdate$(
+    marketOfferIdx: number,
+    marketOfferType: MarketOfferType
+  ): Observable<MarketOfferData> {
+    return this._marketOfferUpdate$[marketOfferType][marketOfferIdx];
   }
 
   public getInventoryItemTypeQuantityUpdate$(
@@ -432,8 +446,14 @@ export class ControllerScene extends CodeFarmScene {
       })
     );
     const marketConfig: MarketConfig = {
-      sellingOffers: Utils.getRandomSetInArray(listSellingOffers, 5),
-      buyingOffers: Utils.getRandomSetInArray(listBuyingOffers, 5),
+      sellingOffers: Utils.getRandomSetInArray(
+        listSellingOffers,
+        ControllerScene.SELLING_OFFERS_COUNT
+      ),
+      buyingOffers: Utils.getRandomSetInArray(
+        listBuyingOffers,
+        ControllerScene.BUYING_OFFERS_COUNT
+      ),
     };
     return marketConfig;
   }
@@ -449,6 +469,52 @@ export class ControllerScene extends CodeFarmScene {
     timer(0, delayRefreshMarket * 1000)
       .pipe(map((): MarketConfig => this.generateMarketConfig()))
       .subscribe(this._marketConfig$);
+
+    this.marketConfig$
+      .pipe(skip(1))
+      .subscribe((marketConfig: MarketConfig): void => {
+        log.debug("New MarketConfig : ", marketConfig);
+      });
+
+    Object.values(MarketOfferType).forEach(
+      (marketOfferType: MarketOfferType): void => {
+        this._marketOfferUpdate$[marketOfferType] = [];
+        const offerCount: number =
+          marketOfferType === MarketOfferType.Buying
+            ? ControllerScene.BUYING_OFFERS_COUNT
+            : ControllerScene.SELLING_OFFERS_COUNT;
+        for (let i: number = 0; i < offerCount; i += 1) {
+          const currentMarketOfferUpdate$: ReplaySubject<MarketOfferData> = new ReplaySubject<
+            MarketOfferData
+          >(1);
+          this._marketConfig$
+            .pipe(
+              map(
+                (marketConfig: MarketConfig): MarketOfferData => {
+                  return marketOfferType === MarketOfferType.Buying
+                    ? marketConfig.buyingOffers[i]
+                    : marketConfig.sellingOffers[i];
+                }
+              )
+            )
+            .subscribe(currentMarketOfferUpdate$);
+          this._marketOfferUpdate$[marketOfferType].push(
+            currentMarketOfferUpdate$
+          );
+
+          currentMarketOfferUpdate$
+            .pipe(skip(1))
+            .subscribe((marketOfferData: MarketOfferData): void => {
+              log.debug(
+                `Update ${marketOfferType} Market offer ${i} :`,
+                marketOfferData
+                  ? `${marketOfferData.item} (Price : ${marketOfferData.price})`
+                  : "Empty"
+              );
+            });
+        }
+      }
+    );
   }
 
   /**
@@ -535,5 +601,8 @@ export class ControllerScene extends CodeFarmScene {
     const startingMoneyAmount: number = this.debugEnabled ? 1000 : 0;
     this._moneyAmount = startingMoneyAmount;
     this._moneyAmount$ = new BehaviorSubject<number>(this.moneyAmount);
+    this._moneyAmount$.pipe(skip(1)).subscribe((moneyAmount: number): void => {
+      log.debug(`New money amount : ${moneyAmount}`);
+    });
   }
 }

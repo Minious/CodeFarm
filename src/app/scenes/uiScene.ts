@@ -1,9 +1,7 @@
 import * as Phaser from "phaser";
-import * as log from "loglevel";
 
 import { MarketInterface } from "../components/ui/marketInterface";
 import { InventoryInterface } from "../components/ui/inventoryInterface";
-import { MarketConfig } from "../interfaces/marketConfig.interface";
 import { Joystick } from "../components/ui/joystick";
 import { CodeFarmScene } from "./codeFarmScene";
 import { ScenesManager } from "./scenesManager";
@@ -89,29 +87,13 @@ export class UiScene extends CodeFarmScene {
      */
     this.scenesManager.controllerScene.moneyAmount$.subscribe(
       (moneyAmount: number): void => {
-        log.debug("New money amount : " + moneyAmount);
         this.updateMoney(moneyAmount);
-      }
-    );
-
-    this.scenesManager.controllerScene.marketConfig$.subscribe(
-      (marketConfig: MarketConfig): void => {
-        log.debug("New MarketConfig : ", marketConfig);
-        this.changeMarketConfig(marketConfig);
       }
     );
   }
 
   // tslint:disable-next-line: no-empty
   public update(time: number, delta: number): void {}
-
-  /**
-   * Updates the MarketConfig in the MarketInterface.
-   * @param {MarketConfig} marketConfig - The new MarketConfig
-   */
-  public changeMarketConfig(marketConfig: MarketConfig): void {
-    this.marketInterface.loadOffers(marketConfig);
-  }
 
   /**
    * Shows the MarketInterface and hides the InventoryInterface.
