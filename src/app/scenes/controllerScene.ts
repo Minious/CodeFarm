@@ -136,11 +136,16 @@ export class ControllerScene extends CodeFarmScene {
            * Grabs the new selected item in the inventory and display it in the
            * logs.
            */
-          const itemType: ItemType = this.inventory[selectedItemInventoryIndex]
-            .item;
-          log.debug(
-            `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
-          );
+          if (this.inventory[selectedItemInventoryIndex]) {
+            const itemType: ItemType = this.inventory[
+              selectedItemInventoryIndex
+            ].item;
+            log.debug(
+              `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
+            );
+          } else {
+            log.debug("Selected slot empty");
+          }
         } else {
           log.debug("Item deselected");
         }
@@ -494,7 +499,10 @@ export class ControllerScene extends CodeFarmScene {
         .pipe(skip(1))
         .subscribe((inventoryItem: InventoryItem): void => {
           log.debug(
-            `Update Inventory slot ${i} : ${inventoryItem.item} (Quantity : ${inventoryItem.quantity})`
+            `Update Inventory slot ${i} :`,
+            inventoryItem
+              ? `${inventoryItem.item} (Quantity : ${inventoryItem.quantity})`
+              : "Empty"
           );
         });
     }

@@ -65,7 +65,6 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     super(uiScene, x, y);
 
     this._itemInventoryIndex = itemInventoryIndex;
-
     this.marginIcon = marginIcon;
 
     this.backgroundImage = this.scene.add.image(0, 0, "ui_button");
