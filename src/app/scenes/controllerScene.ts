@@ -16,7 +16,7 @@ import { MarketConfig } from "../interfaces/marketConfig.interface";
 import { ItemType } from "../enums/itemType.enum";
 import { InventoryItem } from "../interfaces/inventoryItem.interface";
 import { Inventory } from "../types/inventory.type";
-import { MarketOffer } from "../interfaces/marketOffer.interface";
+import { MarketOfferData } from "../interfaces/marketOfferData.interface";
 import { ScenesManager } from "./scenesManager";
 import { CodeFarmScene } from "./codeFarmScene";
 
@@ -366,14 +366,14 @@ export class ControllerScene extends CodeFarmScene {
       ItemType.GrapesSeed,
       ItemType.RoseSeed,
     ];
-    const listSellingOffers: Array<MarketOffer> = cropsOrder.map(
-      (crop: ItemType, idx: number): MarketOffer => ({
+    const listSellingOffers: Array<MarketOfferData> = cropsOrder.map(
+      (crop: ItemType, idx: number): MarketOfferData => ({
         item: crop,
         price: (idx + 1) * 2,
       })
     );
-    const listBuyingOffers: Array<MarketOffer> = cropsSeedOrder.map(
-      (crop: ItemType, idx: number): MarketOffer => ({
+    const listBuyingOffers: Array<MarketOfferData> = cropsSeedOrder.map(
+      (crop: ItemType, idx: number): MarketOfferData => ({
         item: crop,
         price: idx + 1,
       })

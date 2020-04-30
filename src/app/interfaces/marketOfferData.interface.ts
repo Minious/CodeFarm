@@ -1,9 +1,9 @@
 import { ItemType } from "../enums/itemType.enum";
 
 /**
- * An offer available in the Market.
+ * The data of a MarketOffer available in the Market.
  */
-export interface MarketOffer {
+export interface MarketOfferData {
   item: ItemType;
   price: number;
 }
