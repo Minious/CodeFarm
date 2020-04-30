@@ -83,13 +83,6 @@ export class MarketInterface extends Phaser.GameObjects.Container {
 
     this.offers = this.scene.add.container(0, 0);
     this.add(this.offers);
-
-    /**
-     * Doesn't reload the MarketInterface's offers when the Inventory changes to
-     * modify the quantity of the item posessed in the offers.
-     * This is broken on purpose, the MarketOffers won't refresh until the event
-     * changedata-inventoty-item-quantity-update is implemented in marketOffer.
-     */
   }
 
   /**

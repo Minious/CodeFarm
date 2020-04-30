@@ -4,10 +4,14 @@ import { UiScene } from "../../scenes/uiScene";
 import { MarketOfferType } from "../../enums/marketOfferType.enum";
 import { MarketOfferData } from "../../interfaces/marketOfferData.interface";
 import { getItemData, ItemData } from "../../interfaces/itemData.interface";
+import { Subscription } from "rxjs";
 
 export class MarketOffer extends Phaser.GameObjects.Container {
   // Specifies the type of this game object's scene as UiScene
   public scene: UiScene;
+
+  private itemQuantityText: Phaser.GameObjects.Text;
+  private inventoryItemTypeQuantityUpdateSubscription: Subscription;
 
   /**
    * The MarketOffer game object trade's money against items. The data of this
@@ -54,6 +58,18 @@ export class MarketOffer extends Phaser.GameObjects.Container {
       offer
     );
     this.add(arrowContainer);
+
+    this.inventoryItemTypeQuantityUpdateSubscription = this.scene.scenesManager.controllerScene
+      .getInventoryItemTypeQuantityUpdate$(offer.item)
+      .subscribe((newQuantity: number): void => {
+        this.itemQuantityText.setText(newQuantity.toString());
+      });
+  }
+
+  // @ts-ignore
+  public destroy(): void {
+    super.destroy();
+    this.inventoryItemTypeQuantityUpdateSubscription.unsubscribe();
   }
 
   private createItemContainer(
@@ -71,14 +87,14 @@ export class MarketOffer extends Phaser.GameObjects.Container {
     const inventoryItemQuantity: number = this.scene.scenesManager.controllerScene.getInventoryItemQuantity(
       offer.item
     );
-    const itemQuantityText: Phaser.GameObjects.Text = this.scene.add
+    this.itemQuantityText = this.scene.add
       .text(-25, 0, inventoryItemQuantity.toString(), {
         fontSize: "16px",
         fontFamily: '"Roboto Condensed"',
         resolution: 3,
       })
       .setOrigin(1, 0.5);
-    itemContainer.add(itemQuantityText);
+    itemContainer.add(this.itemQuantityText);
 
     return itemContainer;
   }

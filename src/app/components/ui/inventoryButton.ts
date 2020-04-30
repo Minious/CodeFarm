@@ -221,11 +221,6 @@ export class InventoryButton extends Phaser.GameObjects.Container {
   public updateContent(inventoryItem: InventoryItem): void {
     if (inventoryItem) {
       const itemTypeData: ItemData = getItemData(inventoryItem.item);
-      console.log(
-        `Inventory slot ${this._itemInventoryIndex} updated :`,
-        inventoryItem,
-        itemTypeData
-      );
 
       this.itemImage.setTexture(itemTypeData.texture);
       this.itemImage.setFrame(itemTypeData.frame);

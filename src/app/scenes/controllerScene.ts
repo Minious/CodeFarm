@@ -21,7 +21,7 @@ import { ScenesManager } from "./scenesManager";
 import { CodeFarmScene } from "./codeFarmScene";
 import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
 // tslint:disable-next-line: no-submodule-imports
-import { map } from "rxjs/operators";
+import { map, skip } from "rxjs/operators";
 
 /**
  * This Scene manages the logic of the game behind the scene. It contains the
@@ -31,6 +31,9 @@ import { map } from "rxjs/operators";
  */
 export class ControllerScene extends CodeFarmScene {
   public static INVENTORY_SIZE: number = 70;
+  public _inventoryItemTypeQuantityUpdate$: {
+    [key in ItemType]?: BehaviorSubject<number>;
+  } = {};
 
   private inventory: Inventory;
   private _inventorySlotUpdate$: Array<BehaviorSubject<InventoryItem>> = [];
@@ -71,6 +74,12 @@ export class ControllerScene extends CodeFarmScene {
 
   public getInventorySlotUpdate$(slotIdx: number): Observable<InventoryItem> {
     return this._inventorySlotUpdate$[slotIdx];
+  }
+
+  public getInventoryItemTypeQuantityUpdate$(
+    itemType: ItemType
+  ): Observable<number> {
+    return this._inventoryItemTypeQuantityUpdate$[itemType];
   }
 
   /**
@@ -285,6 +294,7 @@ export class ControllerScene extends CodeFarmScene {
         );
       }
     }
+    this.emitInventoryItemTypeQuantity(itemType);
   }
 
   /**
@@ -329,6 +339,7 @@ export class ControllerScene extends CodeFarmScene {
       }
     );
     this.inventory = newInventory;
+    this.emitInventoryItemTypeQuantity(itemType);
   }
 
   /**
@@ -350,6 +361,7 @@ export class ControllerScene extends CodeFarmScene {
     this._inventorySlotUpdate$[itemInventoryIndex].next(
       this.inventory[itemInventoryIndex]
     );
+    this.emitInventoryItemTypeQuantity(this.inventory[itemInventoryIndex].item);
   }
 
   /**
@@ -473,10 +485,39 @@ export class ControllerScene extends CodeFarmScene {
      * TODO
      */
     for (let i: number = 0; i < ControllerScene.INVENTORY_SIZE; i += 1) {
-      this._inventorySlotUpdate$.push(
-        new BehaviorSubject<InventoryItem>(this.inventory[i])
-      );
+      const currentInventorySlotUpdate$: BehaviorSubject<InventoryItem> = new BehaviorSubject<
+        InventoryItem
+      >(this.inventory[i]);
+      this._inventorySlotUpdate$.push(currentInventorySlotUpdate$);
+
+      currentInventorySlotUpdate$
+        .pipe(skip(1))
+        .subscribe((inventoryItem: InventoryItem): void => {
+          log.debug(
+            `Update Inventory slot ${i} : ${inventoryItem.item} (Quantity : ${inventoryItem.quantity})`
+          );
+        });
     }
+
+    Object.values(ItemType).forEach((itemType: ItemType): void => {
+      this._inventoryItemTypeQuantityUpdate$[itemType] = new BehaviorSubject<
+        number
+      >(this.getInventoryItemQuantity(itemType));
+
+      this._inventoryItemTypeQuantityUpdate$[itemType]
+        .pipe(skip(1))
+        .subscribe((newQuantity: number): void => {
+          log.debug(
+            `Update Inventory ItemType quantity ${itemType} : ${newQuantity}`
+          );
+        });
+    });
+  }
+
+  private emitInventoryItemTypeQuantity(itemType: ItemType): void {
+    this._inventoryItemTypeQuantityUpdate$[itemType].next(
+      this.getInventoryItemQuantity(itemType)
+    );
   }
 
   /**
