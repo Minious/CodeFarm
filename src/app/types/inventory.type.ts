@@ -1,3 +1,3 @@
-import { InventoryItem } from "../interfaces/inventoryItem.interface";
+import { InventorySlotData } from "../interfaces/inventorySlotData.interface";
 
-export type Inventory = Array<InventoryItem>;
+export type Inventory = Array<InventorySlotData>;

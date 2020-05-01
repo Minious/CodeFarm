@@ -14,7 +14,7 @@ import * as arrow from "../../assets/arrow.png";
 import { Utils } from "../utils/utils";
 import { MarketConfig } from "../interfaces/marketConfig.interface";
 import { ItemType } from "../enums/itemType.enum";
-import { InventoryItem } from "../interfaces/inventoryItem.interface";
+import { InventorySlotData } from "../interfaces/inventorySlotData.interface";
 import { Inventory } from "../types/inventory.type";
 import { MarketOfferData } from "../interfaces/marketOfferData.interface";
 import { ScenesManager } from "./scenesManager";
@@ -40,7 +40,7 @@ export class ControllerScene extends CodeFarmScene {
   } = {};
 
   private inventory: Inventory;
-  private _inventorySlotUpdate$: Array<BehaviorSubject<InventoryItem>> = [];
+  private _inventorySlotUpdate$: Array<BehaviorSubject<InventorySlotData>> = [];
 
   private _moneyAmount: number;
   private _moneyAmount$: BehaviorSubject<number>;
@@ -79,7 +79,9 @@ export class ControllerScene extends CodeFarmScene {
     return this._marketConfig$;
   }
 
-  public getInventorySlotUpdate$(slotIdx: number): Observable<InventoryItem> {
+  public getInventorySlotUpdate$(
+    slotIdx: number
+  ): Observable<InventorySlotData> {
     return this._inventorySlotUpdate$[slotIdx];
   }
 
@@ -133,29 +135,29 @@ export class ControllerScene extends CodeFarmScene {
     this.scene.launch("UiScene");
 
     /**
-     * The selectedItemInventoryIndex held by the data module of the Scene is an
+     * The selectedInventorySlotIndex held by the data module of the Scene is an
      * integer the holds the value of the currently selected item in the
      * inventory bar (see app/components/ui/inventoryInterface.ts)
      */
-    this.data.set("selectedItemInventoryIndex", undefined);
+    this.data.set("selectedInventorySlotIndex", undefined);
     /**
-     * Event fired everytime the selectedItemInventoryIndex is modified
+     * Event fired everytime the selectedInventorySlotIndex is modified
      * (only for logging purposes)
      */
     this.events.on(
-      "changedata-selectedItemInventoryIndex",
-      (parent: any, selectedItemInventoryIndex: number): void => {
-        if (selectedItemInventoryIndex) {
+      "changedata-selectedInventorySlotIndex",
+      (parent: any, selectedInventorySlotIndex: number): void => {
+        if (selectedInventorySlotIndex) {
           /**
            * Grabs the new selected item in the inventory and display it in the
            * logs.
            */
-          if (this.inventory[selectedItemInventoryIndex]) {
+          if (this.inventory[selectedInventorySlotIndex]) {
             const itemType: ItemType = this.inventory[
-              selectedItemInventoryIndex
+              selectedInventorySlotIndex
             ].item;
             log.debug(
-              `Item selected : ${itemType} (slot: ${selectedItemInventoryIndex})`
+              `Item selected : ${itemType} (slot: ${selectedInventorySlotIndex})`
             );
           } else {
             log.debug("Selected slot empty");
@@ -180,8 +182,8 @@ export class ControllerScene extends CodeFarmScene {
    * Returns an the item stored in the selected item slot
    * @returns {number} - The selected item
    */
-  public getSelectedInventoryItemData(): InventoryItem {
-    return this.inventory[this.data.get("selectedItemInventoryIndex")];
+  public getSelectedInventorySlotData(): InventorySlotData {
+    return this.inventory[this.data.get("selectedInventorySlotIndex")];
   }
 
   /**
@@ -190,13 +192,16 @@ export class ControllerScene extends CodeFarmScene {
    * @param {ItemType} itemType - The ItemType to search for
    * @returns {number} - The quantity of the ItemType
    */
-  public getInventoryItemQuantity(itemType: ItemType): number {
+  public getInventoryItemTypeQuantity(itemType: ItemType): number {
     const quantity: number = this.inventory
       .filter(
-        (inventoryItem: InventoryItem): boolean =>
-          inventoryItem && inventoryItem.item === itemType
+        (inventorySlotData: InventorySlotData): boolean =>
+          inventorySlotData && inventorySlotData.item === itemType
       )
-      .map((inventoryItem: InventoryItem): number => inventoryItem.quantity)
+      .map(
+        (inventorySlotData: InventorySlotData): number =>
+          inventorySlotData.quantity
+      )
       .reduce(
         (totalQuantity: number, curQuantity: number): number =>
           totalQuantity + curQuantity,
@@ -214,7 +219,7 @@ export class ControllerScene extends CodeFarmScene {
    * inventory
    */
   public inventoryContains(itemType: ItemType, quantity: number = 1): boolean {
-    const itemQuantity: number = this.getInventoryItemQuantity(itemType);
+    const itemQuantity: number = this.getInventoryItemTypeQuantity(itemType);
     return itemQuantity >= quantity;
   }
 
@@ -224,23 +229,23 @@ export class ControllerScene extends CodeFarmScene {
    * @param {number} - The first slot index
    * @param {number} itemIdx2 - The second slot index
    */
-  public swapInventoryItems(itemIdx1: number, itemIdx2: number): void {
-    if (itemIdx1 !== itemIdx2) {
+  public swapInventorySlots(slotIdx1: number, slotIdx2: number): void {
+    if (slotIdx1 !== slotIdx2) {
       if (
-        this.inventory[itemIdx1] &&
-        this.inventory[itemIdx2] &&
-        this.inventory[itemIdx1].item === this.inventory[itemIdx2].item
+        this.inventory[slotIdx1] &&
+        this.inventory[slotIdx2] &&
+        this.inventory[slotIdx1].item === this.inventory[slotIdx2].item
       ) {
-        this.inventory[itemIdx2].quantity += this.inventory[itemIdx1].quantity;
-        this.inventory[itemIdx1] = undefined;
+        this.inventory[slotIdx2].quantity += this.inventory[slotIdx1].quantity;
+        this.inventory[slotIdx1] = undefined;
       } else {
-        [this.inventory[itemIdx1], this.inventory[itemIdx2]] = [
-          this.inventory[itemIdx2],
-          this.inventory[itemIdx1],
+        [this.inventory[slotIdx1], this.inventory[slotIdx2]] = [
+          this.inventory[slotIdx2],
+          this.inventory[slotIdx1],
         ];
       }
-      this._inventorySlotUpdate$[itemIdx1].next(this.inventory[itemIdx1]);
-      this._inventorySlotUpdate$[itemIdx2].next(this.inventory[itemIdx2]);
+      this._inventorySlotUpdate$[slotIdx1].next(this.inventory[slotIdx1]);
+      this._inventorySlotUpdate$[slotIdx2].next(this.inventory[slotIdx2]);
     }
   }
 
@@ -251,7 +256,7 @@ export class ControllerScene extends CodeFarmScene {
    */
   public modifySelectedInventoryItemQuantity(quantityChange: number): void {
     this.modifyInventoryItemQuantityByIndex(
-      this.data.get("selectedItemInventoryIndex"),
+      this.data.get("selectedInventorySlotIndex"),
       quantityChange
     );
   }
@@ -290,8 +295,8 @@ export class ControllerScene extends CodeFarmScene {
     }
     if (this.inventoryContains(itemType)) {
       const firstSameItemInventorySlotIdx: number = this.inventory.findIndex(
-        (inventoryItem: InventoryItem): boolean =>
-          inventoryItem.item === itemType
+        (inventorySlotData: InventorySlotData): boolean =>
+          inventorySlotData.item === itemType
       );
       this.inventory[firstSameItemInventorySlotIdx].quantity += quantityChange;
 
@@ -300,7 +305,7 @@ export class ControllerScene extends CodeFarmScene {
       );
     } else {
       const firstEmptyInventorySlotIdx: number = this.inventory.findIndex(
-        (inventoryItem: InventoryItem): boolean => !inventoryItem
+        (inventorySlotData: InventorySlotData): boolean => !inventorySlotData
       );
       if (firstEmptyInventorySlotIdx !== -1) {
         this.inventory[firstEmptyInventorySlotIdx] = {
@@ -318,7 +323,7 @@ export class ControllerScene extends CodeFarmScene {
 
   /**
    * This method decreases the quantity of an ItemType in the Inventory. It
-   * iterates through the inventory items and reduce their quantity until the
+   * iterates through the Inventory slots and reduce their quantity until the
    * required amount is reached. If there's not enough items, the remaining
    * amount is ignored.
    * @param itemType
@@ -334,27 +339,27 @@ export class ControllerScene extends CodeFarmScene {
     let remainingAmount: number = quantityChange;
     const newInventory: Inventory = this.inventory.map(
       (
-        inventoryItem: InventoryItem,
-        itemInventoryIndex: number
-      ): InventoryItem => {
+        inventorySlotData: InventorySlotData,
+        inventorySlotIdx: number
+      ): InventorySlotData => {
         if (
           remainingAmount > 0 &&
-          inventoryItem &&
-          inventoryItem.item === itemType
+          inventorySlotData &&
+          inventorySlotData.item === itemType
         ) {
-          if (inventoryItem.quantity <= remainingAmount) {
-            remainingAmount -= inventoryItem.quantity;
-            inventoryItem = undefined;
+          if (inventorySlotData.quantity <= remainingAmount) {
+            remainingAmount -= inventorySlotData.quantity;
+            inventorySlotData = undefined;
           } else {
-            inventoryItem.quantity -= remainingAmount;
+            inventorySlotData.quantity -= remainingAmount;
             remainingAmount = 0;
           }
 
-          this._inventorySlotUpdate$[itemInventoryIndex].next(
-            this.inventory[itemInventoryIndex]
+          this._inventorySlotUpdate$[inventorySlotIdx].next(
+            this.inventory[inventorySlotIdx]
           );
         }
-        return inventoryItem;
+        return inventorySlotData;
       }
     );
     this.inventory = newInventory;
@@ -362,25 +367,25 @@ export class ControllerScene extends CodeFarmScene {
   }
 
   /**
-   * Modifies the quantity of the item in the inventory at the provided slot
+   * Modifies the quantity of the item in the inventory slot at the provided
    * index. If required quantity is bigger then the item quantity, then the
    * quantity is set to 0.
-   * @param {number} itemInventoryIndex - The index of the slot in the Inventory
+   * @param {number} inventorySlotIdx - The index of the slot in the Inventory
    * @param {number} quantityChange - The quantity to modify
    */
   public modifyInventoryItemQuantityByIndex(
-    itemInventoryIndex: number,
+    inventorySlotIdx: number,
     quantityChange: number
   ): void {
-    this.inventory[itemInventoryIndex].quantity += quantityChange;
-    if (this.inventory[itemInventoryIndex].quantity <= 0) {
-      this.inventory[itemInventoryIndex] = undefined;
+    this.inventory[inventorySlotIdx].quantity += quantityChange;
+    if (this.inventory[inventorySlotIdx].quantity <= 0) {
+      this.inventory[inventorySlotIdx] = undefined;
     }
 
-    this._inventorySlotUpdate$[itemInventoryIndex].next(
-      this.inventory[itemInventoryIndex]
+    this._inventorySlotUpdate$[inventorySlotIdx].next(
+      this.inventory[inventorySlotIdx]
     );
-    this.emitInventoryItemTypeQuantity(this.inventory[itemInventoryIndex].item);
+    this.emitInventoryItemTypeQuantity(this.inventory[inventorySlotIdx].item);
   }
 
   /**
@@ -521,10 +526,10 @@ export class ControllerScene extends CodeFarmScene {
    * TODO
    */
   private initializeInventory(): void {
-    // Creates the inventory as an array of InventoryItem
+    // Creates the inventory as an array of InventorySlotData
     if (this.debugEnabled) {
       this.inventory = new Array(ControllerScene.INVENTORY_SIZE).fill({}).map(
-        (obj: any, i: number): InventoryItem => {
+        (obj: any, i: number): InventorySlotData => {
           // Fills the first 10 slots with each type of seed
           if (i < 10) {
             const enumValues: Array<ItemType> = Object.values(ItemType);
@@ -539,7 +544,7 @@ export class ControllerScene extends CodeFarmScene {
       );
     } else {
       this.inventory = new Array(ControllerScene.INVENTORY_SIZE).fill({}).map(
-        (obj: any, i: number): InventoryItem => {
+        (obj: any, i: number): InventorySlotData => {
           // Gives 5 WheatSeed to the player
           if (i === 0) {
             return {
@@ -556,18 +561,18 @@ export class ControllerScene extends CodeFarmScene {
      * TODO
      */
     for (let i: number = 0; i < ControllerScene.INVENTORY_SIZE; i += 1) {
-      const currentInventorySlotUpdate$: BehaviorSubject<InventoryItem> = new BehaviorSubject<
-        InventoryItem
+      const currentInventorySlotUpdate$: BehaviorSubject<InventorySlotData> = new BehaviorSubject<
+        InventorySlotData
       >(this.inventory[i]);
       this._inventorySlotUpdate$.push(currentInventorySlotUpdate$);
 
       currentInventorySlotUpdate$
         .pipe(skip(1))
-        .subscribe((inventoryItem: InventoryItem): void => {
+        .subscribe((inventorySlotData: InventorySlotData): void => {
           log.debug(
             `Update Inventory slot ${i} :`,
-            inventoryItem
-              ? `${inventoryItem.item} (Quantity : ${inventoryItem.quantity})`
+            inventorySlotData
+              ? `${inventorySlotData.item} (Quantity : ${inventorySlotData.quantity})`
               : "Empty"
           );
         });
@@ -576,7 +581,7 @@ export class ControllerScene extends CodeFarmScene {
     Object.values(ItemType).forEach((itemType: ItemType): void => {
       this._inventoryItemTypeQuantityUpdate$[itemType] = new BehaviorSubject<
         number
-      >(this.getInventoryItemQuantity(itemType));
+      >(this.getInventoryItemTypeQuantity(itemType));
 
       this._inventoryItemTypeQuantityUpdate$[itemType]
         .pipe(skip(1))
@@ -590,7 +595,7 @@ export class ControllerScene extends CodeFarmScene {
 
   private emitInventoryItemTypeQuantity(itemType: ItemType): void {
     this._inventoryItemTypeQuantityUpdate$[itemType].next(
-      this.getInventoryItemQuantity(itemType)
+      this.getInventoryItemTypeQuantity(itemType)
     );
   }
 

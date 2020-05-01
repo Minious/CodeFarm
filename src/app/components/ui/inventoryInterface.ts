@@ -87,7 +87,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
 
     /**
      * Add the InventoryButtons to the inventoryBarButtons Group and set the
-     * InventoryButton at index selectedItemInventoryIndex as selected if the
+     * InventoryButton at index selectedInventorySlotIndex as selected if the
      * value exists.
      */
     inventoryBarButtons.forEach(
@@ -97,7 +97,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
           i ===
           this.scene.game.scene
             .getScene("ControllerScene")
-            .data.get("selectedItemInventoryIndex")
+            .data.get("selectedInventorySlotIndex")
         ) {
           inventoryButton.isSelected = true;
         }
@@ -112,22 +112,22 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer): void => {
       let idxChange: number = Math.sign(pointer.deltaY);
       log.debug("Mouse wheel " + idxChange);
-      // Starts at index 0 if no selectedItemInventoryIndex in ControllerScene
+      // Starts at index 0 if no selectedInventorySlotIndex in ControllerScene
       if (
         this.scene.game.scene
           .getScene("ControllerScene")
-          .data.get("selectedItemInventoryIndex") === undefined
+          .data.get("selectedInventorySlotIndex") === undefined
       ) {
         idxChange = 0;
         this.scene.game.scene
           .getScene("ControllerScene")
-          .data.set("selectedItemInventoryIndex", 0);
+          .data.set("selectedInventorySlotIndex", 0);
       }
       this.selectButtonInventoryBar(
         (nbColumns +
           this.scene.game.scene
             .getScene("ControllerScene")
-            .data.get("selectedItemInventoryIndex") +
+            .data.get("selectedInventorySlotIndex") +
           idxChange) %
           nbColumns
       );
@@ -137,7 +137,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
   /**
    * Resets the isSelected member of the inventory bar's InventoryButton to
    * false and sets the selected InventoryButton's isSelected member to true.
-   * Updates the selectedItemInventoryIndex ControllerScene's data value.
+   * Updates the selectedInventorySlotIndex ControllerScene's data value.
    * @param {number} buttonIdx - The index of the InventoryButton selected
    */
   private selectButtonInventoryBar(buttonIdx: number): void {
@@ -147,12 +147,12 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     ] as InventoryButton).isSelected = true;
     this.scene.game.scene
       .getScene("ControllerScene")
-      .data.set("selectedItemInventoryIndex", buttonIdx);
+      .data.set("selectedInventorySlotIndex", buttonIdx);
   }
 
   /**
    * Resets the isSelected member of the inventory bar's InventoryButton to
-   * false. Updates the selectedItemInventoryIndex ControllerScene's data value.
+   * false. Updates the selectedInventorySlotIndex ControllerScene's data value.
    */
   private deselectButtonInventoryBar(): void {
     this.inventoryBarButtons
@@ -162,7 +162,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       });
     this.scene.game.scene
       .getScene("ControllerScene")
-      .data.set("selectedItemInventoryIndex", undefined);
+      .data.set("selectedInventorySlotIndex", undefined);
   }
 
   /**
@@ -260,7 +260,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     const inventoryGridButtons: Array<InventoryButton> = [];
     for (let j: number = 0; j < nbRows; j += 1) {
       for (let i: number = 0; i < nbColumns; i += 1) {
-        const itemInventoryIndex: number = inventoryOffset + i + j * nbColumns;
+        const inventorySlotIdx: number = inventoryOffset + i + j * nbColumns;
 
         const callback: (
           clickedButton: InventoryButton
@@ -273,7 +273,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
           sizeButton,
           sizeButton,
           4,
-          itemInventoryIndex,
+          inventorySlotIdx,
           callback
         );
         this.add(inventoryButton);
