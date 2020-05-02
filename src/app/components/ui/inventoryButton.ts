@@ -12,7 +12,7 @@ import { UiScene } from "../../scenes/uiScene";
  * given a click callback. A Button can also be selected, it changes its
  * background color. The displayed slot is specified by its index in the
  * Inventory. The button retrieves the latest item in the slot with the
- * ControllerScene's  stream _inventorySlotUpdate$.
+ * ControllerScene's stream _inventorySlotUpdate$.
  */
 export class InventoryButton extends Phaser.GameObjects.Container {
   // Specifies the type of this game object's scene as UiScene
@@ -28,10 +28,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
   private _isSelected: boolean;
   // Is the pointer hovering the InventoryButton
   private isPointerOver: boolean;
-  /**
-   * The index of the InventorySlotData in the Inventory displayed in the
-   * InventoryButton
-   */
+  // The index of the InventorySlotData in the Inventory
   private _inventorySlotDataIdx: number;
   // The inner margin between the border of the InventoryButton and its content
   private marginIcon: number;
@@ -198,6 +195,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       }
     );
 
+    // Subscribe to the stream emitting the new InventorySlotData
     this.scene.scenesManager.controllerScene
       .getInventorySlotUpdate$(this._inventorySlotDataIdx)
       .subscribe((newInventorySlot: InventorySlotData): void => {
