@@ -6,7 +6,7 @@ import { WorldScene } from "../../scenes/worldScene";
  * A Popup icon displayed in the world view asking the player for a double click
  * confirmation to trigger an action (make field, plant crop, harvest crop).
  */
-export class ActionPopup extends Phaser.GameObjects.Container {
+export abstract class ActionPopup extends Phaser.GameObjects.Container {
   // Specifies the type of this game object's scene as WorldScene
   public scene: WorldScene;
 
