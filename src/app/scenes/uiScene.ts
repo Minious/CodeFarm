@@ -42,13 +42,6 @@ export class UiScene extends CodeFarmScene {
    * Creates and initializes interfaces
    */
   public create(): void {
-    /**
-     * Creates the joystick. The joystick is hidden when created, it is only
-     * displayed when the player is moving.
-     */
-    this._joystick = new Joystick(this, 20);
-    this.add.existing(this._joystick);
-
     // Creates the MarketInterface and hides it
     this.marketInterface = new MarketInterface(
       this,
@@ -95,6 +88,13 @@ export class UiScene extends CodeFarmScene {
         this.updateMoney(moneyAmount);
       }
     );
+
+    /**
+     * Creates the joystick. The joystick is hidden when created, it is only
+     * displayed when the player is moving.
+     */
+    this._joystick = new Joystick(this, 20);
+    this.add.existing(this._joystick);
   }
 
   // tslint:disable-next-line: no-empty
@@ -104,6 +104,7 @@ export class UiScene extends CodeFarmScene {
    * Shows the MarketInterface and hides the InventoryInterface.
    */
   public openMarket(): void {
+    this.scenesManager.worldScene.scene.pause();
     this.inventoryInterface.setVisible(false);
     this.marketInterface.setVisible(true);
   }
@@ -112,6 +113,7 @@ export class UiScene extends CodeFarmScene {
    * Hides the MarketInterface and shows the InventoryInterface.
    */
   private closeMarket(): void {
+    this.scenesManager.worldScene.scene.resume();
     this.inventoryInterface.setVisible(true);
     this.marketInterface.setVisible(false);
   }

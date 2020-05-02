@@ -215,6 +215,13 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     inventoryOpenButton.on("pointerup", (): void => {
       this.inventoryGridOpen = !this.inventoryGridOpen;
       this.inventoryGridButtons.setVisible(this.inventoryGridOpen);
+
+      // Pauses the WorldScene to deactivate inputs while the inventory is open.
+      if (this.inventoryGridOpen) {
+        this.scene.scenesManager.worldScene.scene.pause();
+      } else {
+        this.scene.scenesManager.worldScene.scene.resume();
+      }
     });
 
     this.add(inventoryOpenButton);

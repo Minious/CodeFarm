@@ -247,28 +247,21 @@ export class WorldScene extends CodeFarmScene {
      * (Note : Should be moved to its own function)
      */
     // Triggered when the pointer is pressed (Mouse button pressed or finger tap)
-    this.layerGround.on(
-      "pointerdown",
-      (_pointer: Phaser.Input.Pointer): void => {
-        // Retrieves the pointer's screen position
-        const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
-          this.input.activePointer.x,
-          this.input.activePointer.y
-        );
+    this.input.on("pointerdown", (_pointer: Phaser.Input.Pointer): void => {
+      // Retrieves the pointer's screen position
+      const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
+        this.input.activePointer.x,
+        this.input.activePointer.y
+      );
 
-        // Resets the joystick in case the pointer is dragged (the player starts moving)
-        this.scenesManager.uiScene.joystick.resetTo(pointerScreenPos);
-      }
-    );
+      // Resets the joystick in case the pointer is dragged (the player starts moving)
+      this.scenesManager.uiScene.joystick.resetTo(pointerScreenPos);
+    });
     // Triggered when the pointer is released (Mouse button or finger released)
-    this.layerGround.on("pointerup", (_pointer: Phaser.Input.Pointer): void => {
-      // Stops the player's physic body (In case it was moving)
-      this.player.body.stop();
-
+    this.input.on("pointerup", (_pointer: Phaser.Input.Pointer): void => {
       // If the player was moving (meaning pointer dragged)
       if (this.moving) {
-        this.moving = false;
-        this.scenesManager.uiScene.joystick.hide();
+        this.stopPlayerMove();
       } else {
         const pointerWorldPos: Vector2 = new Phaser.Math.Vector2(
           this.input.activePointer.worldX,
@@ -287,8 +280,15 @@ export class WorldScene extends CodeFarmScene {
       }
     });
 
+    this.input.on(
+      "pointerupoutside",
+      (_pointer: Phaser.Input.Pointer): void => {
+        this.stopPlayerMove();
+      }
+    );
+
     // Triggered when the pointer is moving
-    this.layerGround.on("pointermove", (): void => {
+    this.input.on("pointermove", (): void => {
       // If the pointer is down means the player is moving
       if (this.input.activePointer.isDown) {
         /**
@@ -297,7 +297,9 @@ export class WorldScene extends CodeFarmScene {
          */
         if (!this.moving) {
           this.moving = true;
+          this.destroyPopup();
           this.scenesManager.uiScene.joystick.show();
+          this.scenesManager.uiScene.scene.pause();
         }
 
         const pointerScreenPos: Vector2 = new Phaser.Math.Vector2(
@@ -445,6 +447,17 @@ export class WorldScene extends CodeFarmScene {
           y: neighborTilePos.y,
         })
       );
+  }
+
+  /**
+   * Stops the player's movement.
+   */
+  private stopPlayerMove(): void {
+    // Stops the player's physic body
+    this.player.body.stop();
+    this.moving = false;
+    this.scenesManager.uiScene.joystick.hide();
+    this.scenesManager.uiScene.scene.resume();
   }
 
   /**
