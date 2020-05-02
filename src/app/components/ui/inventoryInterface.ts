@@ -3,6 +3,7 @@ import * as log from "loglevel";
 
 import { InventoryButton } from "./inventoryButton";
 import { UiScene } from "../../scenes/uiScene";
+import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * The Interface UI displayed in the UiScene showing the player's Inventory
@@ -12,6 +13,14 @@ import { UiScene } from "../../scenes/uiScene";
  * InventoryGrid that displays the full content of the player's Inventory.
  */
 export class InventoryInterface extends Phaser.GameObjects.Container {
+  private static MARGIN_BUTTONS_INVENTORY_BAR: number = 8;
+  private static MARGIN_BUTTONS_INVENTORY_GRID: number = 8;
+  private static BUTTONS_COUNT_INVENTORY_BAR: number = 10;
+  private static BUTTONS_COUNT_INVENTORY_GRID: number =
+    ControllerScene.INVENTORY_SIZE -
+    InventoryInterface.BUTTONS_COUNT_INVENTORY_BAR;
+  private static BUTTONS_MAX_SIZE_INVENTORY_GRID: number = 50;
+
   // Specifies the type of this game object's scene as UiScene
   public scene: UiScene;
 
@@ -21,13 +30,25 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
   private inventoryGridButtons: Phaser.GameObjects.Group;
   // Is the Inventory grid opens meaning is it visible or not.
   private inventoryGridOpen: boolean;
+  // TODO
+  private sizeButtonsInventoryBar: number;
 
   /**
    * Creates the InventoryInterface object.
    * @param {UiScene} uiScene - The UiScene this Interface belongs to
+   * @param {number} x - The x position of the center of the InventoryInterface
+   * @param {number} y - The y position of the center of the InventoryInterface
+   * @param {number} displayWidth - The displayWidth of the InventoryInterface
+   * @param {number} displayHeight - The displayHeight of the InventoryInterface
    */
-  public constructor(uiScene: UiScene) {
-    super(uiScene, 0, 0);
+  public constructor(
+    uiScene: UiScene,
+    x: number,
+    y: number,
+    displayWidth: number,
+    displayHeight: number
+  ) {
+    super(uiScene, x, y);
     this.name = "inventoryInterface";
 
     this.inventoryBarButtons = this.scene.add.group();
@@ -35,32 +56,36 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
 
     this.inventoryGridOpen = false;
 
-    this.buildInventory();
+    this.buildInventory(displayWidth, displayHeight);
   }
 
   /**
    * Create the InventoryButtons of the inventory Bar and the inventory Grid and
    * the Inventory open button.
+   * @param {number} displayWidth - The displayWidth of the InventoryInterface
+   * @param {number} displayHeight - The displayHeight of the InventoryInterface
    */
-  public buildInventory(): void {
-    this.buildInventoryBar();
-    this.buildInventoryGrid();
+  public buildInventory(displayWidth: number, displayHeight: number): void {
+    this.buildInventoryBar(displayWidth, displayHeight);
+    this.buildInventoryGrid(displayWidth, displayHeight);
     this.inventoryGridButtons.setVisible(this.inventoryGridOpen);
 
-    this.buildInventoryOpenButton();
+    this.buildInventoryOpenButton(displayWidth, displayHeight);
   }
 
   /**
    * Creates the InventoryButtons of the inventory bar and enable the player
    * ability to select slots.
+   * @param {number} displayWidth - The displayWidth of the InventoryInterface
+   * @param {number} displayHeight - The displayHeight of the InventoryInterface
    */
-  private buildInventoryBar(): void {
-    const marginButtons: number = 8;
-    const nbColumns: number = 10;
+  private buildInventoryBar(displayWidth: number, displayHeight: number): void {
+    const nbColumns: number = InventoryInterface.BUTTONS_COUNT_INVENTORY_BAR;
     const nbRows: number = 1;
-    const sizeButton: number =
-      (this.scene.cameras.main.displayWidth - marginButtons) / nbColumns -
-      marginButtons;
+    this.sizeButtonsInventoryBar =
+      (displayWidth - InventoryInterface.MARGIN_BUTTONS_INVENTORY_BAR) /
+        nbColumns -
+      InventoryInterface.MARGIN_BUTTONS_INVENTORY_BAR;
 
     /**
      * Creates the inventory bar InventoryButtons and set their click callback
@@ -69,10 +94,12 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     const inventoryBarButtons: Array<InventoryButton> = this.makeInventoryButtonsGrid(
       nbColumns,
       nbRows,
-      marginButtons,
-      this.scene.cameras.main.displayHeight - sizeButton - marginButtons,
-      sizeButton,
-      marginButtons,
+      -displayWidth / 2 + InventoryInterface.MARGIN_BUTTONS_INVENTORY_BAR,
+      displayHeight / 2 -
+        this.sizeButtonsInventoryBar -
+        InventoryInterface.MARGIN_BUTTONS_INVENTORY_BAR,
+      this.sizeButtonsInventoryBar,
+      InventoryInterface.MARGIN_BUTTONS_INVENTORY_BAR,
       0,
       (columnsIdx: number): ((clickedButton: InventoryButton) => void) => {
         return (clickedButton: InventoryButton): void => {
@@ -93,6 +120,10 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     inventoryBarButtons.forEach(
       (inventoryButton: InventoryButton, i: number): void => {
         this.inventoryBarButtons.add(inventoryButton);
+        if (this.scene.scenesManager.controllerScene.debugEnabled) {
+          this.add(inventoryButton.input.hitAreaDebug);
+          this.inventoryBarButtons.add(inventoryButton.input.hitAreaDebug);
+        }
         if (
           i ===
           this.scene.game.scene
@@ -168,49 +199,83 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
   /**
    * Creates the InventoryButtons of the inventory grid with no special
    * behavior.
+   * @param {number} displayWidth - The displayWidth of the InventoryInterface
+   * @param {number} displayHeight - The displayHeight of the InventoryInterface
    */
-  private buildInventoryGrid(): void {
-    const sizeButton: number = 50;
-    const marginButtons: number = 8;
-    const marginButtonsInventoryBar: number = 8;
+  private buildInventoryGrid(
+    displayWidth: number,
+    displayHeight: number
+  ): void {
+    const inventoryBarHeight: number =
+      this.sizeButtonsInventoryBar +
+      2 * InventoryInterface.MARGIN_BUTTONS_INVENTORY_BAR;
+    const availableHeightInventoryGrid: number =
+      displayHeight - inventoryBarHeight;
     const nbColumns: number = 10;
-    const nbRows: number = 6;
-    const widthGrid: number =
-      sizeButton * nbColumns + marginButtons * (nbColumns - 1);
-    const heightGrid: number =
-      sizeButton * nbRows + marginButtons * (nbRows - 1);
-    const sizeButtonInventoryBar: number =
-      (this.scene.cameras.main.displayWidth - marginButtons) / nbColumns -
-      marginButtons;
+    const nbRows: number = Math.ceil(
+      InventoryInterface.BUTTONS_COUNT_INVENTORY_GRID / nbColumns
+    );
+    const sizeButton: number = Math.min(
+      InventoryInterface.BUTTONS_MAX_SIZE_INVENTORY_GRID,
+      (displayWidth - InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID) /
+        nbColumns -
+        InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID,
+      (availableHeightInventoryGrid -
+        InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID) /
+        nbRows -
+        InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID
+    );
+    const widthInventoryGrid: number =
+      (sizeButton + InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID) *
+        nbColumns -
+      InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID;
+    const heightInventoryGrid: number =
+      (sizeButton + InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID) * nbRows -
+      InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID;
+    const inventoryGridX: number = -widthInventoryGrid / 2;
+    const inventoryGridY: number =
+      displayHeight / 2 - inventoryBarHeight - heightInventoryGrid;
 
     // Creates the inventory grid InventoryButtons.
     const inventoryGridButtons: Array<InventoryButton> = this.makeInventoryButtonsGrid(
       nbColumns,
       nbRows,
-      (this.scene.cameras.main.displayWidth - widthGrid) / 2,
-      this.scene.cameras.main.displayHeight -
-        sizeButtonInventoryBar -
-        marginButtonsInventoryBar * 2 -
-        heightGrid,
+      inventoryGridX,
+      inventoryGridY,
       sizeButton,
-      marginButtons,
-      10
+      InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID,
+      InventoryInterface.BUTTONS_COUNT_INVENTORY_BAR
     );
 
     // Adds the InventoryButtons to the inventoryGridButtons Group.
     inventoryGridButtons.forEach((inventoryButton: InventoryButton): void => {
       this.inventoryGridButtons.add(inventoryButton);
+      if (this.scene.scenesManager.controllerScene.debugEnabled) {
+        this.add(inventoryButton.input.hitAreaDebug);
+        this.inventoryGridButtons.add(inventoryButton.input.hitAreaDebug);
+      }
     });
   }
 
   /**
    * Creates the button which allows to show and hide the inventoryGridButtons.
+   * @param {number} displayWidth - The displayWidth of the InventoryInterface
+   * @param {number} displayHeight - The displayHeight of the InventoryInterface
    */
-  private buildInventoryOpenButton(): void {
+  private buildInventoryOpenButton(
+    displayWidth: number,
+    displayHeight: number
+  ): void {
+    const marginInventoryOpenButton: number = 10;
     const inventoryOpenButton: Phaser.GameObjects.Image = this.scene.add
-      .image(60, 45, "inventory_button")
+      .image(0, 0, "inventory_button")
       .setScale(2)
-      .setInteractive();
+      .setInteractive()
+      .setDisplayOrigin(0, 0);
+    inventoryOpenButton.setPosition(
+      -displayWidth / 2 + marginInventoryOpenButton,
+      -displayHeight / 2 + marginInventoryOpenButton
+    );
     inventoryOpenButton.name = "inventoryOpenButton";
     inventoryOpenButton.on("pointerup", (): void => {
       this.inventoryGridOpen = !this.inventoryGridOpen;
@@ -227,7 +292,6 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     this.add(inventoryOpenButton);
     if (this.scene.scenesManager.controllerScene.debugEnabled) {
       this.scene.input.enableDebug(inventoryOpenButton);
-      this.add(inventoryOpenButton.input.hitAreaDebug);
     }
   }
 
