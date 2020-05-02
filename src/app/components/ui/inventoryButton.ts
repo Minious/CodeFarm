@@ -8,8 +8,11 @@ import { UiScene } from "../../scenes/uiScene";
 
 /**
  * A Button displaying the content of an Inventory slot. Contained Item Icon can
- * be dragged and moved from one InventoryButton to another. The Button can be
- * given a click callback. A Button can also be selected.
+ * be dragged and moved from its InventoryButton to another. The Button can be
+ * given a click callback. A Button can also be selected, it changes its
+ * background color. The displayed slot is specified by its index in the
+ * Inventory. The button retrieves the latest item in the slot with the
+ * ControllerScene's stream _inventorySlotUpdate$.
  */
 export class InventoryButton extends Phaser.GameObjects.Container {
   // Specifies the type of this game object's scene as UiScene
@@ -25,11 +28,8 @@ export class InventoryButton extends Phaser.GameObjects.Container {
   private _isSelected: boolean;
   // Is the pointer hovering the InventoryButton
   private isPointerOver: boolean;
-  /**
-   * The index of the InventorySlot in the Inventory displayed in the
-   * InventoryButton
-   */
-  private _inventorySlotIdx: number;
+  // The index of the InventorySlotData in the Inventory
+  private _inventorySlotDataIdx: number;
   // The inner margin between the border of the InventoryButton and its content
   private marginIcon: number;
 
@@ -42,10 +42,10 @@ export class InventoryButton extends Phaser.GameObjects.Container {
    * the WorldScene's Tilemap
    * @param {number} displayWidth - The width of the InventoryButton
    * @param {number} displayHeight - The height of the InventoryButton
-   * @param {number} marginIcon - The margin between the border of the
-   * InventoryButton and the InventorySlot's item Image icon
-   * @param {number} inventorySlotIdx - Index of the InventorySlot in the
-   * Inventory
+   * @param {number} marginIcon - The inner margin between the border of the
+   * InventoryButton and its content
+   * @param {number} inventorySlotDataIdx - Index of the InventorySlotData in
+   * the Inventory
    * @param {(_: InventoryButton) => void} externalCallback - Callback to call
    * when InventoryButton clicked
    */
@@ -56,20 +56,22 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     displayWidth: number,
     displayHeight: number,
     marginIcon: number,
-    inventorySlotIdx: number,
+    inventorySlotDataIdx: number,
     externalCallback: (_: InventoryButton) => void
   ) {
     super(uiScene, x, y);
 
-    this._inventorySlotIdx = inventorySlotIdx;
     this.marginIcon = marginIcon;
+    this._inventorySlotDataIdx = inventorySlotDataIdx;
+    this._isSelected = false;
 
+    // Creates the background Image
     this.backgroundImage = this.scene.add.image(0, 0, "ui_button");
     this.add(this.backgroundImage);
 
     /**
-     * Phaser container holding the InventorySlot icon Image and its quantity
-     * Text.
+     * Phaser container holding the InventorySlotData item's icon Image and its
+     * quantity Text.
      */
     const contentContainer: Phaser.GameObjects.Container = this.scene.add.container(
       0,
@@ -101,14 +103,16 @@ export class InventoryButton extends Phaser.GameObjects.Container {
 
     this.add(contentContainer);
 
+    // Set the size of the button according to displayWidth and displayHeight
     const { width, height }: Phaser.Geom.Rectangle = this.getBounds();
     this.setSize(width, height).setDisplaySize(displayWidth, displayHeight);
-
-    this._isSelected = false;
 
     // Enables the InventoryButton as a DropZone and make the content draggable
     this.setInteractive(undefined, undefined, true);
     this.scene.input.setDraggable(this);
+    if (this.scene.scenesManager.controllerScene.debugEnabled) {
+      this.scene.input.enableDebug(this);
+    }
 
     // Set up the pointer events callbacks
     if (externalCallback) {
@@ -131,7 +135,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     this.on(
       "dragstart",
       (pointer: Phaser.Input.Pointer, dragX: number, dragY: number): void => {
-        // Puts the InventorySlot above the other ones when dragged.
+        // Puts the InventoryButton above the other ones when dragged.
         this.parentContainer.bringToTop(this);
       }
     );
@@ -141,8 +145,8 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       (pointer: Phaser.Input.Pointer, dragX: number, dragY: number): void => {
         /**
          * When the InventoryButton is dragged, move it with the pointer.
-         * Calculate the position of the content of the InventorySlot relative
-         * to its parent container (The InventorySlot itself).
+         * Calculate the position of the content of the InventoryButton relative
+         * to its parent container (The InventoryButton itself).
          */
         if (contentContainer) {
           const xPointer: number = Utils.clamp(
@@ -180,27 +184,28 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       "drop",
       (pointer: Phaser.Input.Pointer, target: InventoryButton): void => {
         /**
-         * Swaps the InventorySlot of this InventoryButton and the one of the
-         * InventoryButton on which the content of this InventoryButton was
+         * Swaps the InventorySlotData of this InventoryButton and the one of
+         * the InventoryButton on which the content of this InventoryButton was
          * dropped.
          */
         this.scene.scenesManager.controllerScene.swapInventorySlots(
-          this._inventorySlotIdx,
-          target.inventorySlotIdx
+          this._inventorySlotDataIdx,
+          target.inventorySlotDataIdx
         );
       }
     );
 
+    // Subscribe to the stream emitting the new InventorySlotData
     this.scene.scenesManager.controllerScene
-      .getInventorySlotUpdate$(this._inventorySlotIdx)
+      .getInventorySlotUpdate$(this._inventorySlotDataIdx)
       .subscribe((newInventorySlot: InventorySlotData): void => {
         this.updateContent(newInventorySlot);
       });
   }
 
-  // Getter for _inventorySlotIdx
-  public get inventorySlotIdx(): number {
-    return this._inventorySlotIdx;
+  // Getter for _inventorySlotDataIdx
+  public get inventorySlotDataIdx(): number {
+    return this._inventorySlotDataIdx;
   }
 
   // Getter for _isSelected
@@ -208,12 +213,18 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     return this._isSelected;
   }
 
-  // Getter for _isSelected. Update the color of the InventoryButton.
+  // Setter for _isSelected. Update the color of the InventoryButton.
   public set isSelected(_isSelected: boolean) {
     this._isSelected = _isSelected;
     this.updateColor();
   }
 
+  /**
+   * Update the InventorySlotData of this InventoryButton and its content (item
+   * Image and quantity Text). If the InventorySlotData is undefined, hides the
+   * content's game objects.
+   * @param {InventorySlotData} inventorySlotData - The new InventorySlotData
+   */
   public updateContent(inventorySlotData: InventorySlotData): void {
     if (inventorySlotData) {
       const itemTypeData: ItemData = getItemData(inventorySlotData.item);

@@ -1,7 +1,7 @@
 import { ItemType } from "../enums/itemType.enum";
 
 /**
- * An item stored in the inventory.
+ * A slot in the inventory storing items.
  */
 export interface InventorySlotData {
   item: ItemType;

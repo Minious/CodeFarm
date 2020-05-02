@@ -5,7 +5,7 @@ import { InventoryButton } from "./inventoryButton";
 import { UiScene } from "../../scenes/uiScene";
 
 /**
- * The Interface displayed in the UiScene showing the player's Inventory
+ * The Interface UI displayed in the UiScene showing the player's Inventory
  * content. It has an Inventory bar which is always visible at the bottom of the
  * screen that displays the first 10 slots of the Inventory. An Inventory Button
  * in the upper left corner of the screen allows the player to show and hide the

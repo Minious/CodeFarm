@@ -665,7 +665,7 @@ export class WorldScene extends CodeFarmScene {
               selectedInventorySlotData.item
             );
             this.crops.add(crop);
-            this.scenesManager.controllerScene.modifySelectedInventoryItemQuantity(
+            this.scenesManager.controllerScene.modifySelectedInventorySlotQuantity(
               -1
             );
           };

@@ -10,16 +10,16 @@ import { ControllerScene } from "../../scenes/controllerScene";
  * The Interface displayed in the UiScene showing the Market's offers. It
  * contains two columns, one displaying the Selling MarketOfferType offers and
  * the other the Buying MarketOfferType offers. A Selling offer trades money
- * against the player's items and a Buying offer trades item against the payer's
- * money. The MarketInterface contains a close button to which a callback can be
- * provided.
+ * against the player's items and a Buying offer trades item against the
+ * p/ayer's money. The MarketInterface contains a close button to which a click
+ * callback can be provided.
  */
 export class MarketInterface extends Phaser.GameObjects.Container {
   // Specifies the type of this game object's scene as UiScene
   public scene: UiScene;
 
-  // A Phaser Container holding all the offers
-  private offers: Phaser.GameObjects.Container;
+  // A Phaser Group holding all the offers
+  private offers: Phaser.GameObjects.Group;
 
   /**
    * Creates the MarketInterface object.
@@ -80,9 +80,9 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       closeIcon.input.hitAreaDebug.name = "marketCloseIconDebug";
     }
 
-    this.offers = this.scene.add.container(0, 0);
+    // Creates the MarketOffers
+    this.offers = this.scene.add.group();
     this.createMarketOffers();
-    this.add(this.offers);
   }
 
   /**
@@ -99,7 +99,6 @@ export class MarketInterface extends Phaser.GameObjects.Container {
     const marginOffer: number = 60;
 
     // Creates the offers for each MarketOfferData in the MarketConfig
-
     for (
       let idx: number = 0;
       idx < ControllerScene.BUYING_OFFERS_COUNT;
@@ -113,6 +112,7 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         idx
       );
       this.offers.add(marketOffer);
+      this.add(marketOffer);
     }
     for (
       let idx: number = 0;
@@ -127,6 +127,7 @@ export class MarketInterface extends Phaser.GameObjects.Container {
         idx
       );
       this.offers.add(marketOffer);
+      this.add(marketOffer);
     }
   }
 }

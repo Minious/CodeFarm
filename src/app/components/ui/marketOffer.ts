@@ -1,42 +1,58 @@
 import * as Phaser from "phaser";
+import { Subscription } from "rxjs";
 
 import { UiScene } from "../../scenes/uiScene";
 import { MarketOfferType } from "../../enums/marketOfferType.enum";
 import { MarketOfferData } from "../../interfaces/marketOfferData.interface";
 import { getItemData, ItemData } from "../../interfaces/itemData.interface";
-import { Subscription } from "rxjs";
 
+/**
+ * A MarketOffer in the MarketInterface. The MarketOffer can be of two types :
+ * BUYING or SELLING. A Selling offer trades money against the player's items
+ * and a Buying offer trades item against the player's money. Displays the
+ * content of a MarketOfferData. The displayed MarketOfferData is specified by
+ * its MarketOfferType type and index in the MarketConfig. The MarketOffer
+ * retrieves the latest MarketConfig with the ControllerScene's stream
+ * _marketOfferUpdate$. Each time the stream emits, the MarketOffer subscribe to
+ * the ControllerScene's stream _inventoryItemTypeQuantityUpdate$ to update the
+ * displayed quantity of the MarketOfferData item's ItemType. The MarketOffer
+ * contains three parts : the arrowContainer, the itemContainer and the
+ * moneyContainer. The itemContainer displays the item icon Image and a Text of
+ * the item's quantity in the player's Inventory. The moneyContainer displays a
+ * money icon Image and a Text of the item cost. The arrowContainer displays an
+ * arrow icon Image with the text "BUY" or "SELL" depending on the
+ * MarketOfferType.
+ */
 export class MarketOffer extends Phaser.GameObjects.Container {
   // Specifies the type of this game object's scene as UiScene
   public scene: UiScene;
 
-  private itemQuantityText: Phaser.GameObjects.Text;
-  private inventoryItemTypeQuantityUpdateSubscription: Subscription;
-  private moneyAmountText: Phaser.GameObjects.Text;
+  // The type of the MarketOffer (BUYING or SELLING)
   private marketOfferType: MarketOfferType;
-  private itemIcon: Phaser.GameObjects.Sprite;
+  /**
+   * The subscription to the stream emitting the total quantity of the item in
+   * the MarketOfferData. Subscribe to the new ItemType stream when the item in
+   * MarketOfferData changes.
+   */
+  private inventoryItemTypeQuantityUpdateSubscription: Subscription;
+
+  private itemImage: Phaser.GameObjects.Image;
   private arrowImage: Phaser.GameObjects.Image;
+  private itemQuantityText: Phaser.GameObjects.Text;
+  private moneyAmountText: Phaser.GameObjects.Text;
 
   // The index of the MarketOffer in the MarketConfig displayed
   private marketOfferIndex: number;
 
   /**
-   * The MarketOffer game object trade's money against items. The data of this
-   * transaction is grabbed as the MarketOfferData. A Selling offer trades money
-   * against the player's items and a Buying offer trades item against the
-   * payer's money. Its type is defined by the MarketOfferType. The MarketOffer
-   * contains three parts : the arrowContainer, the itemContainer and the
-   * moneyContainer. The itemContainer displays the item icon Image and a Text
-   * of the item's quantity in the player's Inventory. The moneyContainer
-   * displays a money icon Image and a Text of the item cost. The arrowContainer
-   * displays an arrow icon Image with the text "BUY" or "SELL" depending on the
-   * MarketOfferType.
+   * Creates the MarketOffer object.
    * @param {UiScene} uiScene - The UiScene this MarketOffer belongs to
    * @param {number} x - The x position of the center of the MarketOffer
    * @param {number} y - The y position of the center of the MarketOffer
-   * @param {MarketOfferType} marketOfferType - The type of this MarketOffer (either BUY or
-   * SELL)
-   * @param {number} marketOfferIndex - TODO
+   * @param {MarketOfferType} marketOfferType - The type of this MarketOffer
+   * (either BUY or SELL)
+   * @param {number} marketOfferIndex - The index of the MarketOfferData in
+   * the MarketConfig
    */
   public constructor(
     uiScene: UiScene,
@@ -62,6 +78,7 @@ export class MarketOffer extends Phaser.GameObjects.Container {
     const arrowContainer: Phaser.GameObjects.Container = this.createArrowContainer();
     this.add(arrowContainer);
 
+    // Subscribe to the stream emitting the new MarketOfferData
     this.scene.scenesManager.controllerScene
       .getMarketOfferUpdate$(this.marketOfferIndex, this.marketOfferType)
       .subscribe((marketOfferData: MarketOfferData): void => {
@@ -69,13 +86,20 @@ export class MarketOffer extends Phaser.GameObjects.Container {
       });
   }
 
+  /**
+   * Update the MarketOfferData of this MarketOffer and its content (item Image,
+   * quantity and price Text). If the InventorySlotData is undefined, hides the
+   * content game objects.
+   * @param {MarketOfferData} marketOfferData - The new MarketOfferData
+   */
   public updateContent(marketOfferData: MarketOfferData): void {
     this.moneyAmountText.setText(marketOfferData.price.toString());
 
     const itemTypeData: ItemData = getItemData(marketOfferData.item);
-    this.itemIcon.setTexture(itemTypeData.texture);
-    this.itemIcon.setFrame(itemTypeData.frame);
+    this.itemImage.setTexture(itemTypeData.texture);
+    this.itemImage.setFrame(itemTypeData.frame);
 
+    // Subscribe to the new ItemType quantity stream
     if (this.inventoryItemTypeQuantityUpdateSubscription) {
       this.inventoryItemTypeQuantityUpdateSubscription.unsubscribe();
     }
@@ -85,18 +109,22 @@ export class MarketOffer extends Phaser.GameObjects.Container {
         this.itemQuantityText.setText(newQuantity.toString());
       });
 
+    // Enable the arrow click callback which triggers the transaction
     this.setArrowClickCallback(marketOfferData);
   }
 
+  /**
+   * Creates the item Container.
+   */
   private createItemContainer(): Phaser.GameObjects.Container {
     const itemContainer: Phaser.GameObjects.Container = this.scene.add.container(
       -70,
       0
     );
-    this.itemIcon = this.scene.add
+    this.itemImage = this.scene.add
       .sprite(0, 0, undefined, undefined)
       .setScale(3);
-    itemContainer.add(this.itemIcon);
+    itemContainer.add(this.itemImage);
     this.itemQuantityText = this.scene.add
       .text(-25, 0, "", {
         fontSize: "16px",
@@ -109,6 +137,9 @@ export class MarketOffer extends Phaser.GameObjects.Container {
     return itemContainer;
   }
 
+  /**
+   * Creates the money Container.
+   */
   private createMoneyContainer(): Phaser.GameObjects.Container {
     const moneyContainer: Phaser.GameObjects.Container = this.scene.add.container(
       70,
@@ -130,6 +161,9 @@ export class MarketOffer extends Phaser.GameObjects.Container {
     return moneyContainer;
   }
 
+  /**
+   * Creates the arrow Container.
+   */
   private createArrowContainer(): Phaser.GameObjects.Container {
     const arrowContainer: Phaser.GameObjects.Container = this.scene.add.container(
       0,
@@ -171,6 +205,13 @@ export class MarketOffer extends Phaser.GameObjects.Container {
     return arrowContainer;
   }
 
+  /**
+   * Enable the arrow click callback which execute the transaction of the item
+   * and the money (Disable the events callback first if they were already
+   * initialized).
+   * @param {MarketOfferData} marketOfferData - The MarketOfferData containing
+   * the ItemType and the price
+   */
   private setArrowClickCallback(marketOfferData: MarketOfferData): void {
     /**
      * Flip the arrow when pointer enters or exits it to switch shadow's side
@@ -184,12 +225,7 @@ export class MarketOffer extends Phaser.GameObjects.Container {
     this.arrowImage.on("pointerout", (): void => {
       this.arrowImage.setFlipY(!this.arrowImage.flipY);
     });
-    /**
-     * Exchange the money with the item when arrow clicked
-     * (Note : If item's quantity changed first, the Inventory's data change
-     * event callback is called and the MarketOffer is destroyed and recreated
-     * by the MarketInterface)
-     */
+    // Exchange the money with the item when arrow clicked
     this.arrowImage.off("pointerdown");
     this.arrowImage.on("pointerdown", (): void => {
       if (this.marketOfferType === MarketOfferType.Buying) {
@@ -197,12 +233,12 @@ export class MarketOffer extends Phaser.GameObjects.Container {
           this.scene.scenesManager.controllerScene.moneyAmount >=
           marketOfferData.price
         ) {
-          this.scene.scenesManager.controllerScene.modifyMoneyAmount(
-            -marketOfferData.price
-          );
           this.scene.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
             marketOfferData.item,
             1
+          );
+          this.scene.scenesManager.controllerScene.modifyMoneyAmount(
+            -marketOfferData.price
           );
         }
       }
@@ -212,12 +248,12 @@ export class MarketOffer extends Phaser.GameObjects.Container {
             marketOfferData.item
           )
         ) {
-          this.scene.scenesManager.controllerScene.modifyMoneyAmount(
-            marketOfferData.price
-          );
           this.scene.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
             marketOfferData.item,
             -1
+          );
+          this.scene.scenesManager.controllerScene.modifyMoneyAmount(
+            marketOfferData.price
           );
         }
       }

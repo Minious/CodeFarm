@@ -1,4 +1,7 @@
 import * as log from "loglevel";
+import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
+// tslint:disable-next-line: no-submodule-imports
+import { map, skip } from "rxjs/operators";
 
 import * as tileset from "../../assets/tileset.png";
 import * as crops_tileset from "../../assets/crops_tileset.png";
@@ -19,37 +22,67 @@ import { Inventory } from "../types/inventory.type";
 import { MarketOfferData } from "../interfaces/marketOfferData.interface";
 import { ScenesManager } from "./scenesManager";
 import { CodeFarmScene } from "./codeFarmScene";
-import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
-// tslint:disable-next-line: no-submodule-imports
-import { map, skip } from "rxjs/operators";
 import { MarketOfferType } from "../enums/marketOfferType.enum";
 
 /**
  * This Scene manages the logic of the game behind the scene. It contains the
- * inventory and the amount of money and some utility methods to query and
- * manipulate them. The Scene is also in charge of loading all the assets and,
- * once finished, launch the other Scenes : WorldScene and UiScene.
+ * inventory, the index of the selected item in the Inventory, the amount of
+ * money the player holds, the current offers available in the Market and some
+ * utility methods to query and manipulate them. The Inventory, the money amount
+ * and the MarketConfig emits events through streams about their current state.
+ * Streams are RxJS' BehaviourSubject and ReplaySubject(1) with allow the
+ * streams to emit a value and it is immediately sent to each new listeners
+ * listening on the stream, allowing the automatic initialization of objecct
+ * listening to stream (InventoryButton, MarketOffer). The Scene is also in
+ * charge of loading all the assets and, once finished, launch the other Scenes
+ * : WorldScene and UiScene.
  */
 export class ControllerScene extends CodeFarmScene {
+  /**
+   * Constants about the Game
+   * (Note : Should use Constant enum or class ?)
+   */
   public static INVENTORY_SIZE: number = 70;
   public static BUYING_OFFERS_COUNT: number = 5;
   public static SELLING_OFFERS_COUNT: number = 5;
 
+  /**
+   * Object which for each key of type ItemType holds a stream that emits the
+   * total quantity of items of type ItemType in Inventory whenever that total
+   * quantity changes.
+   */
   public _inventoryItemTypeQuantityUpdate$: {
     [key in ItemType]?: BehaviorSubject<number>;
   } = {};
 
+  // The Inventory holding the player's items
   private inventory: Inventory;
+  /**
+   * Array of streams emitting the InventorySlotData of the same index in the
+   * Inventory whenever it is modified.
+   */
   private _inventorySlotUpdate$: Array<BehaviorSubject<InventorySlotData>> = [];
 
+  // The current amount of monet held by the player
   private _moneyAmount: number;
+  // A stream emitting the quantity of money each time it changes
   private _moneyAmount$: BehaviorSubject<number>;
 
+  // A stream emitting a new MarketConfig every some amount of time
   private _marketConfig$: ReplaySubject<MarketConfig>;
+  /**
+   * Object which for each key of type MarketOfferType holds an array of streams
+   * emitting the MarketOffer of the same index in the MarketConfig and of the
+   * type whenever it is modified.
+   */
   private _marketOfferUpdate$: {
     [key in MarketOfferType]?: Array<ReplaySubject<MarketOfferData>>;
   } = {};
 
+  /**
+   *  Is the debug mode enabled meaning should the logs and the debug game
+   *  objects be used.
+   */
   private _debugEnabled: boolean = process.env.NODE_ENV === "development";
 
   public constructor(scenesManager: ScenesManager) {
@@ -71,20 +104,24 @@ export class ControllerScene extends CodeFarmScene {
     return this._moneyAmount;
   }
 
+  // Getter for _moneyAmount$
   public get moneyAmount$(): Observable<number> {
     return this._moneyAmount$;
   }
 
+  // Getter for _marketConfig$
   public get marketConfig$(): Observable<MarketConfig> {
     return this._marketConfig$;
   }
 
+  // Getter for _inventorySlotUpdate$
   public getInventorySlotUpdate$(
     slotIdx: number
   ): Observable<InventorySlotData> {
     return this._inventorySlotUpdate$[slotIdx];
   }
 
+  // Getter for _marketOfferUpdate$
   public getMarketOfferUpdate$(
     marketOfferIdx: number,
     marketOfferType: MarketOfferType
@@ -92,6 +129,7 @@ export class ControllerScene extends CodeFarmScene {
     return this._marketOfferUpdate$[marketOfferType][marketOfferIdx];
   }
 
+  // Getter for _inventoryItemTypeQuantityUpdate$
   public getInventoryItemTypeQuantityUpdate$(
     itemType: ItemType
   ): Observable<number> {
@@ -127,7 +165,8 @@ export class ControllerScene extends CodeFarmScene {
 
   /**
    * Once the assets have been loaded in preload, update launches the Scenes
-   * WorldScene and UiScene and initialize the inventory and the money amount.
+   * WorldScene and UiScene. It Initializes the selected Inventory slot, the
+   * Inventory, the money amount and the MarketConfig.
    */
   public create(): void {
     // Launch the "actual game" Scenes
@@ -149,7 +188,7 @@ export class ControllerScene extends CodeFarmScene {
       (parent: any, selectedInventorySlotIndex: number): void => {
         if (selectedInventorySlotIndex) {
           /**
-           * Grabs the new selected item in the inventory and display it in the
+           * Grabs the new selected item in the inventory and displays it in the
            * logs.
            */
           if (this.inventory[selectedInventorySlotIndex]) {
@@ -168,19 +207,18 @@ export class ControllerScene extends CodeFarmScene {
       }
     );
 
-    // Creates the 'inventory' key in the Scene's data module
+    // Initializes the Inventory, the money amount and the MarketConfig
     this.initializeInventory();
-    // Does the same with the money amount
     this.initializeMoney();
-    this.startMarketConfigGenerator();
+    this.initializeMarketConfig();
   }
 
   // tslint:disable-next-line: no-empty
   public update(time: number, delta: number): void {}
 
   /**
-   * Returns an the item stored in the selected item slot
-   * @returns {number} - The selected item
+   * Returns the data stored in the selected Inventory slot
+   * @returns {number} - The selected InventorySlotData
    */
   public getSelectedInventorySlotData(): InventorySlotData {
     return this.inventory[this.data.get("selectedInventorySlotIndex")];
@@ -212,9 +250,9 @@ export class ControllerScene extends CodeFarmScene {
 
   /**
    * Returns a boolean which is true if the inventory contains the ItemType in
-   * the quantity required (default 1) sent as parameters
+   * the quantity required sent as parameters.
    * @param {ItemType} itemType - The ItemType to search for
-   * @param {boolean} quantity - The quantity required
+   * @param {boolean} quantity - The quantity required (default = 1)
    * @returns {boolean} - Wether there is the quantity of ItemType in the
    * inventory
    */
@@ -250,19 +288,20 @@ export class ControllerScene extends CodeFarmScene {
   }
 
   /**
-   * Modifies the quantity of the selected item in the inventory by a required
-   * amount.
+   * Modifies the quantity of the item in the selected slot in the Inventory by
+   * a required amount.
    * @param {number} quantityChange - The amount to change
    */
-  public modifySelectedInventoryItemQuantity(quantityChange: number): void {
-    this.modifyInventoryItemQuantityByIndex(
+  public modifySelectedInventorySlotQuantity(quantityChange: number): void {
+    this.modifyInventorySlotQuantityByIndex(
       this.data.get("selectedInventorySlotIndex"),
       quantityChange
     );
   }
 
   /**
-   * Adds or reduces the quantity of a specified ItemType by a required amount.
+   * Adds or reduces the quantity of a specified ItemType in the Inventory by a
+   * required amount.
    * @param {ItemType} itemType - The ItemType to look for
    * @param {number} quantityChange - The amount to change
    */
@@ -280,7 +319,7 @@ export class ControllerScene extends CodeFarmScene {
   /**
    * This method increases the quantity of an ItemType in the Inventory. It
    * finds the first slot with the same ItemType and sum the quantity of the
-   * item with the quantity to add. Adds it in the first empty slot if the
+   * slot with the quantity to add. Adds it in the first empty slot if the
    * ItemType is not already in an Inventory slot. If no empty slot, then
    * nothing happens.
    * @param itemType
@@ -323,9 +362,9 @@ export class ControllerScene extends CodeFarmScene {
 
   /**
    * This method decreases the quantity of an ItemType in the Inventory. It
-   * iterates through the Inventory slots and reduce their quantity until the
-   * required amount is reached. If there's not enough items, the remaining
-   * amount is ignored.
+   * iterates through the Inventory slots and reduce their quantity it the item
+   * is of the same type until the required amount is reached. If there's not
+   * enough items, the remaining amount is ignored.
    * @param itemType
    * @param quantityChange
    */
@@ -373,11 +412,13 @@ export class ControllerScene extends CodeFarmScene {
    * @param {number} inventorySlotIdx - The index of the slot in the Inventory
    * @param {number} quantityChange - The quantity to modify
    */
-  public modifyInventoryItemQuantityByIndex(
+  public modifyInventorySlotQuantityByIndex(
     inventorySlotIdx: number,
     quantityChange: number
   ): void {
     this.inventory[inventorySlotIdx].quantity += quantityChange;
+    this.emitInventoryItemTypeQuantity(this.inventory[inventorySlotIdx].item);
+
     if (this.inventory[inventorySlotIdx].quantity <= 0) {
       this.inventory[inventorySlotIdx] = undefined;
     }
@@ -385,7 +426,6 @@ export class ControllerScene extends CodeFarmScene {
     this._inventorySlotUpdate$[inventorySlotIdx].next(
       this.inventory[inventorySlotIdx]
     );
-    this.emitInventoryItemTypeQuantity(this.inventory[inventorySlotIdx].item);
   }
 
   /**
@@ -464,11 +504,15 @@ export class ControllerScene extends CodeFarmScene {
   }
 
   /**
-   * Creates an event triggered every so often (10 seconds) which generate a new
-   * MarketConfig and update the UiScene's MarketConfig with the newly created
-   * one.
+   * Creates a stream emitting every so often (10 seconds) a new MarketConfig
+   * and an array of streams emitting each time the MarketConfig emits their
+   * cell of respecting index.
    */
-  private startMarketConfigGenerator(): void {
+  private initializeMarketConfig(): void {
+    /**
+     * Create the MarketConfig stream and a stream that emits logs each time the
+     * MarketConfig stream emits.
+     */
     const delayRefreshMarket: number = 10;
     this._marketConfig$ = new ReplaySubject<MarketConfig>(1);
     timer(0, delayRefreshMarket * 1000)
@@ -481,6 +525,11 @@ export class ControllerScene extends CodeFarmScene {
         log.debug("New MarketConfig : ", marketConfig);
       });
 
+    /**
+     * Create the Array of streams which emits each cell of the MarketConfig
+     * stream emitted values and a stream that emits logs each time the
+     * MarketConfig emits.
+     */
     Object.values(MarketOfferType).forEach(
       (marketOfferType: MarketOfferType): void => {
         this._marketOfferUpdate$[marketOfferType] = [];
@@ -523,10 +572,14 @@ export class ControllerScene extends CodeFarmScene {
   }
 
   /**
-   * TODO
+   * Creates the Inventory and an array of streams emitting each time the
+   * Inventory emits their cell of respecting index.
    */
   private initializeInventory(): void {
-    // Creates the inventory as an array of InventorySlotData
+    /**
+     * Creates the inventory as an array of InventorySlotData. The initial value
+     * depends on the debug mode.
+     */
     if (this.debugEnabled) {
       this.inventory = new Array(ControllerScene.INVENTORY_SIZE).fill({}).map(
         (obj: any, i: number): InventorySlotData => {
@@ -557,8 +610,10 @@ export class ControllerScene extends CodeFarmScene {
         }
       );
     }
+
     /**
-     * TODO
+     * Create the Array of streams which emits each cell of the Inventory
+     * whenever they are modified and a stream that emits logs.
      */
     for (let i: number = 0; i < ControllerScene.INVENTORY_SIZE; i += 1) {
       const currentInventorySlotUpdate$: BehaviorSubject<InventorySlotData> = new BehaviorSubject<
@@ -578,6 +633,11 @@ export class ControllerScene extends CodeFarmScene {
         });
     }
 
+    /**
+     * Create an Object which of streams which emits each the new total quantity
+     * of an ItemType in the Inventory whenever it is modified and a stream that
+     * emits logs.
+     */
     Object.values(ItemType).forEach((itemType: ItemType): void => {
       this._inventoryItemTypeQuantityUpdate$[itemType] = new BehaviorSubject<
         number
@@ -593,6 +653,10 @@ export class ControllerScene extends CodeFarmScene {
     });
   }
 
+  /**
+   * Emits the new total quantity of an ItemType in the Inventory
+   * @param {ItemType} itemType - The ItemType modified quantity
+   */
   private emitInventoryItemTypeQuantity(itemType: ItemType): void {
     this._inventoryItemTypeQuantityUpdate$[itemType].next(
       this.getInventoryItemTypeQuantity(itemType)
@@ -600,7 +664,8 @@ export class ControllerScene extends CodeFarmScene {
   }
 
   /**
-   * TODO
+   * Initialize the money amount and a stream emitting each time this amount is
+   * modified. The initial money value depends on the debug mode.
    */
   private initializeMoney(): void {
     const startingMoneyAmount: number = this.debugEnabled ? 1000 : 0;

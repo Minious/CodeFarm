@@ -12,9 +12,13 @@ import { ScenesManager } from "./scenesManager";
  * MarketInterface.
  */
 export class UiScene extends CodeFarmScene {
+  // The MarketInteface
   private marketInterface: MarketInterface;
+  // The InventoryInterface
   private inventoryInterface: InventoryInterface;
+  // The Joystick
   private _joystick: Joystick;
+  // The money amount Text
   private moneyAmountText: Phaser.GameObjects.Text;
 
   public constructor(scenesManager: ScenesManager) {
@@ -26,6 +30,7 @@ export class UiScene extends CodeFarmScene {
     );
   }
 
+  // Getter for _joystick
   public get joystick(): Joystick {
     return this._joystick;
   }
@@ -82,8 +87,8 @@ export class UiScene extends CodeFarmScene {
       .setOrigin(0.5, 0.5);
     moneyContainer.add(this.moneyAmountText);
     /**
-     * When the ControllerScene's 'money' data is modified, triggers the
-     * refreshing of the money amount text.
+     * Subscribe to the ControllerScene's stream moneyAmount$ to refresh the
+     * money amount Text each time a new money amount is emitted.
      */
     this.scenesManager.controllerScene.moneyAmount$.subscribe(
       (moneyAmount: number): void => {
