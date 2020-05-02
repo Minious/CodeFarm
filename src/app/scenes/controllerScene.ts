@@ -1,4 +1,7 @@
 import * as log from "loglevel";
+import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
+// tslint:disable-next-line: no-submodule-imports
+import { map, skip } from "rxjs/operators";
 
 import * as tileset from "../../assets/tileset.png";
 import * as crops_tileset from "../../assets/crops_tileset.png";
@@ -19,9 +22,6 @@ import { Inventory } from "../types/inventory.type";
 import { MarketOfferData } from "../interfaces/marketOfferData.interface";
 import { ScenesManager } from "./scenesManager";
 import { CodeFarmScene } from "./codeFarmScene";
-import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
-// tslint:disable-next-line: no-submodule-imports
-import { map, skip } from "rxjs/operators";
 import { MarketOfferType } from "../enums/marketOfferType.enum";
 
 /**

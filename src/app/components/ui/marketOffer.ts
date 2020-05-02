@@ -1,10 +1,10 @@
 import * as Phaser from "phaser";
+import { Subscription } from "rxjs";
 
 import { UiScene } from "../../scenes/uiScene";
 import { MarketOfferType } from "../../enums/marketOfferType.enum";
 import { MarketOfferData } from "../../interfaces/marketOfferData.interface";
 import { getItemData, ItemData } from "../../interfaces/itemData.interface";
-import { Subscription } from "rxjs";
 
 export class MarketOffer extends Phaser.GameObjects.Container {
   // Specifies the type of this game object's scene as UiScene
