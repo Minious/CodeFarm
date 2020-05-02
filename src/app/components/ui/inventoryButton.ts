@@ -149,19 +149,23 @@ export class InventoryButton extends Phaser.GameObjects.Container {
          * to its parent container (The InventoryButton itself).
          */
         if (contentContainer) {
+          const dragWorldPosition: Vector2 = {
+            x: dragX + this.parentContainer.x,
+            y: dragY + this.parentContainer.y,
+          };
           const xPointer: number = Utils.clamp(
-            dragX,
+            dragWorldPosition.x,
             this.displayWidth / 2,
             this.scene.cameras.main.displayWidth - this.displayWidth / 2
           );
           const yPointer: number = Utils.clamp(
-            dragY,
-            this.displayHeight / 2,
-            this.scene.cameras.main.displayHeight - this.displayHeight / 2
+            dragWorldPosition.y,
+            this.displayWidth / 2,
+            this.scene.cameras.main.displayHeight - this.displayWidth / 2
           );
           const containerSpacePos: Vector2 = this.pointToContainer({
-            x: xPointer,
-            y: yPointer,
+            x: xPointer - this.parentContainer.x,
+            y: yPointer - this.parentContainer.y,
           }) as Vector2;
           contentContainer.x = containerSpacePos.x;
           contentContainer.y = containerSpacePos.y;
