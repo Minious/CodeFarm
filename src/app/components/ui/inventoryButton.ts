@@ -73,8 +73,8 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     this.add(this.backgroundImage);
 
     /**
-     * Phaser container holding the InventorySlot icon Image and its quantity
-     * Text.
+     * Phaser container holding the InventorySlotData item's icon Image and its
+     * quantity Text.
      */
     const contentContainer: Phaser.GameObjects.Container = this.scene.add.container(
       0,
@@ -138,7 +138,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     this.on(
       "dragstart",
       (pointer: Phaser.Input.Pointer, dragX: number, dragY: number): void => {
-        // Puts the InventorySlot above the other ones when dragged.
+        // Puts the InventoryButton above the other ones when dragged.
         this.parentContainer.bringToTop(this);
       }
     );
@@ -148,8 +148,8 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       (pointer: Phaser.Input.Pointer, dragX: number, dragY: number): void => {
         /**
          * When the InventoryButton is dragged, move it with the pointer.
-         * Calculate the position of the content of the InventorySlot relative
-         * to its parent container (The InventorySlot itself).
+         * Calculate the position of the content of the InventoryButton relative
+         * to its parent container (The InventoryButton itself).
          */
         if (contentContainer) {
           const xPointer: number = Utils.clamp(
