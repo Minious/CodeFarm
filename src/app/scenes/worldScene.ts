@@ -9,12 +9,14 @@ import { Vector2 } from "../types/vector2.type";
 import { ScenesManager } from "./scenesManager";
 import { BuildingType, buildingFactory } from "../enums/buildingType.enum";
 import { Crop } from "../components/crops/crop";
-import { cropFactory } from "../enums/itemType.enum";
-import { getItemData, ItemData } from "../interfaces/itemData.interface";
+import { cropFactory, ItemType } from "../enums/itemType.enum";
+import { getItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
 import { InventorySlotData } from "../interfaces/inventorySlotData.interface";
 import { Loot } from "../interfaces/loot.interface";
-// import { Joystick } from "../components/ui/joystick";
+import { HarvestPopup } from "../components/worldWidgets/harvestPopup";
+import { PlantPopup } from "../components/worldWidgets/PlantPopup";
+import { PlowPopup } from "../components/worldWidgets/plowPopup";
 
 export class WorldScene extends CodeFarmScene {
   /**
@@ -378,6 +380,74 @@ export class WorldScene extends CodeFarmScene {
   }
 
   /**
+   * Create an instance of the Crop associated to the crop seed ItemType passed
+   * as an argument, adds it to the WorldScene.
+   * @param {number} x - The x position of the Tile of the Crop in the
+   * WorldScene's Tilemap
+   * @param {number} y - The y position of the Tile of the Crop in the
+   * WorldScene's Tilemap
+   * @param {ItemType} seed - The seed ItemType associated to the Crop class
+   */
+  public createCrop(x: number, y: number, seed: ItemType): void {
+    const crop: Crop = cropFactory(this, x, y, seed);
+    this.crops.add(crop);
+  }
+
+  /**
+   * Harvests a Crop Tile. Adds the loots from the Crop's LootConfig and creates
+   * the LootAnims. Remove the tile and destroy the Crop object.
+   * @param {Crop} crop - The Crop to harvest
+   * (Note : Should be moved to the Crop class)
+   */
+  public harvestCrop(crop: Crop): void {
+    const diffuseConeAngle: number = Math.PI / 4;
+    crop.lootConfig.forEach((loot: Loot, i: number, arr: Array<Loot>): void => {
+      const angle: number =
+        -Math.PI / 2 +
+        diffuseConeAngle / 2 -
+        diffuseConeAngle * (i / (arr.length - 1));
+      const lootAnim: LootAnim = new LootAnim(
+        this,
+        crop.tile.getCenterX(this.cameras.main),
+        crop.tile.getCenterY(this.cameras.main),
+        angle,
+        loot.item,
+        loot.quantity
+      );
+      lootAnim.setScale(2);
+      this.add.existing(lootAnim);
+
+      this.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
+        loot.item,
+        loot.quantity
+      );
+    });
+    this._layerCrops.removeTileAt(crop.tilePos.x, crop.tilePos.y);
+    crop.destroy();
+  }
+
+  /**
+   * Sets the Tile at tilePos as a field. Updates the neighbors fields if they
+   * exist.
+   * @param tilePos - The Tile coordinate
+   */
+  public createFieldTile(tilePos: Vector2): void {
+    this.updateFieldTile(tilePos);
+    this.getNeighborTiles(this.layerFields, tilePos)
+      // Filter empty Tiles
+      .filter(
+        (neighborTile: Phaser.Tilemaps.Tile): boolean =>
+          neighborTile.index !== -1
+      )
+      .forEach((neighborTilePos: Vector2): void =>
+        this.updateFieldTile({
+          x: neighborTilePos.x,
+          y: neighborTilePos.y,
+        })
+      );
+  }
+
+  /**
    * Creates a building of the BuildingType specified at the Tilemap pos.
    * @param {BuildingType} buildingType - BuildingType of the building
    * @param {Vector2} pos - Tilemap position of the building
@@ -471,27 +541,6 @@ export class WorldScene extends CodeFarmScene {
   }
 
   /**
-   * Sets the Tile at tilePos as a field. Updates the neighbors fields if they
-   * exist.
-   * @param tilePos - The Tile coordinate
-   */
-  private createFieldTile(tilePos: Vector2): void {
-    this.updateFieldTile(tilePos);
-    this.getNeighborTiles(this.layerFields, tilePos)
-      // Filter empty Tiles
-      .filter(
-        (neighborTile: Phaser.Tilemaps.Tile): boolean =>
-          neighborTile.index !== -1
-      )
-      .forEach((neighborTilePos: Vector2): void =>
-        this.updateFieldTile({
-          x: neighborTilePos.x,
-          y: neighborTilePos.y,
-        })
-      );
-  }
-
-  /**
    * Checks if the neighbors of the Tile at the position tilePos in the
    * layerFields are fields or empty and set the field tile sprite accordingly
    * to match the pattern for the Tile at tilePos.
@@ -576,39 +625,6 @@ export class WorldScene extends CodeFarmScene {
   }
 
   /**
-   * Harvests a Crop Tile. Adds the loots from the Crop's LootConfig and creates
-   * the LootAnims. Remove the tile and destroy the Crop object.
-   * @param {Crop} crop - The Crop to harvest
-   * (Note : Should be moved to the Crop class)
-   */
-  private harvestCrop(crop: Crop): void {
-    const diffuseConeAngle: number = Math.PI / 4;
-    crop.lootConfig.forEach((loot: Loot, i: number, arr: Array<Loot>): void => {
-      const angle: number =
-        -Math.PI / 2 +
-        diffuseConeAngle / 2 -
-        diffuseConeAngle * (i / (arr.length - 1));
-      const lootAnim: LootAnim = new LootAnim(
-        this,
-        crop.tile.getCenterX(this.cameras.main),
-        crop.tile.getCenterY(this.cameras.main),
-        angle,
-        loot.item,
-        loot.quantity
-      );
-      lootAnim.setScale(2);
-      this.add.existing(lootAnim);
-
-      this.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
-        loot.item,
-        loot.quantity
-      );
-    });
-    this._layerCrops.removeTileAt(crop.tilePos.x, crop.tilePos.y);
-    crop.destroy();
-  }
-
-  /**
    * Method called when the player clicks the ground and triggers an action.
    * Creates a Popup to inform him of the possible action and confirm it. If
    * there's no field yet, the Popup creates a field. If there's already a
@@ -632,14 +648,12 @@ export class WorldScene extends CodeFarmScene {
 
     const noField: boolean = !this.layerFields.hasTileAt(tilePos.x, tilePos.y);
     if (noField) {
-      this.actionPopup = new ActionPopup(
+      this.actionPopup = new PlowPopup(
         this,
         layerFieldsTile.getCenterX(this.cameras.main),
         layerFieldsTile.getCenterY(this.cameras.main),
         40,
-        (): void => this.createFieldTile(tilePos),
-        "tools",
-        1
+        tilePos
       );
       this.add.existing(this.actionPopup);
     } else {
@@ -657,30 +671,13 @@ export class WorldScene extends CodeFarmScene {
         ).isSeed;
 
         if (selectedObjectIsSeed) {
-          const callback = (): void => {
-            const crop: Crop = cropFactory(
-              this,
-              tilePos.x,
-              tilePos.y,
-              selectedInventorySlotData.item
-            );
-            this.crops.add(crop);
-            this.scenesManager.controllerScene.modifySelectedInventorySlotQuantity(
-              -1
-            );
-          };
-
-          const itemData: ItemData = getItemData(
-            selectedInventorySlotData.item
-          );
-          this.actionPopup = new ActionPopup(
+          this.actionPopup = new PlantPopup(
             this,
             layerFieldsTile.getCenterX(this.cameras.main),
             layerFieldsTile.getCenterY(this.cameras.main),
             40,
-            callback,
-            itemData.texture,
-            itemData.frame
+            tilePos,
+            selectedInventorySlotData.item
           );
           this.add.existing(this.actionPopup);
         }
@@ -691,14 +688,12 @@ export class WorldScene extends CodeFarmScene {
             currentCrop.tilePos.y === tilePos.y
         );
         if (crop && crop.isReadyToHarvest) {
-          this.actionPopup = new ActionPopup(
+          this.actionPopup = new HarvestPopup(
             this,
             layerFieldsTile.getCenterX(this.cameras.main),
             layerFieldsTile.getCenterY(this.cameras.main),
             40,
-            (): void => this.harvestCrop(crop),
-            "tools",
-            0
+            crop
           );
           this.add.existing(this.actionPopup);
         }
