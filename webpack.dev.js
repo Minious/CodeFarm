@@ -12,4 +12,5 @@ module.exports = merge(common, {
   devServer: {
     writeToDisk: true,
   },
+  devtool: "source-map",
 });

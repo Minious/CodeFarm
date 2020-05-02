@@ -1,11 +1,10 @@
 import * as Phaser from "phaser";
 
-import { MarketConfig } from "../../interfaces/marketConfig.interface";
 import { MarketOfferType } from "../../enums/marketOfferType.enum";
-import { MarketOfferData } from "../../interfaces/marketOfferData.interface";
 import { Vector2 } from "../../types/vector2.type";
 import { UiScene } from "../../scenes/uiScene";
 import { MarketOffer } from "./marketOffer";
+import { ControllerScene } from "../../scenes/controllerScene";
 
 /**
  * The Interface displayed in the UiScene showing the Market's offers. It
@@ -21,8 +20,6 @@ export class MarketInterface extends Phaser.GameObjects.Container {
 
   // A Phaser Container holding all the offers
   private offers: Phaser.GameObjects.Container;
-  // The list of offers of the Market
-  private marketConfig: MarketConfig;
 
   /**
    * Creates the MarketInterface object.
@@ -84,43 +81,8 @@ export class MarketInterface extends Phaser.GameObjects.Container {
     }
 
     this.offers = this.scene.add.container(0, 0);
+    this.createMarketOffers();
     this.add(this.offers);
-
-    /**
-     * Reloads the MarketInterface's offers when the Inventory changes to modify
-     * the quantity of the item posessed in the offers.
-     */
-    this.scene.game.scene
-      .getScene("ControllerScene")
-      .events.on(
-        "changedata-inventory",
-        (parent: any, newInventory: any, oldInventory: any): void => {
-          this.reloadOffers();
-        }
-      );
-  }
-
-  /**
-   * Loads a new MarketConfig to be displayed by the MarketInterface.
-   * @param {MarketConfig} marketConfig - The MarketConfig to display
-   */
-  public loadOffers(marketConfig: MarketConfig): void {
-    this.marketConfig = marketConfig;
-
-    // Destroy all the existing offers and recreate them
-    this.offers.removeAll(true);
-    this.createMarketOffers(marketConfig);
-  }
-
-  /**
-   * Reloads the offers without changing the MarketConfig (Example : Used when
-   * Inventory changes)
-   */
-  private reloadOffers(): void {
-    // (Note : The condition should maybe be removed)
-    if (this.marketConfig) {
-      this.loadOffers(this.marketConfig);
-    }
   }
 
   /**
@@ -128,34 +90,43 @@ export class MarketInterface extends Phaser.GameObjects.Container {
    * MarketInterface
    * @param marketConfig - The MarketConfig holding the offers data
    */
-  private createMarketOffers(marketConfig: MarketConfig): void {
+  private createMarketOffers(): void {
+    /**
+     * (Note : Should MarketOffer's position be calculated in the MarketOffer
+     * with idx, marginColumn and marginOffer - rename marginOffer))
+     */
     const marginColumn: number = 120;
     const marginOffer: number = 60;
 
     // Creates the offers for each MarketOfferData in the MarketConfig
-    marketConfig.buyingOffers.forEach(
-      (offer: MarketOfferData, idx: number): void => {
-        const marketOffer: MarketOffer = new MarketOffer(
-          this.scene,
-          -marginColumn,
-          idx * marginOffer - 130,
-          MarketOfferType.Buying,
-          offer
-        );
-        this.offers.add(marketOffer);
-      }
-    );
-    marketConfig.sellingOffers.forEach(
-      (offer: MarketOfferData, idx: number): void => {
-        const marketOffer: MarketOffer = new MarketOffer(
-          this.scene,
-          marginColumn,
-          idx * marginOffer - 130,
-          MarketOfferType.Selling,
-          offer
-        );
-        this.offers.add(marketOffer);
-      }
-    );
+
+    for (
+      let idx: number = 0;
+      idx < ControllerScene.BUYING_OFFERS_COUNT;
+      idx += 1
+    ) {
+      const marketOffer: MarketOffer = new MarketOffer(
+        this.scene,
+        -marginColumn,
+        idx * marginOffer - 130,
+        MarketOfferType.Buying,
+        idx
+      );
+      this.offers.add(marketOffer);
+    }
+    for (
+      let idx: number = 0;
+      idx < ControllerScene.SELLING_OFFERS_COUNT;
+      idx += 1
+    ) {
+      const marketOffer: MarketOffer = new MarketOffer(
+        this.scene,
+        marginColumn,
+        idx * marginOffer - 130,
+        MarketOfferType.Selling,
+        idx
+      );
+      this.offers.add(marketOffer);
+    }
   }
 }

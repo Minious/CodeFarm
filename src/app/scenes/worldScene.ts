@@ -12,7 +12,7 @@ import { Crop } from "../components/crops/crop";
 import { cropFactory } from "../enums/itemType.enum";
 import { getItemData, ItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
-import { InventoryItem } from "../interfaces/inventoryItem.interface";
+import { InventorySlotData } from "../interfaces/inventorySlotData.interface";
 import { Loot } from "../interfaces/loot.interface";
 // import { Joystick } from "../components/ui/joystick";
 
@@ -650,10 +650,10 @@ export class WorldScene extends CodeFarmScene {
             tilePos.x === crop.tilePos.x && tilePos.y === crop.tilePos.y
         );
 
-      const selectedInventoryItemData: InventoryItem = this.scenesManager.controllerScene.getSelectedInventoryItemData();
-      if (emptyField && selectedInventoryItemData) {
+      const selectedInventorySlotData: InventorySlotData = this.scenesManager.controllerScene.getSelectedInventorySlotData();
+      if (emptyField && selectedInventorySlotData) {
         const selectedObjectIsSeed: boolean = getItemData(
-          selectedInventoryItemData.item
+          selectedInventorySlotData.item
         ).isSeed;
 
         if (selectedObjectIsSeed) {
@@ -662,7 +662,7 @@ export class WorldScene extends CodeFarmScene {
               this,
               tilePos.x,
               tilePos.y,
-              selectedInventoryItemData.item
+              selectedInventorySlotData.item
             );
             this.crops.add(crop);
             this.scenesManager.controllerScene.modifySelectedInventoryItemQuantity(
@@ -671,7 +671,7 @@ export class WorldScene extends CodeFarmScene {
           };
 
           const itemData: ItemData = getItemData(
-            selectedInventoryItemData.item
+            selectedInventorySlotData.item
           );
           this.actionPopup = new ActionPopup(
             this,

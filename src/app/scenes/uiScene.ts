@@ -1,10 +1,7 @@
 import * as Phaser from "phaser";
-import * as log from "loglevel";
 
 import { MarketInterface } from "../components/ui/marketInterface";
 import { InventoryInterface } from "../components/ui/inventoryInterface";
-import { Inventory } from "../types/inventory.type";
-import { MarketConfig } from "../interfaces/marketConfig.interface";
 import { Joystick } from "../components/ui/joystick";
 import { CodeFarmScene } from "./codeFarmScene";
 import { ScenesManager } from "./scenesManager";
@@ -63,16 +60,6 @@ export class UiScene extends CodeFarmScene {
     // Create the InventoryInterface
     this.inventoryInterface = new InventoryInterface(this);
     this.add.existing(this.inventoryInterface);
-    /**
-     * When the ControllerScene's 'inventory' data is modified, triggers the
-     * refreshing of the InventoryInterface
-     */
-    this.scenesManager.controllerScene.events.on(
-      "changedata-inventory",
-      (parent: any, inventory: Inventory): void => {
-        this.updateInventory(inventory);
-      }
-    );
 
     /**
      * Creates the money amount icon and text
@@ -98,32 +85,15 @@ export class UiScene extends CodeFarmScene {
      * When the ControllerScene's 'money' data is modified, triggers the
      * refreshing of the money amount text.
      */
-    this.scenesManager.controllerScene.events.on(
-      "changedata-money",
-      (parent: any, money: number): void => {
-        log.debug("New money amount : " + money);
-        this.updateMoney(money);
+    this.scenesManager.controllerScene.moneyAmount$.subscribe(
+      (moneyAmount: number): void => {
+        this.updateMoney(moneyAmount);
       }
     );
-
-    /**
-     * Notifies the ControllerScene that the UiScene is ready so it can
-     * initialize its data which is going to trigger the update of the
-     * interfaces.
-     */
-    this.scenesManager.controllerScene.uiSceneReady();
   }
 
   // tslint:disable-next-line: no-empty
   public update(time: number, delta: number): void {}
-
-  /**
-   * Updates the MarketConfig in the MarketInterface.
-   * @param {MarketConfig} marketConfig - The new MarketConfig
-   */
-  public changeMarketConfig(marketConfig: MarketConfig): void {
-    this.marketInterface.loadOffers(marketConfig);
-  }
 
   /**
    * Shows the MarketInterface and hides the InventoryInterface.
@@ -147,13 +117,5 @@ export class UiScene extends CodeFarmScene {
    */
   private updateMoney(moneyAmount: number): void {
     this.moneyAmountText.setText(moneyAmount.toString());
-  }
-
-  /**
-   * Updates the InventoryInterface with a new Inventory sent as a parameter.
-   * @param {Inventory} inventory - The new Inventory
-   */
-  private updateInventory(inventory: Inventory): void {
-    this.inventoryInterface.buildInventory(inventory);
   }
 }
