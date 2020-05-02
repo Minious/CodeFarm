@@ -26,6 +26,8 @@ export class MarketInterface extends Phaser.GameObjects.Container {
    * @param {UiScene} uiScene - The UiScene this Interface belongs to
    * @param {number} x - The x position of the center of the MarketInterface
    * @param {number} y - The y position of the center of the MarketInterface
+   * @param {number} displayWidth - The displayWidth of the MarketInterface
+   * @param {number} displayHeight - The displayHeight of the MarketInterface
    * @param {() => void} externalCallback - The callback to call when the close
    * icon is clicked.
    */
@@ -33,6 +35,8 @@ export class MarketInterface extends Phaser.GameObjects.Container {
     uiScene: UiScene,
     x: number,
     y: number,
+    displayWidth: number,
+    displayHeight: number,
     externalCallback: () => void
   ) {
     super(uiScene, x, y);
@@ -44,32 +48,24 @@ export class MarketInterface extends Phaser.GameObjects.Container {
       0,
       "ui_button"
     );
-    const backgroundMargin: number = 40;
-    backgroundImage.setDisplaySize(
-      this.scene.cameras.main.displayWidth - 2 * backgroundMargin,
-      this.scene.cameras.main.displayHeight - 2 * backgroundMargin
-    );
+    backgroundImage.setDisplaySize(displayWidth, displayHeight);
     this.add(backgroundImage);
 
     /**
      * Creates the close icon Image and enable the call to the callback when
      * clicked.
      */
-    const closeIconOffset: number = 28;
-    const closeIconPos: Vector2 = {
-      x:
-        -this.scene.cameras.main.displayWidth / 2 +
-        backgroundMargin +
-        closeIconOffset,
-      y:
-        -this.scene.cameras.main.displayHeight / 2 +
-        backgroundMargin +
-        closeIconOffset,
-    };
     const closeIcon: Phaser.GameObjects.Image = this.scene.add
-      .image(closeIconPos.x, closeIconPos.y, "closeIcon")
+      .image(0, 0, "closeIcon")
       .setScale(2)
-      .setInteractive();
+      .setInteractive()
+      .setDisplayOrigin(0, 0);
+    const closeIconOffset: number = 4;
+    const closeIconPos: Vector2 = {
+      x: -displayWidth / 2 + closeIconOffset,
+      y: -displayHeight / 2 + closeIconOffset,
+    };
+    closeIcon.setPosition(closeIconPos.x, closeIconPos.y);
     this.add(closeIcon);
     closeIcon.name = "marketInterfaceCloseIcon";
 

@@ -43,10 +43,13 @@ export class UiScene extends CodeFarmScene {
    */
   public create(): void {
     // Creates the MarketInterface and hides it
+    const marketInterfaceBackgroundMargin: number = 40;
     this.marketInterface = new MarketInterface(
       this,
       this.cameras.main.displayWidth / 2,
       this.cameras.main.displayHeight / 2,
+      this.cameras.main.displayWidth - 2 * marketInterfaceBackgroundMargin,
+      this.cameras.main.displayHeight - 2 * marketInterfaceBackgroundMargin,
       // Called when MarketInterface's close icon clicked
       (): void => {
         this.closeMarket();
@@ -56,7 +59,13 @@ export class UiScene extends CodeFarmScene {
     this.marketInterface.setVisible(false);
 
     // Create the InventoryInterface
-    this.inventoryInterface = new InventoryInterface(this);
+    this.inventoryInterface = new InventoryInterface(
+      this,
+      this.cameras.main.displayWidth / 2,
+      this.cameras.main.displayHeight / 2,
+      this.cameras.main.displayWidth,
+      this.cameras.main.displayHeight
+    );
     this.add.existing(this.inventoryInterface);
 
     /**
