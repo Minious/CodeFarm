@@ -1,7 +1,13 @@
 import * as log from "loglevel";
-import { BehaviorSubject, ReplaySubject, timer, Observable } from "rxjs";
+import {
+  BehaviorSubject,
+  ReplaySubject,
+  timer,
+  Observable,
+  combineLatest,
+} from "rxjs";
 // tslint:disable-next-line: no-submodule-imports
-import { map, skip } from "rxjs/operators";
+import { map, skip, distinctUntilChanged } from "rxjs/operators";
 
 import * as tileset from "../../assets/tileset.png";
 import * as crops_tileset from "../../assets/crops_tileset.png";
@@ -63,6 +69,11 @@ export class ControllerScene extends CodeFarmScene {
    */
   private _inventorySlotUpdate$: Array<BehaviorSubject<InventorySlotData>> = [];
 
+  // A stream emitting the index of tge selected slot in the Inventory
+  private _idxSelectedInventorySlot$: BehaviorSubject<number>;
+  // A stream emitting the InventorySlotData in the current selected slot
+  private _selectedInventorySlotData$: BehaviorSubject<InventorySlotData>;
+
   // The current amount of monet held by the player
   private _moneyAmount: number;
   // A stream emitting the quantity of money each time it changes
@@ -112,6 +123,16 @@ export class ControllerScene extends CodeFarmScene {
   // Getter for _marketConfig$
   public get marketConfig$(): Observable<MarketConfig> {
     return this._marketConfig$;
+  }
+
+  // Getter for _selectedInventorySlotData$
+  public get idxSelectedInventorySlot$(): BehaviorSubject<number> {
+    return this._idxSelectedInventorySlot$;
+  }
+
+  // Getter for _selectedInventorySlotData$
+  public get selectedInventorySlotData$(): BehaviorSubject<InventorySlotData> {
+    return this._selectedInventorySlotData$;
   }
 
   // Getter for _inventorySlotUpdate$
@@ -173,42 +194,9 @@ export class ControllerScene extends CodeFarmScene {
     this.scene.launch("WorldScene");
     this.scene.launch("UiScene");
 
-    /**
-     * The selectedInventorySlotIndex held by the data module of the Scene is an
-     * integer the holds the value of the currently selected item in the
-     * inventory bar (see app/components/ui/inventoryInterface.ts)
-     */
-    this.data.set("selectedInventorySlotIndex", undefined);
-    /**
-     * Event fired everytime the selectedInventorySlotIndex is modified
-     * (only for logging purposes)
-     */
-    this.events.on(
-      "changedata-selectedInventorySlotIndex",
-      (parent: any, selectedInventorySlotIndex: number): void => {
-        if (selectedInventorySlotIndex) {
-          /**
-           * Grabs the new selected item in the inventory and displays it in the
-           * logs.
-           */
-          if (this.inventory[selectedInventorySlotIndex]) {
-            const itemType: ItemType = this.inventory[
-              selectedInventorySlotIndex
-            ].item;
-            log.debug(
-              `Item selected : ${itemType} (slot: ${selectedInventorySlotIndex})`
-            );
-          } else {
-            log.debug("Selected slot empty");
-          }
-        } else {
-          log.debug("Item deselected");
-        }
-      }
-    );
-
-    // Initializes the Inventory, the money amount and the MarketConfig
+    // Initializes Inventory, the selected slot, the money amount and the MarketConfig
     this.initializeInventory();
+    this.initializeSelectedInventorySlot();
     this.initializeMoney();
     this.initializeMarketConfig();
   }
@@ -217,11 +205,17 @@ export class ControllerScene extends CodeFarmScene {
   public update(time: number, delta: number): void {}
 
   /**
-   * Returns the data stored in the selected Inventory slot
-   * @returns {number} - The selected InventorySlotData
+   * Set the new index of the selected lsot in the Inventory. If the same index
+   * was already selected, then deselect the slot by setting the index to
+   * undefined.
+   * @param slotIdx - The index of the slot to select
    */
-  public getSelectedInventorySlotData(): InventorySlotData {
-    return this.inventory[this.data.get("selectedInventorySlotIndex")];
+  public setIdxSelectedInventorySlot(slotIdx: number): void {
+    this._idxSelectedInventorySlot$.next(
+      this._idxSelectedInventorySlot$.getValue() === slotIdx
+        ? undefined
+        : slotIdx
+    );
   }
 
   /**
@@ -294,7 +288,7 @@ export class ControllerScene extends CodeFarmScene {
    */
   public modifySelectedInventorySlotQuantity(quantityChange: number): void {
     this.modifyInventorySlotQuantityByIndex(
-      this.data.get("selectedInventorySlotIndex"),
+      this._idxSelectedInventorySlot$.getValue(),
       quantityChange
     );
   }
@@ -651,6 +645,68 @@ export class ControllerScene extends CodeFarmScene {
           );
         });
     });
+  }
+
+  /**
+   * Creates a stream that emits the index of the current selected slot in the
+   * Inventory and a other stream emitting the InventorySlotData stoted at this
+   * index in the Inventory.
+   */
+  private initializeSelectedInventorySlot(): void {
+    this._idxSelectedInventorySlot$ = new BehaviorSubject<number>(undefined);
+    this._idxSelectedInventorySlot$
+      .pipe(skip(1))
+      .subscribe((idxSelectedInventorySlot: number): void => {
+        if (idxSelectedInventorySlot) {
+          log.debug(
+            `New selected Inventory slot : index ${idxSelectedInventorySlot}`
+          );
+        } else {
+          log.debug("Inventory slot deselected");
+        }
+      });
+
+    this._selectedInventorySlotData$ = new BehaviorSubject<InventorySlotData>(
+      undefined
+    );
+    combineLatest(
+      this._idxSelectedInventorySlot$,
+      combineLatest(this._inventorySlotUpdate$)
+    )
+      .pipe(
+        map(
+          ([slotIdx, inventory]: [
+            number,
+            Array<InventorySlotData>
+          ]): InventorySlotData => inventory[slotIdx]
+        )
+      )
+      .pipe(
+        distinctUntilChanged(
+          (
+            inventorySlotData1: InventorySlotData,
+            inventorySlotData2: InventorySlotData
+          ): boolean =>
+            inventorySlotData1 === inventorySlotData2 ||
+            (inventorySlotData1 &&
+              inventorySlotData2 &&
+              inventorySlotData1.item === inventorySlotData2.item &&
+              inventorySlotData1.quantity === inventorySlotData2.quantity)
+        )
+      )
+      .subscribe(this._selectedInventorySlotData$);
+
+    this._selectedInventorySlotData$
+      .pipe(skip(1))
+      .subscribe((selectedInventorySlotData: InventorySlotData): void => {
+        if (selectedInventorySlotData) {
+          log.debug(
+            `Item selected : ${selectedInventorySlotData.item} (Qty = ${selectedInventorySlotData.quantity}))`
+          );
+        } else {
+          log.debug("No item selected");
+        }
+      });
   }
 
   /**

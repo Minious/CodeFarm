@@ -5,6 +5,8 @@ import { Utils } from "../../utils/utils";
 import { Vector2 } from "../../types/vector2.type";
 import { InventorySlotData } from "../../interfaces/inventorySlotData.interface";
 import { UiScene } from "../../scenes/uiScene";
+// tslint:disable-next-line: no-submodule-imports
+import { map } from "rxjs/operators";
 
 /**
  * A Button displaying the content of an Inventory slot. Contained Item Icon can
@@ -46,6 +48,8 @@ export class InventoryButton extends Phaser.GameObjects.Container {
    * InventoryButton and its content
    * @param {number} inventorySlotDataIdx - Index of the InventorySlotData in
    * the Inventory
+   * @param {boolean} isSelectable - Is the InventoryButton selectable when
+   * clicked
    * @param {(_: InventoryButton) => void} externalCallback - Callback to call
    * when InventoryButton clicked
    */
@@ -57,6 +61,7 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     displayHeight: number,
     marginIcon: number,
     inventorySlotDataIdx: number,
+    isSelectable: boolean,
     externalCallback: (_: InventoryButton) => void
   ) {
     super(uiScene, x, y);
@@ -115,11 +120,16 @@ export class InventoryButton extends Phaser.GameObjects.Container {
     }
 
     // Set up the pointer events callbacks
-    if (externalCallback) {
-      this.on("pointerdown", (): void => {
+    this.on("pointerup", (): void => {
+      if (isSelectable) {
+        this.scene.scenesManager.controllerScene.setIdxSelectedInventorySlot(
+          this.inventorySlotDataIdx
+        );
+      }
+      if (externalCallback) {
         externalCallback(this);
-      });
-    }
+      }
+    });
 
     // Update color of the InventoryButton when the pointer enters or exit it
     this.on("pointerover", (): void => {
@@ -205,6 +215,18 @@ export class InventoryButton extends Phaser.GameObjects.Container {
       .subscribe((newInventorySlot: InventorySlotData): void => {
         this.updateContent(newInventorySlot);
       });
+
+    this.scene.scenesManager.controllerScene.idxSelectedInventorySlot$
+      .pipe(
+        map(
+          (selectedSlotIdx: number): boolean =>
+            this.inventorySlotDataIdx === selectedSlotIdx
+        )
+      )
+      .subscribe((isSelected: boolean): void => {
+        this._isSelected = isSelected;
+        this.updateColor();
+      });
   }
 
   // Getter for _inventorySlotDataIdx
@@ -215,12 +237,6 @@ export class InventoryButton extends Phaser.GameObjects.Container {
   // Getter for _isSelected
   public get isSelected(): boolean {
     return this._isSelected;
-  }
-
-  // Setter for _isSelected. Update the color of the InventoryButton.
-  public set isSelected(_isSelected: boolean) {
-    this._isSelected = _isSelected;
-    this.updateColor();
   }
 
   /**

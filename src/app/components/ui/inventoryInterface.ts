@@ -1,5 +1,4 @@
 import * as Phaser from "phaser";
-import * as log from "loglevel";
 
 import { InventoryButton } from "./inventoryButton";
 import { UiScene } from "../../scenes/uiScene";
@@ -101,15 +100,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       this.sizeButtonsInventoryBar,
       InventoryInterface.MARGIN_BUTTONS_INVENTORY_BAR,
       0,
-      (columnsIdx: number): ((clickedButton: InventoryButton) => void) => {
-        return (clickedButton: InventoryButton): void => {
-          if (clickedButton.isSelected) {
-            this.deselectButtonInventoryBar();
-          } else {
-            this.selectButtonInventoryBar(columnsIdx);
-          }
-        };
-      }
+      true
     );
 
     /**
@@ -124,76 +115,8 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
           this.add(inventoryButton.input.hitAreaDebug);
           this.inventoryBarButtons.add(inventoryButton.input.hitAreaDebug);
         }
-        if (
-          i ===
-          this.scene.game.scene
-            .getScene("ControllerScene")
-            .data.get("selectedInventorySlotIndex")
-        ) {
-          inventoryButton.isSelected = true;
-        }
       }
     );
-
-    /**
-     * Enables the player to change the selected InventoryButton in the
-     * inventory bar by scrolling the mouse wheel
-     */
-    this.scene.input.off("wheel");
-    this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer): void => {
-      let idxChange: number = Math.sign(pointer.deltaY);
-      log.debug("Mouse wheel " + idxChange);
-      // Starts at index 0 if no selectedInventorySlotIndex in ControllerScene
-      if (
-        this.scene.game.scene
-          .getScene("ControllerScene")
-          .data.get("selectedInventorySlotIndex") === undefined
-      ) {
-        idxChange = 0;
-        this.scene.game.scene
-          .getScene("ControllerScene")
-          .data.set("selectedInventorySlotIndex", 0);
-      }
-      this.selectButtonInventoryBar(
-        (nbColumns +
-          this.scene.game.scene
-            .getScene("ControllerScene")
-            .data.get("selectedInventorySlotIndex") +
-          idxChange) %
-          nbColumns
-      );
-    });
-  }
-
-  /**
-   * Resets the isSelected member of the inventory bar's InventoryButton to
-   * false and sets the selected InventoryButton's isSelected member to true.
-   * Updates the selectedInventorySlotIndex ControllerScene's data value.
-   * @param {number} buttonIdx - The index of the InventoryButton selected
-   */
-  private selectButtonInventoryBar(buttonIdx: number): void {
-    this.deselectButtonInventoryBar();
-    (this.inventoryBarButtons.getChildren()[
-      buttonIdx
-    ] as InventoryButton).isSelected = true;
-    this.scene.game.scene
-      .getScene("ControllerScene")
-      .data.set("selectedInventorySlotIndex", buttonIdx);
-  }
-
-  /**
-   * Resets the isSelected member of the inventory bar's InventoryButton to
-   * false. Updates the selectedInventorySlotIndex ControllerScene's data value.
-   */
-  private deselectButtonInventoryBar(): void {
-    this.inventoryBarButtons
-      .getChildren()
-      .forEach((inventoryBarButton: InventoryButton): void => {
-        inventoryBarButton.isSelected = false;
-      });
-    this.scene.game.scene
-      .getScene("ControllerScene")
-      .data.set("selectedInventorySlotIndex", undefined);
   }
 
   /**
@@ -244,7 +167,8 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
       inventoryGridY,
       sizeButton,
       InventoryInterface.MARGIN_BUTTONS_INVENTORY_GRID,
-      InventoryInterface.BUTTONS_COUNT_INVENTORY_BAR
+      InventoryInterface.BUTTONS_COUNT_INVENTORY_BAR,
+      false
     );
 
     // Adds the InventoryButtons to the inventoryGridButtons Group.
@@ -310,6 +234,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
    * @param {number} inventoryOffset - The index of the first slot in the
    * Inventory to display. The slot displayed are consecutive and the number of
    * slots displayed is nbColumns * nbRows.
+   * @param {boolean} isSelectable - Are the created InventoryButtons selectable
    * @param {(x: number, y: number) => (clickedButton: InventoryButton) => void} callbackFactory
    * A method which given the x and y coordinates of the InventoryButton in the
    * grid, returns the click callback method of the InventoryButton. Allows the
@@ -323,6 +248,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
     sizeButton: number,
     marginButtons: number,
     inventoryOffset: number = 0,
+    isSelectable: boolean,
     callbackFactory?: (
       x: number,
       y: number
@@ -345,6 +271,7 @@ export class InventoryInterface extends Phaser.GameObjects.Container {
           sizeButton,
           4,
           inventorySlotIdx,
+          isSelectable,
           callback
         );
         this.add(inventoryButton);

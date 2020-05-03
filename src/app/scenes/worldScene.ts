@@ -677,7 +677,7 @@ export class WorldScene extends CodeFarmScene {
             tilePos.x === crop.tilePos.x && tilePos.y === crop.tilePos.y
         );
 
-      const selectedInventorySlotData: InventorySlotData = this.scenesManager.controllerScene.getSelectedInventorySlotData();
+      const selectedInventorySlotData: InventorySlotData = this.scenesManager.controllerScene.selectedInventorySlotData$.getValue();
       if (emptyField && selectedInventorySlotData) {
         const selectedObjectIsSeed: boolean = getItemData(
           selectedInventorySlotData.item
