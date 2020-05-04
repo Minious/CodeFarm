@@ -94,7 +94,11 @@ export abstract class ActionPopup extends Phaser.GameObjects.Container {
     }
 
     this.on("pointerdown", (): void => {
-      externalCallback();
+      /**
+       * When the Popup is clicked, move the player to the target and then
+       * perform the action
+       */
+      worldScene.player.moveTo({ x, y }, externalCallback);
       if (this.scene.scenesManager.controllerScene.debugEnabled) {
         this.scene.input.removeDebug(this);
       }

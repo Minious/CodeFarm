@@ -388,9 +388,7 @@ export class ControllerScene extends CodeFarmScene {
             remainingAmount = 0;
           }
 
-          this._inventorySlotUpdate$[inventorySlotIdx].next(
-            this.inventory[inventorySlotIdx]
-          );
+          this._inventorySlotUpdate$[inventorySlotIdx].next(inventorySlotData);
         }
         return inventorySlotData;
       }

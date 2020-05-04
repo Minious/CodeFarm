@@ -30,7 +30,7 @@ export class HarvestPopup extends ActionPopup {
       x,
       y,
       displayWidth,
-      (): void => this.scene.scenesManager.worldScene.harvestCrop(crop),
+      (): void => worldScene.harvestCrop(crop),
       "tools",
       0
     );

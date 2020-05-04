@@ -15,7 +15,7 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
   private static NB_GROWTH_STEPS: number = 5;
 
   // Specifies the type of this game object's scene as WorldScene
-  protected scene: WorldScene;
+  public scene: WorldScene;
 
   // The Tile's position in the Tilemap
   private _tilePos: Vector2;
