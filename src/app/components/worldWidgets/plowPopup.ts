@@ -30,7 +30,7 @@ export class PlowPopup extends ActionPopup {
       x,
       y,
       displayWidth,
-      (): void => this.scene.scenesManager.worldScene.createFieldTile(tilePos),
+      (): void => worldScene.createFieldTile(tilePos),
       "tools",
       1
     );

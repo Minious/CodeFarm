@@ -1,6 +1,5 @@
 import * as Phaser from "phaser";
 
-import { Utils } from "../utils/utils";
 import { ActionPopup } from "../components/worldWidgets/actionPopup";
 import { LootAnim } from "../components/worldWidgets/lootAnim";
 
@@ -17,6 +16,7 @@ import { Loot } from "../interfaces/loot.interface";
 import { HarvestPopup } from "../components/worldWidgets/harvestPopup";
 import { PlantPopup } from "../components/worldWidgets/plantPopup";
 import { PlowPopup } from "../components/worldWidgets/plowPopup";
+import { Player } from "../components/player/player";
 
 export class WorldScene extends CodeFarmScene {
   /**
@@ -27,8 +27,6 @@ export class WorldScene extends CodeFarmScene {
    * (NOTE : Find better solution)
    */
   private _popupClicked: boolean;
-  // Player's moving speed
-  private speed: number = 240;
   // Phaser Group holding the Crop objects
   private crops: Phaser.GameObjects.Group;
   /**
@@ -53,8 +51,8 @@ export class WorldScene extends CodeFarmScene {
    */
   private _layerObjectsBackground: Phaser.Tilemaps.DynamicTilemapLayer;
   private _layerObjectsForeground: Phaser.Tilemaps.DynamicTilemapLayer;
-  // The player Sprite
-  private player: Phaser.Physics.Arcade.Sprite;
+  // The player Sprite game object
+  private _player: Player;
   /**
    * Is the player moving. Used when the pointerup event fires to know if the
    * player dragged (the player stop moving) or clicked (the actionClick method
@@ -89,6 +87,11 @@ export class WorldScene extends CodeFarmScene {
   // Getter for _layerCrops
   public get layerCrops(): Phaser.Tilemaps.DynamicTilemapLayer {
     return this._layerCrops;
+  }
+
+  // Getter for _player
+  public get player(): Player {
+    return this._player;
   }
 
   // Setter for _popupClicked
@@ -195,49 +198,8 @@ export class WorldScene extends CodeFarmScene {
     this._layerObjectsForeground.setPosition(-1000, -1000);
     this._layerObjectsForeground.setDepth(100);
 
-    // Creates the player and set its collider's dimensions and position
-    this.player = this.physics.add.sprite(0, 0, "player");
-    this.player.setSize(12, 12);
-    this.player.setOffset(
-      this.player.width / 2 - this.player.body.width / 2,
-      this.player.height - this.player.body.height
-    );
-    this.player.setScale(2);
-    this.player.setOrigin(0.5, 1);
-
-    /**
-     * Defines the player's animations cycle by setting tiles' positions in the
-     * tileset
-     */
-    this.anims.create({
-      key: "turn",
-      frames: [{ key: "player", frame: 9 }],
-      frameRate: 20,
-    });
-    this.anims.create({
-      key: "left",
-      frames: this.anims.generateFrameNumbers("player", { start: 57, end: 60 }),
-      frameRate: 10,
-      repeat: -1,
-    });
-    this.anims.create({
-      key: "right",
-      frames: this.anims.generateFrameNumbers("player", { start: 41, end: 44 }),
-      frameRate: 10,
-      repeat: -1,
-    });
-    this.anims.create({
-      key: "up",
-      frames: this.anims.generateFrameNumbers("player", { start: 25, end: 28 }),
-      frameRate: 10,
-      repeat: -1,
-    });
-    this.anims.create({
-      key: "down",
-      frames: this.anims.generateFrameNumbers("player", { start: 9, end: 12 }),
-      frameRate: 10,
-      repeat: -1,
-    });
+    // Creates the Player
+    this._player = new Player(this, 0, 150);
 
     // Initializes _popupClicked
     this._popupClicked = false;
@@ -309,13 +271,10 @@ export class WorldScene extends CodeFarmScene {
 
         this.scenesManager.uiScene.joystick.updatePosition(pointerScreenPos);
 
-        const playerTarget: Vector2 = Utils.add(
-          new Phaser.Math.Vector2(this.player.x, this.player.y),
-          this.scenesManager.uiScene.joystick.getMove()
+        this._player.setPlayerMoveDirection(
+          this.scenesManager.uiScene.joystick.getMove(),
+          this.scenesManager.uiScene.joystick.getRatio()
         );
-        const speedFactor: number = this.scenesManager.uiScene.joystick.getRatio();
-
-        this.movePlayerTo(playerTarget, speedFactor);
       }
     });
 
@@ -324,12 +283,19 @@ export class WorldScene extends CodeFarmScene {
     this.createBuilding(BuildingType.Market, posMarket);
 
     // Enables collision between objects and the player
-    this.physics.add.collider(this.player, this.objects);
+    this.physics.add.collider(this._player, this.objects);
 
     if (this.scenesManager.controllerScene.debugEnabled) {
       // Displays the physic bodies for debug purposes
       this.physics.world.createDebugGraphic();
     }
+
+    this.cameras.main.startFollow(this._player, true, 0.1, 0.1);
+    const deadzoneMargin: number = 200;
+    this.cameras.main.setDeadzone(
+      this.cameras.main.displayWidth - deadzoneMargin * 2,
+      this.cameras.main.displayHeight - deadzoneMargin * 2
+    );
   }
 
   /**
@@ -340,39 +306,8 @@ export class WorldScene extends CodeFarmScene {
    * a smoothed and capped value based on the FPS rate.
    */
   public update(time: number, delta: number): void {
-    // Sets the player animation based on its velocity
-    if (this.player.body.velocity.length() > 0) {
-      const moveDirection: Vector2 = new Phaser.Math.Vector2(
-        this.player.body.velocity
-      ).normalize();
-
-      if (Math.abs(moveDirection.x) > Math.abs(moveDirection.y)) {
-        if (moveDirection.x > 0) {
-          this.player.anims.play("right", true);
-        } else {
-          this.player.anims.play("left", true);
-        }
-      } else {
-        if (moveDirection.y > 0) {
-          this.player.anims.play("down", true);
-        } else {
-          this.player.anims.play("up", true);
-        }
-      }
-    } else {
-      this.player.anims.play("turn", true);
-    }
-
-    /**
-     * Centers the camera on the player
-     * (Note : Could use Phaser follow method instead ?)
-     */
-    this.cameras.main.centerOn(
-      Math.round(this.player.x),
-      Math.round(this.player.y - 15)
-    );
-
     // Calls the update method on all crops and objects
+    this._player.update(time, delta);
     this.crops
       .getChildren()
       .forEach((crop: Crop): void => crop.update(time, delta));
@@ -454,7 +389,7 @@ export class WorldScene extends CodeFarmScene {
    */
   private stopPlayerMove(): void {
     // Stops the player's physic body
-    this.player.body.stop();
+    this._player.resetPlayerMoveDirection();
     this.moving = false;
     this.scenesManager.uiScene.joystick.hide();
     this.scenesManager.uiScene.scene.resume();
@@ -474,17 +409,6 @@ export class WorldScene extends CodeFarmScene {
     );
     this.objects.add(building);
     this.add.existing(building);
-  }
-
-  /**
-   * Uses the Phaser physic engine to move the player to the specified target
-   * world position.
-   * @param {Vector2} target - Player movement target position
-   * @param {number} speedFactor - Factor of the player maximum speed to use
-   * (between 0 and 1 - default 1)
-   */
-  private movePlayerTo(target: Vector2, speedFactor: number = 1): void {
-    this.physics.moveToObject(this.player, target, this.speed * speedFactor);
   }
 
   /**

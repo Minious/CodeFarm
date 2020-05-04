@@ -36,7 +36,7 @@ export class PlantPopup extends ActionPopup {
 
     const callback = (): void => {
       worldScene.createCrop(tilePos.x, tilePos.y, itemType);
-      this.scene.scenesManager.controllerScene.modifySelectedInventorySlotQuantity(
+      worldScene.scenesManager.controllerScene.modifySelectedInventorySlotQuantity(
         -1
       );
     };
