@@ -1,7 +1,6 @@
 import * as Phaser from "phaser";
 
 import { ActionPopup } from "../components/worldWidgets/actionPopup";
-import { LootAnim } from "../components/worldWidgets/lootAnim";
 
 import { CodeFarmScene } from "./codeFarmScene";
 import { Vector2 } from "../types/vector2.type";
@@ -12,11 +11,11 @@ import { cropFactory, ItemType } from "../enums/itemType.enum";
 import { getItemData } from "../interfaces/itemData.interface";
 import { Building } from "../components/buildings/building";
 import { InventorySlotData } from "../interfaces/inventorySlotData.interface";
-import { Loot } from "../interfaces/loot.interface";
 import { HarvestPopup } from "../components/worldWidgets/harvestPopup";
 import { PlantPopup } from "../components/worldWidgets/plantPopup";
 import { PlowPopup } from "../components/worldWidgets/plowPopup";
 import { Player } from "../components/player/player";
+import { WaterPopup } from "../components/worldWidgets/waterPopup";
 
 export class WorldScene extends CodeFarmScene {
   /**
@@ -40,7 +39,7 @@ export class WorldScene extends CodeFarmScene {
   // Tilemap layer holding the ground tiles
   private layerGround: Phaser.Tilemaps.DynamicTilemapLayer;
   // Tilemap layer holding the field tiles (above layerGround)
-  private layerFields: Phaser.Tilemaps.DynamicTilemapLayer;
+  private _layerFields: Phaser.Tilemaps.DynamicTilemapLayer;
   // Tilemap layer holding the crop tiles (above layerFields)
   private _layerCrops: Phaser.Tilemaps.DynamicTilemapLayer;
   /**
@@ -72,6 +71,11 @@ export class WorldScene extends CodeFarmScene {
       },
       scenesManager
     );
+  }
+
+  // Getter for _layerFields
+  public get layerFields(): Phaser.Tilemaps.DynamicTilemapLayer {
+    return this._layerFields;
   }
 
   // Getter for _layerObjectsBackground
@@ -167,12 +171,12 @@ export class WorldScene extends CodeFarmScene {
     // Enable the ground for interaction with the Tiles (Popups)
     this.layerGround.setInteractive();
 
-    // Initializes the layerFields
-    this.layerFields = this.map.createBlankDynamicLayer("Fields", tileset);
-    this.layerFields.setScale(2);
-    this.layerFields.setPosition(-1000, -1000);
+    // Initializes the _layerFields
+    this._layerFields = this.map.createBlankDynamicLayer("Fields", tileset);
+    this._layerFields.setScale(2);
+    this._layerFields.setPosition(-1000, -1000);
 
-    // Initializes the layerCrops
+    // Initializes the _layerCrops
     this._layerCrops = this.map.createBlankDynamicLayer("Crops", cropsTileset);
     this._layerCrops.setScale(2);
     this._layerCrops.setPosition(-1000, -1000);
@@ -331,46 +335,13 @@ export class WorldScene extends CodeFarmScene {
   }
 
   /**
-   * Harvests a Crop Tile. Adds the loots from the Crop's LootConfig and creates
-   * the LootAnims. Remove the tile and destroy the Crop object.
-   * @param {Crop} crop - The Crop to harvest
-   * (Note : Should be moved to the Crop class)
-   */
-  public harvestCrop(crop: Crop): void {
-    const diffuseConeAngle: number = Math.PI / 4;
-    crop.lootConfig.forEach((loot: Loot, i: number, arr: Array<Loot>): void => {
-      const angle: number =
-        -Math.PI / 2 +
-        diffuseConeAngle / 2 -
-        diffuseConeAngle * (i / (arr.length - 1));
-      const lootAnim: LootAnim = new LootAnim(
-        this,
-        crop.tile.getCenterX(this.cameras.main),
-        crop.tile.getCenterY(this.cameras.main),
-        angle,
-        loot.item,
-        loot.quantity
-      );
-      lootAnim.setScale(2);
-      this.add.existing(lootAnim);
-
-      this.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
-        loot.item,
-        loot.quantity
-      );
-    });
-    this._layerCrops.removeTileAt(crop.tilePos.x, crop.tilePos.y);
-    crop.destroy();
-  }
-
-  /**
    * Sets the Tile at tilePos as a field. Updates the neighbors fields if they
    * exist.
    * @param tilePos - The Tile coordinate
    */
   public createFieldTile(tilePos: Vector2): void {
     this.updateFieldTile(tilePos);
-    this.getNeighborTiles(this.layerFields, tilePos)
+    this.getNeighborTiles(this._layerFields, tilePos)
       // Filter empty Tiles
       .filter(
         (neighborTile: Phaser.Tilemaps.Tile): boolean =>
@@ -479,13 +450,13 @@ export class WorldScene extends CodeFarmScene {
 
   /**
    * Checks if the neighbors of the Tile at the position tilePos in the
-   * layerFields are fields or empty and set the field tile sprite accordingly
+   * _layerFields are fields or empty and set the field tile sprite accordingly
    * to match the pattern for the Tile at tilePos.
    * @param tilePos - The position of the Tile to look neighbors of
    * (Note : This function is a bit messy)
    */
   private updateFieldTile(tilePos: Vector2): void {
-    const currentTile: Phaser.Tilemaps.Tile = this.layerFields.getTileAt(
+    const currentTile: Phaser.Tilemaps.Tile = this._layerFields.getTileAt(
       tilePos.x,
       tilePos.y,
       true
@@ -499,7 +470,7 @@ export class WorldScene extends CodeFarmScene {
     ];
     const neighborTiles: Array<Phaser.Tilemaps.Tile> = neighborTilesPosOrder.map(
       (neighborTilePos: Vector2): Phaser.Tilemaps.Tile =>
-        this.layerFields.getTileAt(
+        this._layerFields.getTileAt(
           tilePos.x + neighborTilePos.x,
           tilePos.y + neighborTilePos.y,
           true
@@ -548,7 +519,7 @@ export class WorldScene extends CodeFarmScene {
         tileIdx = 192;
         break;
     }
-    this.layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
+    this._layerFields.putTileAt(tileIdx, tilePos.x, tilePos.y);
   }
 
   /**
@@ -577,13 +548,13 @@ export class WorldScene extends CodeFarmScene {
       pointerWorldPos.x,
       pointerWorldPos.y
     );
-    const layerFieldsTile: Phaser.Tilemaps.Tile = this.layerFields.getTileAt(
+    const layerFieldsTile: Phaser.Tilemaps.Tile = this._layerFields.getTileAt(
       tilePos.x,
       tilePos.y,
       true
     );
 
-    const noField: boolean = !this.layerFields.hasTileAt(tilePos.x, tilePos.y);
+    const noField: boolean = !this._layerFields.hasTileAt(tilePos.x, tilePos.y);
     if (noField) {
       this.actionPopup = new PlowPopup(
         this,
@@ -624,15 +595,26 @@ export class WorldScene extends CodeFarmScene {
             currentCrop.tilePos.x === tilePos.x &&
             currentCrop.tilePos.y === tilePos.y
         );
-        if (crop && crop.isReadyToHarvest) {
-          this.actionPopup = new HarvestPopup(
-            this,
-            layerFieldsTile.getCenterX(this.cameras.main),
-            layerFieldsTile.getCenterY(this.cameras.main),
-            40,
-            crop
-          );
-          this.add.existing(this.actionPopup);
+        if (crop) {
+          if (crop.isReadyToHarvest) {
+            this.actionPopup = new HarvestPopup(
+              this,
+              layerFieldsTile.getCenterX(this.cameras.main),
+              layerFieldsTile.getCenterY(this.cameras.main),
+              40,
+              crop
+            );
+            this.add.existing(this.actionPopup);
+          } else {
+            this.actionPopup = new WaterPopup(
+              this,
+              layerFieldsTile.getCenterX(this.cameras.main),
+              layerFieldsTile.getCenterY(this.cameras.main),
+              40,
+              crop
+            );
+            this.add.existing(this.actionPopup);
+          }
         }
       }
     }

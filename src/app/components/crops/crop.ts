@@ -3,6 +3,8 @@ import * as Phaser from "phaser";
 import { LootConfig } from "../../types/lootConfig.type";
 import { Vector2 } from "../../types/vector2.type";
 import { WorldScene } from "../../scenes/worldScene";
+import { Loot } from "../../interfaces/loot.interface";
+import { LootAnim } from "../worldWidgets/lootAnim";
 
 /**
  * Abstract class representing a Crop planted in a field by the player. It
@@ -19,8 +21,10 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
 
   // The Tile's position in the Tilemap
   private _tilePos: Vector2;
-  // The Crop's Tile
-  private _tile: Phaser.Tilemaps.Tile;
+  // The crop Tile on the WorldScene's _layerCrops
+  private cropTile: Phaser.Tilemaps.Tile;
+  // The field Tile on the WorldScene's _layerFields
+  private fieldTile: Phaser.Tilemaps.Tile;
   /**
    * The Crop's growthState represented by an integer going from 0 to 4 (nbSteps
    * - 1) included (0 is seed planted and 4 fully grown).
@@ -38,6 +42,8 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
   private baseTileIdx: number;
   // The LootConfig that the Crop produces when harvested.
   private _lootConfig: LootConfig;
+  // Is the Crop watered (meaning it can grow)
+  private isWatered: boolean = false;
 
   /**
    * Creates the Crop object.
@@ -71,6 +77,14 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
 
     // Update the Tile in the WorldScene's _layerCrops
     this.updateTile();
+    this.cropTile = this.scene.layerCrops.getTileAt(
+      this.tilePos.x,
+      this.tilePos.y
+    );
+    this.fieldTile = this.scene.layerFields.getTileAt(
+      this.tilePos.x,
+      this.tilePos.y
+    );
   }
 
   /**
@@ -91,9 +105,44 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
     return this._tilePos;
   }
 
-  // Getter for _tile
-  public get tile(): Phaser.Tilemaps.Tile {
-    return this._tile;
+  /**
+   * Water the Crop to allow it to grow.
+   */
+  public water(): void {
+    this.isWatered = true;
+    this.fieldTile.tint = 0xddddff;
+  }
+
+  /**
+   * Harvests the Crop. Adds the loots from the Crop's LootConfig and creates
+   * the LootAnims. Remove the tile and destroy the Crop object.
+   */
+  public harvest(): void {
+    const diffuseConeAngle: number = Math.PI / 4;
+    this.lootConfig.forEach((loot: Loot, i: number, arr: Array<Loot>): void => {
+      const angle: number =
+        -Math.PI / 2 +
+        diffuseConeAngle / 2 -
+        diffuseConeAngle * (i / (arr.length - 1));
+      const lootAnim: LootAnim = new LootAnim(
+        this.scene,
+        this.cropTile.getCenterX(this.scene.cameras.main),
+        this.cropTile.getCenterY(this.scene.cameras.main),
+        angle,
+        loot.item,
+        loot.quantity
+      );
+      lootAnim.setScale(2);
+      this.scene.add.existing(lootAnim);
+
+      this.scene.scenesManager.controllerScene.modifyItemTypeQuantityInInventory(
+        loot.item,
+        loot.quantity
+      );
+    });
+    this.scene.layerCrops.removeTileAt(this.tilePos.x, this.tilePos.y);
+    this.fieldTile.tint = 0xffffff;
+    this.destroy();
   }
 
   /**
@@ -107,7 +156,7 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
      * Updates the growth of the Crop and the growthState and the Tile if the
      * growth reaches 1.
      */
-    if (this.growthState < Crop.NB_GROWTH_STEPS - 1) {
+    if (this.isWatered && this.growthState < Crop.NB_GROWTH_STEPS - 1) {
       this.growth += (this.growthRate * delta) / 1000;
       if (this.growth >= 1) {
         this.growth -= 1;
@@ -123,10 +172,6 @@ export abstract class Crop extends Phaser.GameObjects.GameObject {
   private updateTile(): void {
     this.scene.layerCrops.putTileAt(
       this.baseTileIdx + this.growthState,
-      this.tilePos.x,
-      this.tilePos.y
-    );
-    this._tile = this.scene.layerCrops.getTileAt(
       this.tilePos.x,
       this.tilePos.y
     );

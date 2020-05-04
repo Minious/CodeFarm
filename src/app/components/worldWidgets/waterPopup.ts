@@ -4,19 +4,19 @@ import { Crop } from "../crops/crop";
 
 /**
  * A Popup icon displayed in the world view asking the player for a double click
- * confirmation to harvest a crop.
+ * confirmation to water a crop.
  */
-export class HarvestPopup extends ActionPopup {
+export class WaterPopup extends ActionPopup {
   // Specifies the type of this game object's scene as WorldScene
   public scene: WorldScene;
 
   /**
-   * Creates the HarvestPopup object.
+   * Creates the WaterPopup object.
    * @param {WorldScene} worldScene - The WorldScene this Popup belongs to
    * @param {number} x - The x position of the Popup in the world
    * @param {number} y - The y position of the Popup in the world
    * @param {number} displayWidth - The width of the Popup
-   * @param {Crop} crop - The Crop to harvest
+   * @param {Crop} crop - The Crop to water
    */
   public constructor(
     worldScene: WorldScene,
@@ -25,14 +25,6 @@ export class HarvestPopup extends ActionPopup {
     displayWidth: number,
     crop: Crop
   ) {
-    super(
-      worldScene,
-      x,
-      y,
-      displayWidth,
-      (): void => crop.harvest(),
-      "tools",
-      0
-    );
+    super(worldScene, x, y, displayWidth, (): void => crop.water(), "tools", 2);
   }
 }
